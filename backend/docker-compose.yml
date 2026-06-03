@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hub-postgres
+    environment:
+      POSTGRES_USER: hub_admin
+      POSTGRES_PASSWORD: hub_secret
+      POSTGRES_DB: hub_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub_admin -d hub_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    container_name: hub-api
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://hub_admin:hub_secret@postgres:5432/hub_platform
+      JWT_SECRET: hub_jwt_secret_dev_2026
+      PORT: "3001"
+      NODE_ENV: development
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
