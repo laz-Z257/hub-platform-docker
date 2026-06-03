@@ -7,7 +7,7 @@ interface TextFieldProps {
   value: string;
   onChangeText: (text: string) => void;
   error?: string;
-  keyboardType?: "default" | "email-address" | "numeric";
+  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
 }
 
 export default function TextField({
