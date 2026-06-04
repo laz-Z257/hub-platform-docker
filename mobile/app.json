@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "hub-platform",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F5F6FA"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hubplatform.aiapp"
@@ -32,7 +27,22 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#F5F6FA"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "10965177-584d-46f0-937a-d6fdcf8bf046"
+      }
+    },
+    "owner": "laz65585"
   }
 }
