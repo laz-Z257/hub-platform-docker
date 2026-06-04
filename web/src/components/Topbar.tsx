@@ -1,128 +1,60 @@
 "use client";
 
-import { Bell, HelpCircle, Search } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Bell, HelpCircle, Search, UserPlus } from "lucide-react";
 
-export default function Topbar() {
+export default function Topbar({ userName }: { userName?: string }) {
+  const pathname = usePathname();
+  const isAnalytics = pathname === "/dashboard/analytics";
+  const isUsers = pathname === "/dashboard/users";
+  const isTickets = pathname === "/dashboard/tickets";
+
+  const placeholder = isUsers
+    ? "Buscar usuarios por nombre o email..."
+    : isAnalytics
+      ? "Buscar reportes o métricas..."
+      : isTickets
+        ? "Buscar tickets, usuarios o ID..."
+        : "Buscar en el sistema...";
+
   return (
-    <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: "250px",
-        right: 0,
-        height: "70px",
-        backgroundColor: "#FFFFFF",
-        borderBottom: "1px solid #E5E7EB",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 24px",
-        zIndex: 30,
-      }}
-    >
-      {/* Search */}
-      <div
-        style={{
-          position: "relative",
-          width: "340px",
-        }}
-      >
+    <header className="fixed top-0 left-[250px] right-0 h-[72px] bg-white border-b border-gray-200 flex items-center px-6 z-30">
+      <div className="relative w-80">
         <Search
           size={18}
           color="#9CA3AF"
           strokeWidth={2}
-          style={{
-            position: "absolute",
-            left: "14px",
-            top: "50%",
-            transform: "translateY(-50%)",
-          }}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2"
         />
         <input
           type="text"
-          placeholder="Buscar en el sistema..."
-          style={{
-            width: "100%",
-            height: "40px",
-            border: "1px solid #E5E7EB",
-            borderRadius: "20px",
-            backgroundColor: "#F9FAFB",
-            padding: "0 16px 0 40px",
-            fontSize: "13px",
-            fontFamily: "Inter, sans-serif",
-            color: "#1F2937",
-            outline: "none",
-          }}
+          placeholder={placeholder}
+          className="w-full h-[42px] border border-gray-200 rounded-[20px] bg-[#EEF2FF] pl-10 pr-4 text-[13px] font-inter text-gray-800 outline-none"
         />
       </div>
 
-      {/* Right Section */}
-      <div
-        style={{
-          marginLeft: "auto",
-          display: "flex",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
-        {/* Notification */}
-        <button
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            position: "relative",
-            padding: "8px",
-            borderRadius: "8px",
-          }}
-        >
+      <div className="ml-auto flex items-center gap-5">
+        <button className="bg-none border-none cursor-pointer relative p-2 rounded-lg">
           <Bell size={20} color="#6B7280" strokeWidth={2} />
-          <div
-            style={{
-              position: "absolute",
-              top: "6px",
-              right: "6px",
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              backgroundColor: "#EF4444",
-              border: "2px solid #FFFFFF",
-            }}
-          />
+          <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
         </button>
 
-        {/* Help */}
-        <button
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "8px",
-            borderRadius: "8px",
-          }}
-        >
+        <button className="bg-none border-none cursor-pointer p-2 rounded-lg">
           <HelpCircle size={20} color="#6B7280" strokeWidth={2} />
         </button>
 
-        {/* Divider */}
-        <div
-          style={{
-            width: "1px",
-            height: "24px",
-            backgroundColor: "#E5E7EB",
-          }}
-        />
+        <div className="w-px h-6 bg-gray-200" />
 
-        {/* User */}
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "#6B7280",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
-          User - xxxxxx
+        <span className="text-[13px] font-semibold text-[#25207E] font-inter">
+          User - {userName || "xxxxxx"}
         </span>
+
+        {isUsers && (
+          <button className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white">
+            <UserPlus size={16} strokeWidth={2.5} />
+            Añadir Usuario
+          </button>
+        )}
       </div>
     </header>
   );

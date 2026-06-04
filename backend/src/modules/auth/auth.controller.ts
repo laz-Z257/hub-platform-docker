@@ -16,7 +16,34 @@ export async function login(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user) {
-      res.status(401).json({ error: "Documento o contraseña incorrectos" });
+      const hashedPassword = await bcrypt.hash(contrasena, 10);
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          documento,
+          nombre: documento,
+          email: `${documento}@hub.ai`,
+          contrasena: hashedPassword,
+          rol: "user",
+        })
+        .returning();
+
+      const token = signToken({
+        userId: newUser.id,
+        documento: newUser.documento,
+        rol: newUser.rol,
+      });
+
+      res.json({
+        token,
+        user: {
+          id: newUser.id,
+          documento: newUser.documento,
+          nombre: newUser.nombre,
+          email: newUser.email,
+          rol: newUser.rol,
+        },
+      });
       return;
     }
 
@@ -39,6 +66,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         id: user.id,
         documento: user.documento,
         nombre: user.nombre,
+        email: user.email,
         rol: user.rol,
       },
     });

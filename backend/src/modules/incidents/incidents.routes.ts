@@ -5,6 +5,8 @@ import {
   getIncident,
   updateIncident,
   addComment,
+  getStats,
+  deleteIncident,
 } from "./incidents.controller";
 import { validate } from "../../middlewares/validate";
 import {
@@ -20,9 +22,11 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post("/", validate(createIncidentSchema), createIncident);
+router.get("/stats", getStats);
 router.get("/", listIncidents);
 router.get("/:id", getIncident);
 router.patch("/:id", adminOnly, validate(updateIncidentSchema), updateIncident);
+router.delete("/:id", adminOnly, deleteIncident);
 router.post("/:id/comments", validate(commentSchema), addComment);
 
 export default router;

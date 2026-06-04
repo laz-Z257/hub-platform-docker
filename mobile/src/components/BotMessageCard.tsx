@@ -6,12 +6,14 @@ interface BotMessageCardProps {
   message: string;
   timestamp: string;
   onSubmenuPress?: (label: string) => void;
+  onMenuPress?: (label: string) => void;
 }
 
 export default function BotMessageCard({
   message,
   timestamp,
   onSubmenuPress,
+  onMenuPress,
 }: BotMessageCardProps) {
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
@@ -42,7 +44,7 @@ export default function BotMessageCard({
           {message}
         </Text>
 
-        <ExpandableMenu onSubmenuPress={onSubmenuPress} />
+        <ExpandableMenu onSubmenuPress={onSubmenuPress} onMenuPress={onMenuPress} />
       </View>
 
       <Text

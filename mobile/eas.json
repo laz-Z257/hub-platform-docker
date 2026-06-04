@@ -1,0 +1,31 @@
+{
+  "cli": {
+    "version": ">= 14.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://TU-APP.railway.app/api"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://TU-APP.railway.app/api"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

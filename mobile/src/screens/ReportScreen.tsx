@@ -5,7 +5,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,9 +12,8 @@ import { useRouter } from "expo-router";
 import {
   Send,
   MessageSquare,
-  AlertTriangle,
-  History,
 } from "lucide-react-native";
+import BottomTab from "../components/BottomTab";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +24,7 @@ import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
 import UrgencySelector from "../components/UrgencySelector";
 import Logo from "../components/Logo";
+import { api } from "../services/api";
 
 const AnimatedTouchable =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -49,6 +48,7 @@ export default function ReportScreen() {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState("");
 
   const [nombre, setNombre] = useState("");
   const [documento, setDocumento] = useState("");
@@ -85,24 +85,33 @@ export default function ReportScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
     setLoading(true);
+    setSubmitError("");
 
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        "Reporte enviado",
-        "Tu incidente ha sido registrado exitosamente. Nuestro equipo técnico lo revisará pronto.",
-        [
-          {
-            text: "Ir al chat",
-            onPress: () => router.replace("/chat"),
-          },
-        ]
+    try {
+      const incident = await api.post<{ id: string }>("/incidents", {
+        nombre,
+        documento,
+        punto_venta: puntoVenta,
+        telefono,
+        descripcion,
+        urgencia,
+      });
+
+      router.replace({
+        pathname: "/exito",
+        params: { ticketId: incident.id },
+      });
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Error al enviar el reporte"
       );
-    }, 1500);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,12 +134,10 @@ export default function ReportScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
           <View className="items-center mb-4">
             <Logo size={80} />
           </View>
 
-          {/* Title */}
           <Text
             className="text-[34px] text-[#1F2366] text-center mb-2"
             style={{ fontFamily: "Inter_700Bold", fontWeight: "700" }}
@@ -138,13 +145,19 @@ export default function ReportScreen() {
             Reportar un Incidente
           </Text>
 
-          {/* Description */}
           <Text className="text-[15px] font-inter text-[#6B7280] text-center mb-6 max-w-[300px]">
             Por favor, completa los detalles para que nuestro equipo
             técnico pueda ayudarte.
           </Text>
 
-          {/* Form Card */}
+          {submitError ? (
+            <View className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 w-[92%]">
+              <Text className="text-red-700 text-sm font-inter">
+                {submitError}
+              </Text>
+            </View>
+          ) : null}
+
           <View
             className="bg-white rounded-[18px] border border-[#E5E7EB] p-5 w-[92%]"
             style={{
@@ -218,7 +231,6 @@ export default function ReportScreen() {
               onSelect={setUrgencia}
             />
 
-            {/* Submit Button */}
             <AnimatedTouchable
               onPress={handleSubmit}
               onPressIn={handlePressIn}
@@ -231,7 +243,9 @@ export default function ReportScreen() {
                   width: "100%" as const,
                   height: 52,
                   borderRadius: 10,
-                  backgroundColor: loading ? "rgba(42, 35, 126, 0.7)" : "#2A237E",
+                  backgroundColor: loading
+                    ? "rgba(42, 35, 126, 0.7)"
+                    : "#2A237E",
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
@@ -254,7 +268,6 @@ export default function ReportScreen() {
             </AnimatedTouchable>
           </View>
 
-          {/* Secondary Action */}
           <TouchableOpacity
             onPress={() => router.back()}
             className="flex-row items-center justify-center mt-5"
@@ -268,46 +281,14 @@ export default function ReportScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Bottom Navigation */}
-      <View className="bg-white flex-row border-t border-[#E5E7EB] px-2 pb-5 pt-1 rounded-t-[16px]">
-        <TouchableOpacity
-          onPress={() => router.replace("/chat")}
-          activeOpacity={0.7}
-          className="flex-1 items-center justify-center py-2.5 mx-1 rounded-xl"
-        >
-          <MessageSquare size={22} color="#6B7280" strokeWidth={2} />
-          <Text className="text-[11px] font-inter text-[#6B7280] mt-0.5">
-            Chatbot
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          className="flex-1 items-center justify-center py-2.5 mx-1 rounded-xl bg-[#EEEDF8]"
-        >
-          <AlertTriangle size={22} color="#1F2366" strokeWidth={2.5} />
-          <Text
-            className="text-[11px] font-inter text-[#1F2366] mt-0.5"
-            style={{ fontWeight: "600" }}
-          >
-            Reportar
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.replace("/chat")}
-          activeOpacity={0.7}
-          className="flex-1 items-center justify-center py-2.5 mx-1 rounded-xl"
-        >
-          <History size={22} color="#6B7280" strokeWidth={2} />
-          <Text className="text-[11px] font-inter text-[#6B7280] mt-0.5">
-            Historial
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Safe area bottom inset */}
-      <View style={{ height: insets.bottom, backgroundColor: "#FFFFFF" }} />
+      <BottomTab
+        activeTab="reportar"
+        safeBottom={insets.bottom + 4}
+        onTabChange={(tab) => {
+          if (tab === "chatbot") router.replace("/chat");
+          if (tab === "historial") router.replace("/historial");
+        }}
+      />
     </View>
   );
 }

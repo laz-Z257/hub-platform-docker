@@ -1,0 +1,84 @@
+"use client";
+
+import { Ticket, AlertCircle, Loader, CheckCircle } from "lucide-react";
+
+interface SummaryCard {
+  icon: typeof Ticket;
+  title: string;
+  value: string;
+  iconBg: string;
+  iconColor: string;
+}
+
+interface TicketSummaryCardsProps {
+  total: number;
+  pendientes: number;
+  enProceso: number;
+  resueltos: number;
+  loading: boolean;
+}
+
+export default function TicketSummaryCards({
+  total,
+  pendientes,
+  enProceso,
+  resueltos,
+  loading,
+}: TicketSummaryCardsProps) {
+  const cards: SummaryCard[] = [
+    {
+      icon: Ticket,
+      title: "Total Tickets",
+      value: loading ? "..." : total.toLocaleString(),
+      iconBg: "#F3F0FF",
+      iconColor: "#25207E",
+    },
+    {
+      icon: AlertCircle,
+      title: "Pendientes",
+      value: loading ? "..." : pendientes.toLocaleString(),
+      iconBg: "#FEE2E2",
+      iconColor: "#DC2626",
+    },
+    {
+      icon: Loader,
+      title: "En Proceso",
+      value: loading ? "..." : enProceso.toLocaleString(),
+      iconBg: "#F3F0FF",
+      iconColor: "#25207E",
+    },
+    {
+      icon: CheckCircle,
+      title: "Resueltos",
+      value: loading ? "..." : resueltos.toLocaleString(),
+      iconBg: "#F3F0FF",
+      iconColor: "#25207E",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-4 mb-7">
+      {cards.map((card) => (
+        <div
+          key={card.title}
+          className="bg-white border border-[#E5E7EB] rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2.5"
+        >
+          <div
+            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
+            style={{ backgroundColor: card.iconBg }}
+          >
+            <card.icon size={19} color={card.iconColor} strokeWidth={2} />
+          </div>
+          <div>
+            <p className="text-[13px] font-medium text-[#6B7280] font-inter">
+              {card.title}
+            </p>
+            <p className="text-[32px] font-bold text-[#25207E] font-inter leading-none mt-1">
+              {card.value}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

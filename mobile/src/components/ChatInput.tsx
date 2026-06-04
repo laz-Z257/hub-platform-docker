@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, TouchableOpacity } from "react-native";
-import { Paperclip, ArrowRight } from "lucide-react-native";
+import { ArrowRight } from "lucide-react-native";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -27,19 +27,6 @@ export default function ChatInput({ onSend }: ChatInputProps) {
         paddingVertical: 10,
       }}
     >
-      <TouchableOpacity
-        style={{
-          width: 40,
-          height: 40,
-          alignItems: "center",
-          justifyContent: "center",
-          marginRight: 4,
-        }}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Paperclip size={22} color="#6B7280" strokeWidth={2} />
-      </TouchableOpacity>
-
       <TextInput
         value={text}
         onChangeText={setText}

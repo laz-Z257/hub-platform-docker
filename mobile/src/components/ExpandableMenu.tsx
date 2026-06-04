@@ -44,10 +44,12 @@ const MENU_OPTIONS: MenuOption[] = [
 
 interface ExpandableMenuProps {
   onSubmenuPress?: (label: string) => void;
+  onMenuPress?: (label: string) => void;
 }
 
 export default function ExpandableMenu({
   onSubmenuPress,
+  onMenuPress,
 }: ExpandableMenuProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const rotation = useSharedValue(0);
@@ -88,8 +90,10 @@ export default function ExpandableMenu({
           easing: Easing.ease,
         });
       }, 260);
+    } else {
+      onMenuPress?.(label);
     }
-  }, []);
+  }, [onMenuPress]);
 
   const handleSubmenuPress = (label: string) => {
     onSubmenuPress?.(label);

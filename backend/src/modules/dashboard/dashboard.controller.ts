@@ -1,26 +1,41 @@
 import { Request, Response } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, users } from "../../db/schema";
 
-export async function getKpis(_req: Request, res: Response): Promise<void> {
+export async function getKpis(req: Request, res: Response): Promise<void> {
   try {
-    const totalResult = await db.$count(incidents);
+    const query = req.validatedQuery || req.query;
+    const { start, end } = query;
+    const dateConditions = [];
+
+    if (typeof start === "string" && start) {
+      dateConditions.push(gte(incidents.created_at, new Date(start)));
+    }
+    if (typeof end === "string" && end) {
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+      dateConditions.push(lte(incidents.created_at, endDate));
+    }
+
+    const dateFilter = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
+    const totalResult = await db.$count(incidents, dateFilter);
     const pendientesResult = await db.$count(
       incidents,
-      eq(incidents.estado, "pendiente")
+      dateFilter ? and(dateFilter, eq(incidents.estado, "pendiente")) : eq(incidents.estado, "pendiente")
     );
     const enProcesoResult = await db.$count(
       incidents,
-      eq(incidents.estado, "en_proceso")
+      dateFilter ? and(dateFilter, eq(incidents.estado, "en_proceso")) : eq(incidents.estado, "en_proceso")
     );
     const resueltosResult = await db.$count(
       incidents,
-      eq(incidents.estado, "resuelto")
+      dateFilter ? and(dateFilter, eq(incidents.estado, "resuelto")) : eq(incidents.estado, "resuelto")
     );
     const altaUrgenciaResult = await db.$count(
       incidents,
-      eq(incidents.urgencia, "alta")
+      dateFilter ? and(dateFilter, eq(incidents.urgencia, "alta")) : eq(incidents.urgencia, "alta")
     );
 
     const usuariosActivos = await db.$count(users);

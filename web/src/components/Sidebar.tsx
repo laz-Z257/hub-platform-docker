@@ -1,50 +1,36 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard,
   BarChart3,
   Users,
   Ticket,
-  Plug,
-  Settings,
+  LogOut,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Panel de control", active: true },
-  { icon: BarChart3, label: "Analítica", active: false },
-  { icon: Users, label: "Gestión de Usuarios", active: false },
-  { icon: Ticket, label: "Tickets", active: false },
-  { icon: Plug, label: "Sistemas Externos", active: false },
-  { icon: Settings, label: "Configuración", active: false },
+interface NavItem {
+  icon: typeof LayoutDashboard;
+  label: string;
+  path: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { icon: LayoutDashboard, label: "Panel de control", path: "/dashboard" },
+  { icon: BarChart3, label: "Analítica", path: "/dashboard/analytics" },
+  { icon: Users, label: "Gestión de Usuarios", path: "/dashboard/users" },
+  { icon: Ticket, label: "Tickets", path: "/dashboard/tickets" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }: { onLogout: () => void }) {
+  const pathname = usePathname();
+
   return (
-    <aside
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        bottom: 0,
-        width: "250px",
-        backgroundColor: "#FFFFFF",
-        borderRight: "1px solid #E5E7EB",
-        display: "flex",
-        flexDirection: "column",
-        zIndex: 40,
-      }}
-    >
-      {/* Logo Area */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "20px 20px 24px",
-          gap: "10px",
-        }}
-      >
+    <aside className="fixed top-0 left-0 bottom-0 w-[250px] bg-white border-r border-gray-200 flex flex-col z-40">
+      <div className="flex items-center px-5 py-5 pb-6 gap-2.5">
         <Image
           src={logoImg}
           alt="Logo"
@@ -52,111 +38,56 @@ export default function Sidebar() {
           height={32}
           style={{ borderRadius: "6px" }}
         />
-        <span
-          style={{
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "#374151",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
+        <span className="text-sm font-medium text-gray-700 font-inter">
           Admin Dashboard
         </span>
       </div>
 
-      {/* Navigation */}
-      <nav
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: "0 12px",
-          gap: "2px",
-        }}
-      >
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.label}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              height: "48px",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              backgroundColor: item.active ? "#F3F0FF" : "transparent",
-              color: item.active ? "#25207E" : "#6B7280",
-              padding: "0 12px",
-              gap: "12px",
-              position: "relative",
-              fontFamily: "Inter, sans-serif",
-              fontSize: "14px",
-              fontWeight: item.active ? 600 : 400,
-              textAlign: "left",
-              width: "100%",
-              transition: "background-color 0.15s",
-            }}
-          >
-            {item.active && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: "8px",
-                  bottom: "8px",
-                  width: "4px",
-                  backgroundColor: "#25207E",
-                  borderRadius: "0 4px 4px 0",
-                }}
+      <nav className="flex-1 flex flex-col px-3 gap-0.5">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.path;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.path}
+              className="flex items-center h-12 rounded-lg px-3 gap-3 relative font-inter text-sm no-underline w-full transition-colors duration-150"
+              style={{
+                backgroundColor: isActive ? "#F3F0FF" : "transparent",
+                color: isActive ? "#25207E" : "#6B7280",
+                fontWeight: isActive ? 600 : 400,
+              }}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#25207E] rounded-r-md" />
+              )}
+              <item.icon
+                size={20}
+                color={isActive ? "#25207E" : "#9CA3AF"}
+                strokeWidth={isActive ? 2.5 : 2}
               />
-            )}
-            <item.icon
-              size={20}
-              color={item.active ? "#25207E" : "#9CA3AF"}
-              strokeWidth={item.active ? 2.5 : 2}
-            />
-            {item.label}
-          </button>
-        ))}
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* User Profile */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "16px 20px",
-          borderTop: "1px solid #E5E7EB",
-          gap: "10px",
-        }}
-      >
-        <div
-          style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            backgroundColor: "#25207E",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#FFFFFF",
-            fontSize: "14px",
-            fontWeight: 600,
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
-          AP
+      <div className="p-5 border-t border-gray-200">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-9 h-9 rounded-full bg-[#25207E] flex items-center justify-center text-white text-sm font-semibold font-inter">
+            AP
+          </div>
+          <span className="text-[13px] font-medium text-gray-800 font-inter">
+            Admin Principal
+          </span>
         </div>
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "#1F2937",
-            fontFamily: "Inter, sans-serif",
-          }}
+        <button
+          onClick={onLogout}
+          className="w-full h-9 rounded-lg border border-gray-200 bg-white cursor-pointer text-[13px] font-medium font-inter text-red-600 flex items-center justify-center gap-1.5"
         >
-          Admin Principal
-        </span>
+          <LogOut size={16} />
+          Cerrar Sesión
+        </button>
       </div>
     </aside>
   );

@@ -1,19 +1,17 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Lock, Eye, EyeOff, LogIn, IdCard } from "lucide-react";
-import { VALID_CREDENTIALS } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
 import logoImg from "@/assets/logo.png";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { login, loading } = useAuth();
 
   const [documento, setDocumento] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{
     documento?: string;
     contrasena?: string;
@@ -37,158 +35,60 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoginError("");
 
     if (!validate()) return;
 
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-
-      if (
-        documento === VALID_CREDENTIALS.documento &&
-        contrasena === VALID_CREDENTIALS.contrasena
-      ) {
-        document.cookie = "auth-token=mock-jwt-token; path=/";
-        router.push("/dashboard");
-      } else {
-        setLoginError(
-          "Credenciales inválidas. Usa 123456789 / admin123"
-        );
-      }
-    }, 1200);
+    try {
+      await login(documento, contrasena);
+    } catch (err) {
+      setLoginError(
+        err instanceof Error ? err.message : "Credenciales inválidas"
+      );
+    }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "#F5F4FC",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "#FFFFFF",
-          width: "420px",
-          borderRadius: "12px",
-          border: "1px solid #E5E7EB",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-          padding: "36px",
-        }}
-      >
-        {/* Logo */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "24px",
-          }}
-        >
+    <div className="bg-[#F5F4FC] min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white w-[420px] rounded-xl border border-gray-200 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-9">
+        <div className="flex justify-center mb-6">
           <Image
             src={logoImg}
             alt="HUB Logo"
-            width={90}
-            height={90}
+            width={80}
+            height={80}
             priority
           />
         </div>
 
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "22px",
-            fontWeight: 700,
-            color: "#1F2937",
-            textAlign: "center",
-            margin: 0,
-          }}
-        >
+        <h1 className="font-inter text-[22px] font-bold text-gray-800 text-center">
           Bienvenido de nuevo
         </h1>
 
-        {/* Subtitle */}
-        <p
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "14px",
-            fontWeight: 400,
-            color: "#6B7280",
-            textAlign: "center",
-            margin: 0,
-            marginTop: "6px",
-            marginBottom: "34px",
-          }}
-        >
+        <p className="font-inter text-sm font-normal text-gray-500 text-center mt-1.5 mb-[34px]">
           Accede a tu panel corporativo seguro.
         </p>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Login Error */}
           {loginError && (
-            <div
-              style={{
-                backgroundColor: "#FEF2F2",
-                border: "1px solid #FECACA",
-                borderRadius: "6px",
-                padding: "8px 12px",
-                marginBottom: "16px",
-                fontSize: "13px",
-                color: "#DC2626",
-                fontFamily: "Inter, sans-serif",
-              }}
-            >
+            <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-4 text-[13px] text-red-600 font-inter">
               {loginError}
             </div>
           )}
 
-          {/* Documento Field */}
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#374151",
-                fontFamily: "Inter, sans-serif",
-                marginBottom: "6px",
-                marginLeft: "2px",
-              }}
-            >
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-700 font-inter mb-1.5 ml-0.5">
               Número de Documento
             </label>
             <div
+              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] overflow-hidden"
               style={{
-                display: "flex",
-                alignItems: "center",
-                height: "48px",
-                width: "100%",
-                border: errors.documento
-                  ? "1px solid #EF4444"
-                  : "1px solid #D1D5DB",
-                borderRadius: "6px",
-                backgroundColor: "#F8FAFC",
-                overflow: "hidden",
+                border: errors.documento ? "1px solid #EF4444" : "1px solid #D1D5DB",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "44px",
-                  height: "100%",
-                  flexShrink: 0,
-                }}
-              >
+              <div className="flex items-center justify-center w-11 h-full shrink-0">
                 <IdCard size={20} color="#9CA3AF" strokeWidth={1.75} />
               </div>
               <input
@@ -202,74 +102,27 @@ export default function LoginPage() {
                 placeholder="Ej: 123456789"
                 autoComplete="off"
                 autoCapitalize="off"
-                style={{
-                  flex: 1,
-                  height: "100%",
-                  border: "none",
-                  outline: "none",
-                  backgroundColor: "transparent",
-                  fontSize: "15px",
-                  fontFamily: "Inter, sans-serif",
-                  color: "#111827",
-                  paddingRight: "12px",
-                }}
+                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] pr-3"
               />
             </div>
             {errors.documento && (
-              <p
-                style={{
-                  margin: 0,
-                  marginTop: "4px",
-                  marginLeft: "2px",
-                  fontSize: "11px",
-                  color: "#EF4444",
-                  fontFamily: "Inter, sans-serif",
-                }}
-              >
+              <p className="mt-1 ml-0.5 text-[11px] text-red-500 font-inter">
                 {errors.documento}
               </p>
             )}
           </div>
 
-          {/* Contraseña Field */}
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#374151",
-                fontFamily: "Inter, sans-serif",
-                marginBottom: "6px",
-                marginLeft: "2px",
-              }}
-            >
+          <div className="mb-6">
+            <label className="block text-xs font-medium text-gray-700 font-inter mb-1.5 ml-0.5">
               Contraseña
             </label>
             <div
+              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] overflow-hidden"
               style={{
-                display: "flex",
-                alignItems: "center",
-                height: "48px",
-                width: "100%",
-                border: errors.contrasena
-                  ? "1px solid #EF4444"
-                  : "1px solid #D1D5DB",
-                borderRadius: "6px",
-                backgroundColor: "#F8FAFC",
-                overflow: "hidden",
+                border: errors.contrasena ? "1px solid #EF4444" : "1px solid #D1D5DB",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "44px",
-                  height: "100%",
-                  flexShrink: 0,
-                }}
-              >
+              <div className="flex items-center justify-center w-11 h-full shrink-0">
                 <Lock size={20} color="#9CA3AF" strokeWidth={1.75} />
               </div>
               <input
@@ -285,34 +138,13 @@ export default function LoginPage() {
                 }}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                style={{
-                  flex: 1,
-                  height: "100%",
-                  border: "none",
-                  outline: "none",
-                  backgroundColor: "transparent",
-                  fontSize: "15px",
-                  fontFamily: "Inter, sans-serif",
-                  color: "#111827",
-                  paddingRight: "4px",
-                }}
+                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] pr-1"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "44px",
-                  height: "100%",
-                  flexShrink: 0,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#9CA3AF",
-                }}
+                className="flex items-center justify-center w-11 h-full shrink-0 bg-none border-none cursor-pointer text-[#9CA3AF]"
               >
                 {showPassword ? (
                   <EyeOff size={20} strokeWidth={1.75} />
@@ -322,44 +154,20 @@ export default function LoginPage() {
               </button>
             </div>
             {errors.contrasena && (
-              <p
-                style={{
-                  margin: 0,
-                  marginTop: "4px",
-                  marginLeft: "2px",
-                  fontSize: "11px",
-                  color: "#EF4444",
-                  fontFamily: "Inter, sans-serif",
-                }}
-              >
+              <p className="mt-1 ml-0.5 text-[11px] text-red-500 font-inter">
                 {errors.contrasena}
               </p>
             )}
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
+            className="flex items-center justify-center w-full h-12 border-none rounded-md text-white text-[15px] font-semibold font-inter gap-2 shadow-[0_4px_12px_rgba(55,49,142,0.25)]"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: "48px",
-              backgroundColor: loading
-                ? "rgba(55,49,142,0.7)"
-                : "#37318E",
-              border: "none",
-              borderRadius: "6px",
-              color: "#FFFFFF",
-              fontSize: "15px",
-              fontWeight: 600,
-              fontFamily: "Inter, sans-serif",
+              backgroundColor: loading ? "rgba(55,49,142,0.7)" : "#37318E",
               cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.7 : 1,
-              boxShadow: "0 4px 12px rgba(55,49,142,0.25)",
-              gap: "8px",
             }}
           >
             {loading ? (
@@ -393,14 +201,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div
-          style={{
-            height: "1px",
-            backgroundColor: "#E5E7EB",
-            marginTop: "24px",
-          }}
-        />
+        <div className="h-px bg-gray-200 mt-6" />
       </div>
     </div>
   );

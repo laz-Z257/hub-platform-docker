@@ -7,10 +7,17 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "hub-platform",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F6FA"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hubplatform.aiapp"
     },
     "android": {
+      "package": "com.hubplatform.aiapp",
       "adaptiveIcon": {
         "backgroundColor": "#F5F6FA",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,7 +31,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ]
   }
 }
