@@ -20,8 +20,13 @@ app.use(
   cors({
     origin:
       env.NODE_ENV === "development"
-        ? ["http://localhost:3000", "http://localhost:8081"]
-        : "*",
+        ? [
+            "http://localhost:3000",
+            "http://localhost:8081",
+            "http://localhost:19006",
+            /^https?:\/\/localhost(:\d+)?$/,
+          ]
+        : process.env.CORS_ORIGIN?.split(",") || "http://localhost:3000",
     credentials: true,
   })
 );
@@ -44,6 +49,18 @@ app.use("/api/users", usersRoutes);
 app.use((_req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });
+
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+);
 
 app.listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}`);

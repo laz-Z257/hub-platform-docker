@@ -1,6 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { Settings } from "lucide-react-native";
+import { View, Text } from "react-native";
 import Logo from "./Logo";
 
 export default function ReportHeader() {
@@ -15,12 +14,6 @@ export default function ReportHeader() {
       >
         CorporateSupport
       </Text>
-      <TouchableOpacity
-        className="w-10 h-10 items-center justify-center rounded-full"
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Settings size={22} color="#1F2366" strokeWidth={2} />
-      </TouchableOpacity>
     </View>
   );
 }

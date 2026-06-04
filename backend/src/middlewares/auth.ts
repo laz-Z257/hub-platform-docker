@@ -41,8 +41,8 @@ export function optionalAuth(
     try {
       const token = header.slice(7);
       req.user = verifyToken(token);
-    } catch {
-      // token is invalid, continue without user
+    } catch (err) {
+      console.error("optionalAuth: token verification failed", err);
     }
   }
 

@@ -1,66 +1,67 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ClipboardList, Users, Plug } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
 import TicketsTable from "@/components/TicketsTable";
 import UserManagement from "@/components/UserManagement";
+import { api } from "@/lib/api";
+
+interface KpiResponse {
+  totalIncidentes: number;
+  pendientes: number;
+  enProceso: number;
+  resueltos: number;
+  altaUrgencia: number;
+  usuariosActivos: number;
+}
+
+interface IncidentItem {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  urgencia: string;
+  estado: string;
+  created_at: string;
+}
 
 export default function DashboardPage() {
+  const [kpis, setKpis] = useState<KpiResponse | null>(null);
+  const [incidents, setIncidents] = useState<IncidentItem[]>([]);
+
+  useEffect(() => {
+    api.get<KpiResponse>("/dashboard/kpis").then(setKpis).catch((err) => {
+      console.error("Dashboard KPIs:", err instanceof Error ? err.message : err);
+    });
+    api
+      .get<{ items: IncidentItem[] }>("/incidents?limit=5")
+      .then((data) => setIncidents(data.items))
+      .catch((err) => {
+        console.error("Dashboard incidents:", err instanceof Error ? err.message : err);
+      });
+  }, []);
+
   return (
-    <div
-      style={{
-        backgroundColor: "#F8F8FC",
-        minHeight: "calc(100vh - 70px)",
-        padding: "32px",
-      }}
-    >
-      {/* Header */}
-      <div style={{ marginBottom: "32px" }}>
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "42px",
-            fontWeight: 700,
-            color: "#25207E",
-            fontFamily: "Inter, sans-serif",
-            lineHeight: 1.2,
-          }}
-        >
+    <div className="bg-[#F8F8FC] min-h-[calc(100vh-70px)] p-8">
+      <div className="mb-8">
+        <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
           Panel de Control
         </h1>
-        <p
-          style={{
-            margin: 0,
-            marginTop: "6px",
-            fontSize: "14px",
-            color: "#6B7280",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
-          Bienvenido de nuevo. Aquí tienes un vistazo del estado actual de tu
-          ecosistema.
+        <p className="mt-1.5 text-sm text-gray-500 font-inter">
+          Bienvenido de nuevo. Aquí tienes un vistazo del estado actual de tu ecosistema.
         </p>
       </div>
 
-      {/* Metrics */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "20px",
-          maxWidth: "860px",
-          marginBottom: "28px",
-        }}
-      >
+      <div className="grid grid-cols-3 gap-5 max-w-[860px] mb-7">
         <MetricCard
           icon={<ClipboardList size={20} color="#25207E" strokeWidth={2} />}
           title="Tickets Abiertos"
-          value="1,284"
+          value={kpis ? kpis.totalIncidentes.toLocaleString() : "..."}
         />
         <MetricCard
           icon={<Users size={20} color="#25207E" strokeWidth={2} />}
           title="Usuarios Activos"
-          value="42,891"
+          value={kpis ? kpis.usuariosActivos.toLocaleString() : "..."}
         />
         <MetricCard
           icon={<Plug size={20} color="#25207E" strokeWidth={2} />}
@@ -69,16 +70,8 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Tickets + Users Grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "24px",
-          alignItems: "start",
-        }}
-      >
-        <TicketsTable />
+      <div className="grid grid-cols-2 gap-6 items-start">
+        <TicketsTable incidents={incidents} />
         <UserManagement />
       </div>
     </div>

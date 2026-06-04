@@ -15,14 +15,16 @@ import { User, Lock } from "lucide-react-native";
 import Logo from "../components/Logo";
 import Input from "../components/Input";
 import PrimaryButton from "../components/PrimaryButton";
+import { useAuth } from "../contexts/AuthContext";
 import type { LoginFormData, FormErrors } from "../types";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { login, loading } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loginError, setLoginError] = useState("");
   const [form, setForm] = useState<LoginFormData>({
     documento: "",
     contrasena: "",
@@ -45,15 +47,18 @@ export default function LoginScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!validate()) return;
+    setLoginError("");
 
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await login(form.documento, form.contrasena);
       router.replace("/chat");
-    }, 1500);
+    } catch (err) {
+      setLoginError(
+        err instanceof Error ? err.message : "Credenciales inválidas"
+      );
+    }
   };
 
   const handleForgotPassword = () => {
@@ -97,6 +102,14 @@ export default function LoginScreen() {
             Ingresa tus credenciales para continuar
           </Text>
 
+          {loginError ? (
+            <View className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
+              <Text className="text-red-700 text-sm font-inter">
+                {loginError}
+              </Text>
+            </View>
+          ) : null}
+
           <Input
             label="Documento"
             icon={User}
@@ -107,6 +120,7 @@ export default function LoginScreen() {
               if (errors.documento) {
                 setErrors({ ...errors, documento: undefined });
               }
+              if (loginError) setLoginError("");
             }}
             error={errors.documento}
           />
@@ -122,6 +136,7 @@ export default function LoginScreen() {
               if (errors.contrasena) {
                 setErrors({ ...errors, contrasena: undefined });
               }
+              if (loginError) setLoginError("");
             }}
             error={errors.contrasena}
           />

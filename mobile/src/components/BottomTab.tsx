@@ -48,9 +48,10 @@ function TabItem({ label, icon: Icon, active, onPress }: Tab) {
 interface BottomTabProps {
   activeTab: "chatbot" | "reportar" | "historial";
   onTabChange: (tab: "chatbot" | "reportar" | "historial") => void;
+  safeBottom?: number;
 }
 
-export default function BottomTab({ activeTab, onTabChange }: BottomTabProps) {
+export default function BottomTab({ activeTab, onTabChange, safeBottom = 20 }: BottomTabProps) {
   return (
     <View
       style={{
@@ -59,7 +60,7 @@ export default function BottomTab({ activeTab, onTabChange }: BottomTabProps) {
         borderTopWidth: 1,
         borderTopColor: "#E5E7EB",
         paddingHorizontal: 8,
-        paddingBottom: 20,
+        paddingBottom: safeBottom,
       }}
     >
       <TabItem

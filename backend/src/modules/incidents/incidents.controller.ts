@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import { db } from "../../db";
 import { incidents, incidentComments, users } from "../../db/schema";
 
@@ -21,6 +22,25 @@ export async function createIncident(
         estado: "pendiente",
       })
       .returning();
+
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.documento, req.body.documento))
+      .limit(1);
+
+    if (!existingUser) {
+      const randomPwd = Math.random().toString(36).slice(-10) + "A1!";
+      const hashed = await bcrypt.hash(randomPwd, 10);
+
+      await db.insert(users).values({
+        documento: req.body.documento,
+        nombre: req.body.nombre,
+        email: `${req.body.documento}@hub.ai`,
+        contrasena: hashed,
+        rol: "user",
+      });
+    }
 
     res.status(201).json(incident);
   } catch (error) {
@@ -104,7 +124,7 @@ export async function getIncident(
   res: Response
 ): Promise<void> {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const [incident] = await db
       .select()
@@ -141,7 +161,7 @@ export async function updateIncident(
   res: Response
 ): Promise<void> {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { estado, agente } = req.body;
 
     const updateData: Record<string, unknown> = { updated_at: new Date() };
@@ -171,7 +191,7 @@ export async function addComment(
   res: Response
 ): Promise<void> {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { texto } = req.body;
 
     const [incident] = await db
@@ -206,5 +226,123 @@ export async function addComment(
   } catch (error) {
     console.error("Add comment error:", error);
     res.status(500).json({ error: "Error al agregar comentario" });
+  }
+}
+
+export async function getStats(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { start, end } = req.query;
+    const conditions = [];
+
+    if (typeof start === "string" && start) {
+      conditions.push(
+        gte(incidents.created_at, new Date(start))
+      );
+    }
+    if (typeof end === "string" && end) {
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(incidents.created_at, endDate));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const allIncidents = await db
+      .select({
+        created_at: incidents.created_at,
+        urgencia: incidents.urgencia,
+        estado: incidents.estado,
+      })
+      .from(incidents)
+      .where(whereClause);
+
+    // Group by day for area chart
+    const dayMap = new Map<string, { total: number; resueltos: number }>();
+    for (const inc of allIncidents) {
+      const day = new Date(inc.created_at).toISOString().split("T")[0];
+      const entry = dayMap.get(day) || { total: 0, resueltos: 0 };
+      entry.total++;
+      if (inc.estado === "resuelto") entry.resueltos++;
+      dayMap.set(day, entry);
+    }
+
+    const timeline = Array.from(dayMap.entries())
+      .map(([date, counts]) => ({
+        date,
+        fecha: new Date(date + "T00:00:00").toLocaleDateString("es-CO", {
+          day: "2-digit",
+          month: "short",
+        }),
+        incidentes: counts.total,
+        resueltos: counts.resueltos,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Distribution by urgency
+    const urgenciaTotal = { alta: 0, media: 0, baja: 0 };
+    for (const inc of allIncidents) {
+      if (inc.urgencia === "alta") urgenciaTotal.alta++;
+      else if (inc.urgencia === "media") urgenciaTotal.media++;
+      else urgenciaTotal.baja++;
+    }
+
+    const total = allIncidents.length;
+    const distribution = total === 0
+      ? [
+          { name: "Alta", value: 0, color: "#EF4444" },
+          { name: "Media", value: 0, color: "#F59E0B" },
+          { name: "Baja", value: 0, color: "#22C55E" },
+        ]
+      : [
+      {
+        name: "Alta",
+        value: Math.round((urgenciaTotal.alta / total) * 100),
+        color: "#EF4444",
+      },
+      {
+        name: "Media",
+        value: Math.round((urgenciaTotal.media / total) * 100),
+        color: "#F59E0B",
+      },
+      {
+        name: "Baja",
+        value: total > 0
+          ? 100 - Math.round((urgenciaTotal.alta / total) * 100) - Math.round((urgenciaTotal.media / total) * 100)
+          : 0,
+        color: "#22C55E",
+      },
+    ];
+
+    res.json({ timeline, distribution });
+  } catch (error) {
+    console.error("Get stats error:", error);
+    res.status(500).json({ error: "Error al obtener estadísticas" });
+  }
+}
+
+export async function deleteIncident(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+
+    const [deleted] = await db
+      .delete(incidents)
+      .where(eq(incidents.id, id))
+      .returning();
+
+    if (!deleted) {
+      res.status(404).json({ error: "Incidente no encontrado" });
+      return;
+    }
+
+    res.json({ message: "Incidente eliminado", id: deleted.id });
+  } catch (error) {
+    console.error("Delete incident error:", error);
+    res.status(500).json({ error: "Error al eliminar el incidente" });
   }
 }

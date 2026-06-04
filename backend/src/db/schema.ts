@@ -20,6 +20,7 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   documento: varchar("documento", { length: 20 }).notNull().unique(),
   nombre: varchar("nombre", { length: 100 }).notNull(),
+  email: varchar("email", { length: 150 }),
   contrasena: varchar("contrasena", { length: 255 }).notNull(),
   rol: rolEnum("rol").notNull().default("user"),
   created_at: timestamp("created_at").defaultNow().notNull(),

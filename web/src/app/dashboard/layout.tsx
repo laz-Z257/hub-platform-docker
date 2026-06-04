@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 
@@ -10,23 +11,29 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, initializing, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const hasAuth = document.cookie.includes("auth-token");
-    if (!hasAuth) {
+    if (!initializing && !user) {
       router.push("/login");
     }
-  }, [router]);
+  }, [user, initializing, router]);
+
+  if (initializing || !user) {
+    return (
+      <div className="min-h-screen bg-[#F8F8FC] flex items-center justify-center">
+        <div className="w-6 h-6 border-[3px] border-gray-200 border-t-[#25207E] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar />
-      <div style={{ flex: 1, marginLeft: "250px", display: "flex", flexDirection: "column" }}>
-        <Topbar />
-        <main style={{ flex: 1, paddingTop: "70px" }}>
-          {children}
-        </main>
+    <div className="flex min-h-screen">
+      <Sidebar onLogout={logout} />
+      <div className="flex-1 ml-[250px] flex flex-col">
+        <Topbar userName={user.nombre} />
+        <main className="flex-1 pt-[72px]">{children}</main>
       </div>
     </div>
   );
