@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: hub-platform-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: CORS_ORIGIN
+        value: "https://web-a-74c5ba6d.vercel.app,https://web-oxme3iuul-a-74c5ba6d.vercel.app"
