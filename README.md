@@ -168,13 +168,20 @@ El APK se genera en los servidores de Expo (~15 min) y se descarga desde el link
   "build": {
     "preview": {
       "android": { "buildType": "apk" },
+      "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://TU-API.railway.app/api"
+        "EXPO_PUBLIC_API_URL": "https://TU-API.onrender.com/api"
       }
     }
   }
 }
 ```
+
+> **Importante:** El perfil `preview` debe llevar `"distribution": "internal"` para que el APK se genere sin firma de Play Store y pueda instalarse directamente en cualquier dispositivo Android. Sin esto, el build se cancela o genera un archivo que Android rechaza al instalar.
+
+**Compatibilidad de dependencias:**
+
+El proyecto requiere TypeScript `~6.0.3` para ser compatible con Expo SDK 56. Usa `npx expo install --check` para verificar que todas las dependencias estén alineadas antes de buildear.
 
 ---
 
