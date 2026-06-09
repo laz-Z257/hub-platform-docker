@@ -3,13 +3,13 @@ services:
     name: hub-platform-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npx tsc
     startCommand: node dist/db/migrate.js; node dist/db/seed.js; node dist/index.js
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
