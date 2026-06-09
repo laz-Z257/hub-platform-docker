@@ -6,19 +6,23 @@ import { incidents, users } from "../../db/schema";
 export async function getKpis(req: Request, res: Response): Promise<void> {
   try {
     const query = req.validatedQuery || req.query;
-    const { start, end } = query;
-    const dateConditions = [];
+    const { start, end, agente } = query;
+    const conditions = [];
+
+    if (typeof agente === "string" && agente) {
+      conditions.push(eq(incidents.agente, agente));
+    }
 
     if (typeof start === "string" && start) {
-      dateConditions.push(gte(incidents.created_at, new Date(start)));
+      conditions.push(gte(incidents.created_at, new Date(start)));
     }
     if (typeof end === "string" && end) {
       const endDate = new Date(end);
       endDate.setHours(23, 59, 59, 999);
-      dateConditions.push(lte(incidents.created_at, endDate));
+      conditions.push(lte(incidents.created_at, endDate));
     }
 
-    const dateFilter = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [result] = await db
       .select({
@@ -33,7 +37,7 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
           sql<number>`count(*) filter (where ${incidents.urgencia} = 'alta')`.mapWith(Number),
       })
       .from(incidents)
-      .where(dateFilter);
+      .where(whereClause);
 
     const [usuarioCount] = await db
       .select({ total: sql<number>`count(*)`.mapWith(Number) })

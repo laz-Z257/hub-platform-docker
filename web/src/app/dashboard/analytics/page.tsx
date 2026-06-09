@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ClipboardList, CheckCircle, Clock, Activity } from "lucide-react";
+import { ClipboardList, CheckCircle, Clock, Activity, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   TrafficChart,
@@ -53,12 +53,22 @@ export default function AnalyticsPage() {
   const [metrics, setMetrics] = useState<{ icon: LucideIcon; title: string; value: string; desc: string }[]>([]);
   const [areaData, setAreaData] = useState<AreaDataPoint[]>([]);
   const [donutData, setDonutData] = useState<DonutDataPoint[]>([]);
+  const [agentes, setAgentes] = useState<string[]>([]);
+  const [selectedAgente, setSelectedAgente] = useState("");
 
-  function fetchData(start: string, end: string) {
-    const params = `?start=${start}&end=${end}`;
+  useEffect(() => {
+    api.get<string[]>("/incidents/agentes")
+      .then(setAgentes)
+      .catch(() => {});
+  }, []);
+
+  function fetchData(start: string, end: string, agente?: string) {
+    const params = new URLSearchParams({ start, end });
+    if (agente) params.set("agente", agente);
+    const qs = `?${params.toString()}`;
 
     api
-      .get<KpiResponse>(`/dashboard/kpis${params}`)
+      .get<KpiResponse>(`/dashboard/kpis${qs}`)
       .then((kpis) => {
         setMetrics([
           { icon: ClipboardList, title: "Incidentes Reportados", value: kpis.totalIncidentes.toLocaleString(), desc: "Total de incidentes registrados" },
@@ -72,7 +82,7 @@ export default function AnalyticsPage() {
       });
 
     api
-      .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[] }>(`/incidents/stats${params}`)
+      .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[] }>(`/incidents/stats${qs}`)
       .then((stats) => {
         setAreaData(
           stats.timeline.map((d) => ({
@@ -99,7 +109,7 @@ export default function AnalyticsPage() {
       setShowDatePicker(false);
       setAppliedRange(null);
       const range = getDefaultRange();
-      fetchData(range.start, range.end);
+      fetchData(range.start, range.end, selectedAgente);
     } else {
       setFilter("custom");
       setShowDatePicker(true);
@@ -113,21 +123,27 @@ export default function AnalyticsPage() {
     }
   };
 
+  const handleAgentChange = (agente: string) => {
+    setSelectedAgente(agente);
+    const range = appliedRange || getDefaultRange();
+    fetchData(range.start, range.end, agente || undefined);
+  };
+
   const handleApplyRange = useCallback(() => {
     if (startDate && endDate && startDate <= endDate) {
       setAppliedRange({ start: startDate, end: endDate });
       setShowDatePicker(false);
-      fetchData(startDate, endDate);
+      fetchData(startDate, endDate, selectedAgente);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, selectedAgente]);
 
   const handleCancelRange = useCallback(() => {
     setShowDatePicker(false);
     setFilter("30d");
     setAppliedRange(null);
     const range = getDefaultRange();
-    fetchData(range.start, range.end);
-  }, []);
+    fetchData(range.start, range.end, selectedAgente);
+  }, [selectedAgente]);
 
   const subtitle = appliedRange
     ? `Rango: ${formatDateRange(appliedRange.start, appliedRange.end)}`
@@ -135,7 +151,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="bg-[#F8F8FC] min-h-[calc(100vh-72px)] p-8">
-      <div className="flex items-start justify-between mb-7">
+      <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
         <div>
           <h1 className="text-[42px] font-bold text-gray-800 font-inter leading-tight">
             Panel de Analítica
@@ -145,21 +161,41 @@ export default function AnalyticsPage() {
           </p>
         </div>
 
-        <AnalyticsFilters
-          filter={filter}
-          showDatePicker={showDatePicker}
-          startDate={startDate}
-          endDate={endDate}
-          appliedRange={appliedRange}
-          metrics={metrics}
-          areaData={areaData}
-          donutData={donutData}
-          onFilterChange={handleFilterChange}
-          onStartChange={setStartDate}
-          onEndChange={setEndDate}
-          onApplyRange={handleApplyRange}
-          onCancelRange={handleCancelRange}
-        />
+        <div className="flex flex-col gap-3 items-end">
+          <div className="flex items-center gap-3">
+            {agentes.length > 0 && (
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 h-11">
+                <User size={16} color="#6B7280" strokeWidth={2} />
+                <select
+                  value={selectedAgente}
+                  onChange={(e) => handleAgentChange(e.target.value)}
+                  className="h-full border-none bg-transparent text-[13px] font-medium text-gray-700 font-inter cursor-pointer outline-none min-w-[140px]"
+                >
+                  <option value="">Todos los técnicos</option>
+                  {agentes.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <AnalyticsFilters
+              filter={filter}
+              showDatePicker={showDatePicker}
+              startDate={startDate}
+              endDate={endDate}
+              appliedRange={appliedRange}
+              metrics={metrics}
+              areaData={areaData}
+              donutData={donutData}
+              onFilterChange={handleFilterChange}
+              onStartChange={setStartDate}
+              onEndChange={setEndDate}
+              onApplyRange={handleApplyRange}
+              onCancelRange={handleCancelRange}
+            />
+          </div>
+        </div>
       </div>
 
       <AnalyticsMetrics metrics={metrics} />
