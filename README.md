@@ -23,60 +23,64 @@ hub-platform/
 - **Drizzle ORM** + **PostgreSQL 16**
 - **JWT** (auth) + **bcryptjs** (passwords) + **Zod** (validación)
 - **Helmet** + **CORS** + **Morgan** (logging)
-- **express-rate-limit** (protección anti fuerza bruta)
+- **express-rate-limit** (protección anti fuerza bruta global + por endpoint)
 
 ### Endpoints
 
 | Método | Ruta | Auth | Admin | Descripción |
 |--------|------|:---:|:---:|---|
 | `GET` | `/api/health` | No | No | Health check |
-| `POST` | `/api/auth/login` | No | No | Login / auto-registro |
+| `POST` | `/api/auth/register` | No | No | Registrar usuario (doc + nombre + contraseña) |
+| `POST` | `/api/auth/login` | No | No | Login (bloqueado si usuario está bloqueado) |
 | `GET` | `/api/auth/me` | Sí | No | Datos del usuario actual |
-| `POST` | `/api/incidents` | Sí | No | Crear incidente |
-| `GET` | `/api/incidents` | Sí | No | Listar incidentes (pag, filtros) |
-| `GET` | `/api/incidents/stats` | Sí | No | Estadísticas (timeline + distribución) |
+| `POST` | `/api/incidents` | Sí | No | Crear incidente (auto-crea usuario si documento nuevo) |
+| `GET` | `/api/incidents` | Sí | No | Listar incidentes (pag, filtros, búsqueda) |
+| `GET` | `/api/incidents/agentes` | Sí | No | Lista de técnicos únicos (para filtro en analítica) |
+| `GET` | `/api/incidents/stats` | Sí | No | Estadísticas (timeline + distribución, filtro ?agente=) |
 | `GET` | `/api/incidents/:id` | Sí | No | Detalle incidente + comentarios |
 | `PATCH` | `/api/incidents/:id` | Sí | Sí | Actualizar estado/agente |
 | `DELETE` | `/api/incidents/:id` | Sí | Sí | Eliminar incidente |
 | `POST` | `/api/incidents/:id/comments` | Sí | No | Agregar comentario |
 | `POST` | `/api/chat/message` | Sí | No | Enviar mensaje al bot |
 | `GET` | `/api/chat/history` | Sí | No | Historial de chat |
-| `GET` | `/api/dashboard/kpis` | Sí | Sí | KPIs del dashboard |
-| `GET` | `/api/users` | Sí | Sí | Listar usuarios (no admin) |
+| `GET` | `/api/dashboard/kpis` | Sí | Sí | KPIs del dashboard (filtro ?start=&end=&agente=) |
+| `GET` | `/api/users` | Sí | Sí | Listar usuarios (incluye estado y última actividad) |
 | `PATCH` | `/api/users/:id` | Sí | Sí | Actualizar rol/nombre de usuario |
+| `PATCH` | `/api/users/:id/toggle-status` | Sí | Sí | Bloquear/desbloquear usuario |
 
-### Auto-registro
+### Gestión de usuarios
 
-Al crear un incidente desde el móvil, si el documento no existe como usuario, se crea automáticamente. Esto permite que aparezca tanto en Tickets como en Gestión de Usuarios.
+- **Registro:** `POST /api/auth/register` crea cuenta con documento + nombre + contraseña
+- **Bloqueo:** `PATCH /api/users/:id/toggle-status` alterna entre activo/bloqueado
+- **Usuarios bloqueados** reciben 403 al intentar login
+- **Última actividad** se actualiza automáticamente en cada request autenticado
+- **Auto-creación:** Al reportar un incidente con documento nuevo, el usuario se crea automáticamente
 
-### Ejecutar local (Docker)
+### Filtro por técnico en analítica
 
-```bash
-cd backend
-docker compose up --build -d
-```
+Los endpoints `/api/dashboard/kpis` y `/api/incidents/stats` aceptan `?agente=Nombre`.
+Usa `GET /api/incidents/agentes` para obtener la lista de técnicos disponibles.
 
-```bash
-# Setup inicial (solo primera vez)
-docker compose exec api npx drizzle-kit push
-docker compose exec api npx tsx src/db/seed.ts
-```
+### Rate limiting
 
-### Variables de entorno (`backend/.env`)
+- **Global:** 100 req/min por IP (todas las rutas)
+- **Auth:** 10 req/15 min en login y register
 
-```
-DATABASE_URL=postgres://hub_admin:hub_secret@postgres:5432/hub_platform
-JWT_SECRET=hub_jwt_secret_dev_2026
-PORT=3001
-NODE_ENV=development
-```
+### Seguridad
+
+- CORS restrictivo con orígenes explícitos (sin wildcard con credenciales)
+- Helmet (headers de seguridad)
+- Zod en todos los inputs (body, query params)
+- JWT con expiración 24h
+- Contraseñas con bcrypt (10 salt rounds)
+- Rate limiting global + por endpoint
 
 ---
 
 ## Web — Dashboard Admin
 
 ### Stack
-- **Next.js 15** (App Router) + **React 19** + **TypeScript**
+- **Next.js 15.5.19** (App Router) + **React 19** + **TypeScript**
 - **TailwindCSS 3.4** + **Recharts 3.x** + **Lucide React**
 - **exceljs** (exportación Excel)
 
@@ -85,34 +89,15 @@ NODE_ENV=development
 | Ruta | Descripción |
 |------|---|
 | `/login` | Login (documento + contraseña) |
-| `/dashboard` | Panel de control: KPIs, tickets recientes, gestión de usuarios |
+| `/dashboard` | Panel de control: KPIs (tickets, usuarios, resueltos), tickets recientes, gestión de usuarios |
 | `/dashboard/tickets` | Gestión de tickets con tabla, filtros, acciones (ver detalle, cambiar estado) |
-| `/dashboard/analytics` | Analíticas: gráficos (área + donut), exportación Excel, filtro por fechas |
-| `/dashboard/users` | Gestión de usuarios con tabla, búsqueda, filtro por rol, edición de nombre/rol |
+| `/dashboard/analytics` | Analíticas: gráficos (área + donut), exportación Excel, filtro por fechas y técnico |
+| `/dashboard/users` | Gestión de usuarios: tabla con nombre, rol, estado, última actividad, bloquear/activar |
 | `/` | Redirect a `/login` |
 
-### Ejecutar local
+### Filtro por técnico en Analytics
 
-```bash
-cd web
-cp .env.example .env
-npm install
-npm run dev
-```
-
-Abrir `http://localhost:3000`
-
-### Variables de entorno (`web/.env`)
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-```
-
-### Build producción
-
-```bash
-npm run build && npm start
-```
+En el Panel de Analítica hay un dropdown que lista todos los técnicos (agentes) del sistema. Al seleccionar uno, las métricas KPIs, la gráfica de evolución y la distribución por urgencia se filtran para mostrar solo los datos de ese técnico.
 
 ---
 
@@ -136,87 +121,58 @@ npm run build && npm start
 | `/historial` | Lista de incidentes con pull-to-refresh, tap → detalle |
 | `/incidente/[id]` | Detalle completo del incidente (datos + comentarios) |
 
-### Ejecutar local
+### Fix de teclado Android
 
-```bash
-cd mobile
-cp .env.example .env
-npm install
-npm start
-```
-
-### Variables de entorno (`mobile/.env`)
-
-```
-EXPO_PUBLIC_API_URL=http://localhost:3001/api
-```
-
-### Build APK
-
-```bash
-cd mobile
-npx eas login
-npx eas build --platform android --profile preview
-```
-
-El APK se genera en los servidores de Expo (~15 min) y se descarga desde el link que llega por mail o desde el dashboard de Expo.
-
-**Configuración en `eas.json`:**
-
-```json
-{
-  "build": {
-    "preview": {
-      "android": { "buildType": "apk" },
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://TU-API.onrender.com/api"
-      }
-    }
-  }
-}
-```
-
-> **Importante:** El perfil `preview` debe llevar `"distribution": "internal"` para que el APK se genere sin firma de Play Store y pueda instalarse directamente en cualquier dispositivo Android. Sin esto, el build se cancela o genera un archivo que Android rechaza al instalar.
-
-**Compatibilidad de dependencias:**
-
-El proyecto requiere TypeScript `~6.0.3` para ser compatible con Expo SDK 56. Usa `npx expo install --check` para verificar que todas las dependencias estén alineadas antes de buildear.
+En builds de producción (APK), NativeWind en TextInput causaba que el teclado no funcionara. Solución: el componente `Input` usa `style` nativo de React Native en vez de `className`. Además se configuró `softwareKeyboardLayoutMode: "resize"` en `app.json`.
 
 ---
 
 ## Despliegue
 
-### Backend
+### Producción
 
-| Plataforma | Qué | Costo |
-|-----------|-----|-------|
-| **Ngrok / Localtunnel** | Túnel HTTPS a localhost | Gratis (PC prendida) |
-| **Railway** | API + PostgreSQL | $5/mes crédito gratis |
-| **Render** | API Node.js | Gratis (sleep tras 15 min) |
-| **Supabase** | PostgreSQL (DB) | Gratis |
+| Servicio | Plataforma | URL |
+|----------|-----------|-----|
+| **API** | Render (Docker) | `https://hub-platform-api.onrender.com` |
+| **Web** | Vercel | `https://web-a-74c5ba6d.vercel.app` |
+| **DB** | Render PostgreSQL 16 | Interna |
+| **APK** | EAS Build (Expo) | Link por email |
 
-#### Túnel rápido (desarrollo)
+### Local
 
 ```bash
-# Ngrok
-ngrok config add-authtoken TU_TOKEN
-ngrok http 3001
+# Terminal 1 — Backend
+cd backend
+docker compose up -d postgres   # o usar DB local
+npx tsx src/index.ts
 
-# Localtunnel
-npx localtunnel --port 3001
+# Terminal 2 — Web
+cd web
+npm run dev
+
+# Terminal 3 — Mobile
+cd mobile
+npx expo start
 ```
 
-### Web
+### Variables de entorno
 
-| Plataforma | Comando |
-|-----------|---------|
-| **Vercel** | Root Directory: `web`, Framework: Next.js |
-
-**Variable de entorno en Vercel:**
-
+**Backend (`backend/.env`):**
 ```
-NEXT_PUBLIC_API_URL = https://TU-API.railway.app/api
+DATABASE_URL=postgres://hub_admin:hub_secret@localhost:5432/hub_platform
+JWT_SECRET=hub_jwt_secret_dev_2026
+PORT=3001
+NODE_ENV=development
+```
+
+**Web (`web/.env`):**
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+```
+
+**Móvil (`mobile/.env`):**
+```
+EXPO_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
 ---
@@ -226,24 +182,22 @@ NEXT_PUBLIC_API_URL = https://TU-API.railway.app/api
 | Campo | Valor |
 |---|---|
 | **Documento** | `123456789` |
-| **Contraseña** | `user123` |
+| **Contraseña** | `admin123` |
 | **Rol** | `admin` |
 
 ---
 
-## Limpiar BD
+## Seed (población inicial)
 
 ```bash
-docker compose exec api npm run db:seed
+cd backend
+npx tsx src/db/seed.ts
 ```
 
-Esto recrea el admin y 30 incidentes de prueba con nombres reales.
-
-Para vaciar completamente:
+Crea el usuario admin. La contraseña se toma de `SEED_ADMIN_PASSWORD` o se genera aleatoria (se muestra en consola). Ya no genera incidentes de prueba.
 
 ```bash
-docker compose exec postgres psql "postgres://hub_admin:hub_secret@localhost:5432/hub_platform" \
-  -c "TRUNCATE incidents, messages, incident_comments CASCADE; DELETE FROM users WHERE rol != 'admin';"
+SEED_ADMIN_PASSWORD=admin123 npx tsx src/db/seed.ts
 ```
 
 ---
@@ -251,25 +205,42 @@ docker compose exec postgres psql "postgres://hub_admin:hub_secret@localhost:543
 ## Migraciones
 
 ```bash
-# Generar
-docker compose exec api npx drizzle-kit generate
-
-# Push (sin archivos de migración)
-docker compose exec api npx drizzle-kit push
+cd backend
+npx drizzle-kit generate   # generar
+npx tsx src/db/migrate.ts  # ejecutar
 ```
 
 ---
 
 ## Auditoría de seguridad
 
-Resuelta en commit `feat: Railway deploy config, APK build setup, mobile detail screen, audit fixes`. Principales fixes:
+Resuelta. Principales fixes aplicados:
 
-- JWT_SECRET sin fallback inseguro
-- Rate limiting en `/api/auth/login` (10 intentos / 15 min)
-- Cookies con Secure/SameSite condicional
-- CORS restrictivo en producción (sin `*` con credenciales)
-- Validación Zod en todos los endpoints (chat, dashboard, users)
-- Middleware global de errores Express
-- `drizzle-orm` actualizado (fix SQL injection CWE-89)
-- `next` actualizado a 15.5.19 (fix RCE CVSS 10.0)
-- `xlsx` reemplazado por `exceljs` (librería abandonada con 2 HIGH)
+| Área | Fix |
+|------|-----|
+| Rate limiting | Global (100 req/min) + auth (10 req/15min) |
+| Validación | Zod en body y query params de todos los endpoints |
+| Autenticación | JWT sin fallback inseguro, bloqueo de usuarios |
+| CORS | Orígenes explícitos, sin wildcard con credenciales |
+| Passwords | bcrypt 10 rounds, seed desde env var |
+| Dependencias | drizzle-orm actualizado, Next.js 15.5.19 (fix RCE) |
+| Logs | Morgan en dev, errores sin stack traces en producción |
+| Docker | Sin hardcodeos, health check con timeouts adecuados |
+
+---
+
+## Changelog
+
+### v2 (actual)
+- Registro de usuarios (`/auth/register`)
+- Bloqueo/desbloqueo de usuarios (`/users/:id/toggle-status`)
+- Columnas `estado` y `ultima_actividad` en users
+- Filtro por técnico en analytics (dropdown + endpoints)
+- Rate limiting global
+- Validación Zod en query params
+- Auto-creación de usuario al reportar incidente
+- Fix teclado Android (NativeWind → style nativo)
+- Fix URLs producción (typo `platafomr` → `platform-api`)
+- Seed simplificado (solo admin, sin incidentes falsos)
+- Dashboard sin datos hardcodeados
+- Next.js 15.5.19 (security patch)
