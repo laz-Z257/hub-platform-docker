@@ -97,7 +97,19 @@ Usa `GET /api/incidents/agentes` para obtener la lista de técnicos disponibles.
 
 ### Filtro por técnico en Analytics
 
-En el Panel de Analítica hay un dropdown que lista todos los técnicos (agentes) del sistema. Al seleccionar uno, las métricas KPIs, la gráfica de evolución y la distribución por urgencia se filtran para mostrar solo los datos de ese técnico.
+En el Panel de Analítica hay un dropdown que lista todos los técnicos (agentes) del sistema. Al seleccionar uno:
+- Las métricas KPIs se filtran (total incidentes, pendientes, etc.)
+- La gráfica de evolución (área) muestra solo incidentes de ese técnico
+- La distribución por urgencia (donut) se actualiza
+- La **gráfica de barras por estado** muestra pendientes, en proceso y resueltos del técnico
+
+Si se deja en "Todos los técnicos", se muestra el total general.
+
+### Asignar técnico desde tickets
+
+En la tabla de Gestión de Tickets, el menú de acciones (⋮) de cada ticket incluye un campo **"Asignar técnico"** donde se puede escribir el nombre de un técnico. Al asignarlo:
+- Se actualiza el incidente con `PATCH /api/incidents/:id { agente: "Nombre" }`
+- El técnico aparece automáticamente en el dropdown de Analytics
 
 ---
 
@@ -235,7 +247,11 @@ Resuelta. Principales fixes aplicados:
 - Registro de usuarios (`/auth/register`)
 - Bloqueo/desbloqueo de usuarios (`/users/:id/toggle-status`)
 - Columnas `estado` y `ultima_actividad` en users
-- Filtro por técnico en analytics (dropdown + endpoints)
+- Filtro por técnico en analytics (dropdown + endpoints `?agente=`)
+- Asignar técnico desde la tabla de tickets (input en menú de acciones)
+- Gráfica de barras por estado en Analytics (pendientes, en proceso, resueltos)
+- Endpoint `GET /incidents/agentes` (lista de técnicos únicos)
+- `GET /incidents/stats` ahora retorna `statusCounts` para la gráfica de barras
 - Rate limiting global
 - Validación Zod en query params
 - Auto-creación de usuario al reportar incidente
@@ -244,3 +260,25 @@ Resuelta. Principales fixes aplicados:
 - Seed simplificado (solo admin, sin incidentes falsos)
 - Dashboard sin datos hardcodeados
 - Next.js 15.5.19 (security patch)
+
+## Errores conocidos y soluciones
+
+### 🐛 Render Docker no arrancaba (`x-render-routing: no-server`)
+**Causa:** `process.exit(0)` en `migrate.ts` y `seed.ts` mataba el shell del contenedor Docker antes de que `index.js` arrancara.
+**Solución:** Eliminar `process.exit()` de ambos scripts. El shell `;` en el CMD permite que los scripts terminen naturalmente y el servidor arranque.
+
+### 🐛 Render build fallaba en Node.js nativo
+**Causa:** El `buildCommand` (`npm run build` → `tsc`) fallaba en Render sin logs claros.
+**Solución:** Cambiar el servicio a Docker (más confiable) y ajustar el `render.yaml`.
+
+### 🐛 Teclado no funcionaba en el APK de Android
+**Causa:** NativeWind/Tailwind `className` en `TextInput` rompe el input en builds de producción Android. `KeyboardAvoidingView` también contribuía al problema en algunos dispositivos.
+**Solución:** Reescribir `Input.tsx` y `LoginScreen.tsx` usando `style={}` nativo de React Native en vez de `className`. Configurar `softwareKeyboardLayoutMode: "resize"` en `app.json`.
+
+### 🐛 `CREATE SCHEMA IF NOT EXISTS "drizzle"` fallaba en PostgreSQL
+**Causa:** Drizzle intenta crear un schema `drizzle` para sus migrations, pero el usuario de PostgreSQL no tiene permisos o el schema ya existe.
+**Solución:** Capturar el error en `migrate.ts` con try/catch y continuar. Las migraciones se aplican igualmente en el schema `public`.
+
+### 🐛 Reinicios en loop en Render (logs con solo warnings SSL)
+**Causa:** Los scripts `migrate.ts` y `seed.ts` tenían pools de PostgreSQL sin `connectionTimeoutMillis`, lo que causaba que se colgaran indefinidamente si la DB no respondía.
+**Solución:** Agregar `connectionTimeoutMillis: 10000` y `query_timeout: 15000` a todos los pools. Agregar `timeout 40` en el CMD del Dockerfile para forzar terminación de scripts colgados.
