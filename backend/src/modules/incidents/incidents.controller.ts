@@ -337,7 +337,19 @@ export async function getStats(
       },
     ];
 
-    res.json({ timeline, distribution });
+    // Status counts for bar chart
+    const statusCounts = {
+      pendientes: 0,
+      enProceso: 0,
+      resueltos: 0,
+    };
+    for (const inc of allIncidents) {
+      if (inc.estado === "pendiente") statusCounts.pendientes++;
+      else if (inc.estado === "en_proceso") statusCounts.enProceso++;
+      else if (inc.estado === "resuelto") statusCounts.resueltos++;
+    }
+
+    res.json({ timeline, distribution, statusCounts });
   } catch (error) {
     console.error("Get stats error:", error);
     res.status(500).json({ error: "Error al obtener estadísticas" });
