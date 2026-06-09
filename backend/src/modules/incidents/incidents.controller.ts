@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc, gte, lte } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne } from "drizzle-orm";
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { db } from "../../db";
@@ -231,18 +231,37 @@ export async function addComment(
   }
 }
 
+export async function getAgentes(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const agentes = await db
+      .selectDistinct({ agente: incidents.agente })
+      .from(incidents)
+      .where(and(isNotNull(incidents.agente), ne(incidents.agente, "")));
+
+    res.json(agentes.map((a) => a.agente).filter(Boolean));
+  } catch (error) {
+    console.error("Get agentes error:", error);
+    res.status(500).json({ error: "Error al listar agentes" });
+  }
+}
+
 export async function getStats(
   req: Request,
   res: Response
 ): Promise<void> {
   try {
-    const { start, end } = req.query;
+    const { start, end, agente } = req.query;
     const conditions = [];
 
+    if (typeof agente === "string" && agente) {
+      conditions.push(eq(incidents.agente, agente));
+    }
+
     if (typeof start === "string" && start) {
-      conditions.push(
-        gte(incidents.created_at, new Date(start))
-      );
+      conditions.push(gte(incidents.created_at, new Date(start)));
     }
     if (typeof end === "string" && end) {
       const endDate = new Date(end);

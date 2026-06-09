@@ -6,6 +6,7 @@ import {
   updateIncident,
   addComment,
   getStats,
+  getAgentes,
   deleteIncident,
 } from "./incidents.controller";
 import { validate } from "../../middlewares/validate";
@@ -23,6 +24,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post("/", validate(createIncidentSchema), createIncident);
+router.get("/agentes", getAgentes);
 router.get("/stats", getStats);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", getIncident);
