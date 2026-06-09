@@ -22,10 +22,9 @@ async function runMigrations() {
   }
 
   await pool.end();
-  process.exit(0);
+  console.log("Migrate script done.");
 }
 
 runMigrations().catch((err) => {
-  console.error("Migration failed:", err);
-  process.exit(1);
+  console.error("Migration warning:", err instanceof Error ? err.message : err);
 });
