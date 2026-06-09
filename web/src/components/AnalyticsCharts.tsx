@@ -11,6 +11,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
 
 export interface AreaDataPoint {
@@ -23,6 +25,13 @@ export interface DonutDataPoint {
   name: string;
   value: number;
   color: string;
+}
+
+export interface StatusBarDataPoint {
+  name: string;
+  pendientes: number;
+  enProceso: number;
+  resueltos: number;
 }
 
 interface TrafficChartProps {
@@ -103,5 +112,41 @@ export function DonutChart({ data }: DonutChartProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+interface StatusBarChartProps {
+  data: StatusBarDataPoint[];
+}
+
+export function StatusBarChart({ data }: StatusBarChartProps) {
+  if (data.length === 0) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280 }}>
+        <span style={{ fontSize: "14px", color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
+          Sin datos
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            borderRadius: "8px",
+            border: "1px solid #E5E7EB",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+          }}
+        />
+        <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="enProceso" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="resueltos" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={60} />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

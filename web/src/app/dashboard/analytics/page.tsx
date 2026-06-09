@@ -6,8 +6,10 @@ import type { LucideIcon } from "lucide-react";
 import {
   TrafficChart,
   DonutChart,
+  StatusBarChart,
   type AreaDataPoint,
   type DonutDataPoint,
+  type StatusBarDataPoint,
 } from "@/components/AnalyticsCharts";
 import AnalyticsMetrics from "@/components/AnalyticsMetrics";
 import AnalyticsFilters from "@/components/AnalyticsFilters";
@@ -53,6 +55,7 @@ export default function AnalyticsPage() {
   const [metrics, setMetrics] = useState<{ icon: LucideIcon; title: string; value: string; desc: string }[]>([]);
   const [areaData, setAreaData] = useState<AreaDataPoint[]>([]);
   const [donutData, setDonutData] = useState<DonutDataPoint[]>([]);
+  const [statusData, setStatusData] = useState<StatusBarDataPoint[]>([]);
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
 
@@ -82,7 +85,7 @@ export default function AnalyticsPage() {
       });
 
     api
-      .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[] }>(`/incidents/stats${qs}`)
+      .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
       .then((stats) => {
         setAreaData(
           stats.timeline.map((d) => ({
@@ -92,6 +95,14 @@ export default function AnalyticsPage() {
           }))
         );
         setDonutData(stats.distribution);
+        if (stats.statusCounts) {
+          setStatusData([{
+            name: selectedAgente || "General",
+            pendientes: stats.statusCounts.pendientes,
+            enProceso: stats.statusCounts.enProceso,
+            resueltos: stats.statusCounts.resueltos,
+          }]);
+        }
       })
       .catch((err) => {
         console.error("Analytics stats:", err instanceof Error ? err.message : err);
@@ -236,6 +247,35 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <DonutChart data={donutData} />
+        </div>
+      </div>
+
+      {/* Status Bar Chart */}
+      <div className="mt-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="mb-5">
+            <h3 className="text-base font-bold text-gray-800 font-inter">
+              Incidentes por Estado
+            </h3>
+            <p className="mt-1 text-[13px] text-gray-500 font-inter">
+              {selectedAgente ? `Técnico: ${selectedAgente}` : "Todos los técnicos"} — Pendientes, en proceso y resueltos
+            </p>
+          </div>
+          <div className="flex items-center gap-6 mb-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#3B82F6]" />
+              <span className="text-xs text-gray-500 font-inter">Pendientes</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#7C3AED]" />
+              <span className="text-xs text-gray-500 font-inter">En Proceso</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#22C55E]" />
+              <span className="text-xs text-gray-500 font-inter">Resueltos</span>
+            </div>
+          </div>
+          <StatusBarChart data={statusData} />
         </div>
       </div>
     </div>
