@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.hubplatform.aiapp",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#F5F6FA",
         "foregroundImage": "./assets/android-icon-foreground.png",

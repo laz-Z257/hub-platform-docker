@@ -14,7 +14,7 @@
       },
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://hub-platafomr-api.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://hub-platform-api.onrender.com/api"
       }
     },
     "production": {
@@ -22,7 +22,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://hub-platafomr-api.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://hub-platform-api.onrender.com/api"
       }
     }
   },

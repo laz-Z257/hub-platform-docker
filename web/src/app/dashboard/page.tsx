@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClipboardList, Users, Plug } from "lucide-react";
+import { ClipboardList, Users, CheckCircle } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
 import TicketsTable from "@/components/TicketsTable";
 import UserManagement from "@/components/UserManagement";
@@ -64,9 +64,9 @@ export default function DashboardPage() {
           value={kpis ? kpis.usuariosActivos.toLocaleString() : "..."}
         />
         <MetricCard
-          icon={<Plug size={20} color="#25207E" strokeWidth={2} />}
-          title="Sistemas Conectados"
-          value="18"
+          icon={<CheckCircle size={20} color="#22C55E" strokeWidth={2} />}
+          title="Resueltos"
+          value={kpis ? kpis.resueltos.toLocaleString() : "..."}
         />
       </div>
 

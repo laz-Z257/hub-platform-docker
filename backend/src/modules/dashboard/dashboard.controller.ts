@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, users } from "../../db/schema";
 
@@ -20,33 +20,32 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
 
     const dateFilter = dateConditions.length > 0 ? and(...dateConditions) : undefined;
 
-    const totalResult = await db.$count(incidents, dateFilter);
-    const pendientesResult = await db.$count(
-      incidents,
-      dateFilter ? and(dateFilter, eq(incidents.estado, "pendiente")) : eq(incidents.estado, "pendiente")
-    );
-    const enProcesoResult = await db.$count(
-      incidents,
-      dateFilter ? and(dateFilter, eq(incidents.estado, "en_proceso")) : eq(incidents.estado, "en_proceso")
-    );
-    const resueltosResult = await db.$count(
-      incidents,
-      dateFilter ? and(dateFilter, eq(incidents.estado, "resuelto")) : eq(incidents.estado, "resuelto")
-    );
-    const altaUrgenciaResult = await db.$count(
-      incidents,
-      dateFilter ? and(dateFilter, eq(incidents.urgencia, "alta")) : eq(incidents.urgencia, "alta")
-    );
+    const [result] = await db
+      .select({
+        totalIncidentes: sql<number>`count(*)`.mapWith(Number),
+        pendientes:
+          sql<number>`count(*) filter (where ${incidents.estado} = 'pendiente')`.mapWith(Number),
+        enProceso:
+          sql<number>`count(*) filter (where ${incidents.estado} = 'en_proceso')`.mapWith(Number),
+        resueltos:
+          sql<number>`count(*) filter (where ${incidents.estado} = 'resuelto')`.mapWith(Number),
+        altaUrgencia:
+          sql<number>`count(*) filter (where ${incidents.urgencia} = 'alta')`.mapWith(Number),
+      })
+      .from(incidents)
+      .where(dateFilter);
 
-    const usuariosActivos = await db.$count(users);
+    const [usuarioCount] = await db
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(users);
 
     res.json({
-      totalIncidentes: totalResult,
-      pendientes: pendientesResult,
-      enProceso: enProcesoResult,
-      resueltos: resueltosResult,
-      altaUrgencia: altaUrgenciaResult,
-      usuariosActivos,
+      totalIncidentes: result.totalIncidentes,
+      pendientes: result.pendientes,
+      enProceso: result.enProceso,
+      resueltos: result.resueltos,
+      altaUrgencia: result.altaUrgencia,
+      usuariosActivos: usuarioCount.total,
     });
   } catch (error) {
     console.error("Get KPIs error:", error);

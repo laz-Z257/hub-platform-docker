@@ -18,6 +18,19 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const handleToggleStatus = useCallback(async (user: ApiUser) => {
+    setActionLoading(user.id);
+    try {
+      const updated = await api.patch<ApiUser>(`/users/${user.id}/toggle-status`);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+    } catch (err) {
+      console.error("Toggle status:", err instanceof Error ? err.message : err);
+    } finally {
+      setActionLoading(null);
+    }
+  }, []);
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -101,7 +114,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <UsersTable users={pagedUsers} onEdit={setEditingUser} />
+      <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} />
 
       <div className="flex items-center justify-between mt-5">
         <span className="text-[13px] text-gray-500 font-inter">

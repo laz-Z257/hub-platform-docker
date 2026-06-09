@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { ClipboardList, CheckCircle, Clock, Activity } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   TrafficChart,
   DonutChart,
@@ -39,12 +40,6 @@ function getDefaultRange(): { start: string; end: string } {
   };
 }
 
-const EMPTY_METRICS = [
-  { icon: ClipboardList, title: "Incidentes Reportados", value: "0", desc: "Cargando..." },
-  { icon: Clock, title: "Pendientes", value: "0", desc: "Cargando..." },
-  { icon: Activity, title: "En Proceso", value: "0", desc: "Cargando..." },
-  { icon: CheckCircle, title: "Resueltos", value: "0", desc: "Cargando..." },
-];
 
 export default function AnalyticsPage() {
   const [filter, setFilter] = useState<"30d" | "custom">("30d");
@@ -55,7 +50,7 @@ export default function AnalyticsPage() {
     start: string;
     end: string;
   } | null>(null);
-  const [metrics, setMetrics] = useState(EMPTY_METRICS);
+  const [metrics, setMetrics] = useState<{ icon: LucideIcon; title: string; value: string; desc: string }[]>([]);
   const [areaData, setAreaData] = useState<AreaDataPoint[]>([]);
   const [donutData, setDonutData] = useState<DonutDataPoint[]>([]);
 

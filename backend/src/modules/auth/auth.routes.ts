@@ -1,13 +1,13 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { login, me } from "./auth.controller";
+import { register, login, me } from "./auth.controller";
 import { validate } from "../../middlewares/validate";
-import { loginSchema } from "./auth.schema";
+import { loginSchema, registerSchema } from "./auth.schema";
 import { authMiddleware } from "../../middlewares/auth";
 
 const router = Router();
 
-const loginLimiter = rateLimit({
+const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: "Demasiados intentos. Intenta de nuevo en 15 minutos." },
@@ -15,7 +15,8 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.post("/login", loginLimiter, validate(loginSchema), login);
+router.post("/register", authLimiter, validate(registerSchema), register);
+router.post("/login", authLimiter, validate(loginSchema), login);
 router.get("/me", authMiddleware, me);
 
 export default router;

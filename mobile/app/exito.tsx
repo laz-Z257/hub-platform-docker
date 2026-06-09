@@ -4,10 +4,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Clipboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import * as Clipboard from "expo-clipboard";
 import {
   Check,
   Copy,
@@ -15,6 +15,7 @@ import {
   History,
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
+import { useAuth } from "../src/contexts/AuthContext";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,10 +36,11 @@ export default function SuccessScreen() {
   const router = useRouter();
   const { ticketId } = useLocalSearchParams<{ ticketId: string }>();
   const [copied, setCopied] = useState(false);
+  const { user } = useAuth();
 
   const userId = ticketId
     ? shortTicketId(ticketId)
-    : "#TK-99281";
+    : "Ticket no disponible";
 
   const scaleOuter = useSharedValue(0.6);
   const scaleInner = useSharedValue(0);
@@ -72,7 +74,7 @@ export default function SuccessScreen() {
   }));
 
   const handleCopy = () => {
-    Clipboard.setString(userId);
+    Clipboard.setStringAsync(userId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -128,7 +130,9 @@ export default function SuccessScreen() {
                 fontFamily: "Inter_700Bold",
               }}
             >
-              AP
+              {user?.nombre
+                ? user.nombre.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+                : "??"}
             </Text>
           </View>
         </View>

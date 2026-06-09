@@ -63,7 +63,7 @@ npx expo install --check  # verificar versiones alineadas con SDK 56
 
 ```bash
 # mobile/.env
-EXPO_PUBLIC_API_URL=https://hub-platafomr-api.onrender.com/api
+EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 ```
 
 ## Notas

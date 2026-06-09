@@ -13,6 +13,7 @@ import {
   createIncidentSchema,
   updateIncidentSchema,
   commentSchema,
+  listIncidentsQuerySchema,
 } from "./incidents.schema";
 import { authMiddleware } from "../../middlewares/auth";
 import { adminOnly } from "../../middlewares/admin";
@@ -23,7 +24,7 @@ router.use(authMiddleware);
 
 router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/stats", getStats);
-router.get("/", listIncidents);
+router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", getIncident);
 router.patch("/:id", adminOnly, validate(updateIncidentSchema), updateIncident);
 router.delete("/:id", adminOnly, deleteIncident);

@@ -7,6 +7,11 @@ const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
   user: { bg: "#DCCFFF", color: "#6D4AFF" },
 };
 
+const ESTADO_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
+  activo: { bg: "#DCFCE7", color: "#16A34A", dot: "#22C55E" },
+  bloqueado: { bg: "#FEE2E2", color: "#DC2626", dot: "#EF4444" },
+};
+
 function getInitials(user: ApiUser): string {
   const name = hasName(user) ? user.nombre : user.documento;
   return name
@@ -25,15 +30,29 @@ function displayName(user: ApiUser): string {
   return hasName(user) ? user.nombre : user.documento;
 }
 
+function formatLastActivity(date: string | null): string {
+  if (!date) return "Sin actividad";
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Ahora";
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `Hace ${diffHours}h`;
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+}
+
 interface UsersTableProps {
   users: ApiUser[];
   onEdit: (user: ApiUser) => void;
+  onToggleStatus: (user: ApiUser) => void;
 }
 
-export default function UsersTable({ users, onEdit }: UsersTableProps) {
+export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTableProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="grid grid-cols-[1fr_1fr_1fr_1fr_120px] bg-[#EEF2FF] px-5">
+      <div className="grid grid-cols-[1fr_100px_110px_120px_140px] bg-[#EEF2FF] px-5">
         {["USUARIO", "ROL", "ESTADO", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
           <div
             key={col}
@@ -52,7 +71,7 @@ export default function UsersTable({ users, onEdit }: UsersTableProps) {
       {users.map((user) => (
         <div
           key={user.id}
-          className="grid grid-cols-[1fr_1fr_1fr_1fr_120px] px-5 border-t border-gray-100 items-center"
+          className="grid grid-cols-[1fr_100px_110px_120px_140px] px-5 border-t border-gray-100 items-center"
         >
           <div className="flex items-center gap-3 py-3 px-2">
             <div className="w-9 h-9 rounded-full bg-[#F3F0FF] flex items-center justify-center text-[#25207E] text-[13px] font-semibold font-inter shrink-0">
@@ -79,23 +98,43 @@ export default function UsersTable({ users, onEdit }: UsersTableProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 py-3 px-2">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-[13px] text-gray-700 font-inter">Activo</span>
+          <div className="py-3 px-2">
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.dot ?? "#9CA3AF" }}
+              />
+              <span
+                className="inline-block px-2 py-[2px] rounded-full text-[11px] font-medium font-inter"
+                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.bg ?? "#F3F4F6", color: ESTADO_STYLES[user.estado]?.color ?? "#6B7280" }}
+              >
+                {user.estado === "activo" ? "Activo" : "Bloqueado"}
+              </span>
+            </div>
           </div>
 
           <div className="py-3 px-2">
             <span className="text-[13px] text-gray-500 font-inter">
-              {new Date(user.created_at).toLocaleDateString("es-CO")}
+              {formatLastActivity(user.ultima_actividad)}
             </span>
           </div>
 
           <div className="flex items-center gap-2 py-3 px-2 justify-end">
             <button
               onClick={() => onEdit(user)}
-              className="h-[30px] px-3 rounded-md border border-gray-200 bg-white cursor-pointer text-xs font-medium font-inter text-gray-700"
+              className="h-[30px] px-3 rounded-md border border-gray-200 bg-white cursor-pointer text-xs font-medium font-inter text-gray-700 hover:bg-gray-50"
             >
               Editar
+            </button>
+            <button
+              onClick={() => onToggleStatus(user)}
+              className={`h-[30px] px-3 rounded-md border cursor-pointer text-xs font-medium font-inter ${
+                user.estado === "activo"
+                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              }`}
+            >
+              {user.estado === "activo" ? "Bloquear" : "Activar"}
             </button>
           </div>
         </div>

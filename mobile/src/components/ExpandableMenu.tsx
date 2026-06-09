@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   TouchableOpacity,
@@ -55,6 +55,11 @@ export default function ExpandableMenu({
   const rotation = useSharedValue(0);
   const submenuHeight = useSharedValue(0);
   const submenuOpacity = useSharedValue(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -77,6 +82,7 @@ export default function ExpandableMenu({
 
     if (option.subItems) {
       setTimeout(() => {
+        if (!mountedRef.current) return;
         rotation.value = withTiming(180, {
           duration: 250,
           easing: Easing.ease,

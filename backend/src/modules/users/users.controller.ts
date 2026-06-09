@@ -12,6 +12,8 @@ export async function listUsers(_req: Request, res: Response): Promise<void> {
         nombre: users.nombre,
         email: users.email,
         rol: users.rol,
+        estado: users.estado,
+        ultima_actividad: users.ultima_actividad,
         created_at: users.created_at,
       })
       .from(users)
@@ -21,6 +23,49 @@ export async function listUsers(_req: Request, res: Response): Promise<void> {
   } catch (error) {
     console.error("List users error:", error);
     res.status(500).json({ error: "Error al listar usuarios" });
+  }
+}
+
+export async function toggleUserStatus(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+
+    const [user] = await db
+      .select({ id: users.id, estado: users.estado, rol: users.rol })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!user) {
+      res.status(404).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    if (user.rol === "admin") {
+      res.status(403).json({ error: "No se puede bloquear a un administrador" });
+      return;
+    }
+
+    const newEstado = user.estado === "activo" ? "bloqueado" : "activo";
+
+    const [updated] = await db
+      .update(users)
+      .set({ estado: newEstado })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        nombre: users.nombre,
+        rol: users.rol,
+        estado: users.estado,
+      });
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Toggle user status error:", error);
+    res.status(500).json({ error: "Error al cambiar estado del usuario" });
   }
 }
 

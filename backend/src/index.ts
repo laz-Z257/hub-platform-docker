@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 
 import authRoutes from "./modules/auth/auth.routes";
@@ -32,6 +33,16 @@ app.use(
 );
 app.use(morgan("dev"));
 app.use(express.json());
+
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes. Intenta de nuevo en 1 minuto." },
+});
+
+app.use(globalLimiter);
 
 // Health check
 app.get("/api/health", (_req, res) => {

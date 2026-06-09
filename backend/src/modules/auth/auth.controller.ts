@@ -1,9 +1,62 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { signToken } from "../../lib/jwt";
+
+export async function register(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { documento, nombre, contrasena } = req.body;
+
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(eq(users.documento, documento))
+      .limit(1);
+
+    if (existing) {
+      res.status(409).json({ error: "El documento ya está registrado" });
+      return;
+    }
+
+    const hashed = await bcrypt.hash(contrasena, 10);
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        documento,
+        nombre,
+        contrasena: hashed,
+        email: `${documento}@hub.ai`,
+        rol: "user",
+      })
+      .returning();
+
+    const token = signToken({
+      userId: user.id,
+      documento: user.documento,
+      rol: user.rol,
+    });
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        documento: user.documento,
+        nombre: user.nombre,
+        email: user.email,
+        rol: user.rol,
+      },
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ error: "Error al registrar usuario" });
+  }
+}
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
@@ -16,34 +69,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user) {
-      const hashedPassword = await bcrypt.hash(contrasena, 10);
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          documento,
-          nombre: documento,
-          email: `${documento}@hub.ai`,
-          contrasena: hashedPassword,
-          rol: "user",
-        })
-        .returning();
+      res.status(401).json({ error: "Documento o contraseña incorrectos" });
+      return;
+    }
 
-      const token = signToken({
-        userId: newUser.id,
-        documento: newUser.documento,
-        rol: newUser.rol,
-      });
-
-      res.json({
-        token,
-        user: {
-          id: newUser.id,
-          documento: newUser.documento,
-          nombre: newUser.nombre,
-          email: newUser.email,
-          rol: newUser.rol,
-        },
-      });
+    if (user.estado === "bloqueado") {
+      res.status(403).json({ error: "Usuario bloqueado. Contacta al administrador." });
       return;
     }
 

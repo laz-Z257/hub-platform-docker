@@ -5,8 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-  TouchableOpacity,
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,18 +59,11 @@ export default function LoginScreen() {
     }
   };
 
-  const handleForgotPassword = () => {
-    Alert.alert(
-      "Recuperar contraseña",
-      "Se enviará un enlace a tu correo registrado."
-    );
-  };
-
   const cardWidth = Math.min(screenWidth * 0.92, 420);
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="flex-1"
     >
       <ScrollView
@@ -141,15 +132,7 @@ export default function LoginScreen() {
             error={errors.contrasena}
           />
 
-          <TouchableOpacity
-            onPress={handleForgotPassword}
-            className="self-end mb-5"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text className="text-primary text-sm font-inter-bold">
-              ¿Olvidaste tu contraseña?
-            </Text>
-          </TouchableOpacity>
+          <View className="mb-5" />
 
           <PrimaryButton
             title="Iniciar Sesión"

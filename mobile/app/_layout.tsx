@@ -12,7 +12,7 @@ import {
 import { AuthProvider } from "../src/contexts/AuthContext";
 import "../global.css";
 
-SplashScreen.preventAutoHideAsync();
+try { SplashScreen.preventAutoHideAsync(); } catch {}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

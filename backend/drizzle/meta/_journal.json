@@ -8,6 +8,13 @@
       "when": 1780671200077,
       "tag": "0000_nervous_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781016165913,
+      "tag": "0001_giant_the_leader",
+      "breakpoints": true
     }
   ]
 }

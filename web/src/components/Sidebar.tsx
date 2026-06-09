@@ -11,6 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   icon: typeof LayoutDashboard;
@@ -27,6 +28,17 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const initials = user?.nombre
+    ? user.nombre
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "??";
+  const displayName = user?.nombre || "Usuario";
 
   return (
     <aside className="fixed top-0 left-0 bottom-0 w-[250px] bg-white border-r border-gray-200 flex flex-col z-40">
@@ -75,10 +87,10 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
       <div className="p-5 border-t border-gray-200">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-9 h-9 rounded-full bg-[#25207E] flex items-center justify-center text-white text-sm font-semibold font-inter">
-            AP
+            {initials}
           </div>
           <span className="text-[13px] font-medium text-gray-800 font-inter">
-            Admin Principal
+            {displayName}
           </span>
         </div>
         <button

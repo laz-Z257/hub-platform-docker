@@ -7,6 +7,6 @@ import { kpisQuerySchema } from "./dashboard.schema";
 
 const router = Router();
 
-router.get("/kpis", validate(kpisQuerySchema), authMiddleware, adminOnly, getKpis);
+router.get("/kpis", authMiddleware, adminOnly, validate(kpisQuerySchema), getKpis);
 
 export default router;

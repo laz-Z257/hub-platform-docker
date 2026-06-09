@@ -1,16 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-
-interface ApiUser {
-  id: string;
-  documento: string;
-  nombre: string;
-  email: string | null;
-  rol: "admin" | "user";
-  created_at: string;
-}
+import type { ApiUser } from "@/types/user";
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#F3F0FF", color: "#25207E" },
@@ -52,11 +45,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    setNow(Date.now());
-  }, []);
+  const router = useRouter();
 
   useEffect(() => {
     api
@@ -113,6 +102,7 @@ export default function UserManagement() {
           </p>
         </div>
         <button
+          onClick={() => router.push("/dashboard/users")}
           style={{
             backgroundColor: "#25207E",
             color: "#FFFFFF",
@@ -123,11 +113,9 @@ export default function UserManagement() {
             fontWeight: 600,
             fontFamily: "Inter, sans-serif",
             cursor: "pointer",
-            opacity: 0.7,
           }}
-          title="Próximamente"
         >
-          Invitar Usuario
+          Ver todos
         </button>
       </div>
 
@@ -266,6 +254,15 @@ export default function UserManagement() {
                     gap: "6px",
                   }}
                 >
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: user.estado === "activo" ? "#22C55E" : "#EF4444",
+                      flexShrink: 0,
+                    }}
+                  />
                   <span
                     style={{
                       fontSize: "12px",
@@ -273,7 +270,7 @@ export default function UserManagement() {
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
-                    {getRelativeTime(user.created_at, now)}
+                    {getRelativeTime(user.ultima_actividad || user.created_at, Date.now())}
                   </span>
                 </div>
               </div>

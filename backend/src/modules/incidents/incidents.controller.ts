@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { eq, ilike, or, and, desc, gte, lte } from "drizzle-orm";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { db } from "../../db";
 import { incidents, incidentComments, users } from "../../db/schema";
@@ -30,7 +31,7 @@ export async function createIncident(
       .limit(1);
 
     if (!existingUser) {
-      const randomPwd = Math.random().toString(36).slice(-10) + "A1!";
+      const randomPwd = crypto.randomBytes(16).toString("hex");
       const hashed = await bcrypt.hash(randomPwd, 10);
 
       await db.insert(users).values({
@@ -54,12 +55,13 @@ export async function listIncidents(
   res: Response
 ): Promise<void> {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const q = req.validatedQuery!;
+    const page = q.page as number;
+    const limit = q.limit as number;
     const offset = (page - 1) * limit;
-    const search = req.query.search as string | undefined;
-    const estado = req.query.estado as string | undefined;
-    const urgencia = req.query.urgencia as string | undefined;
+    const search = q.search as string | undefined;
+    const estado = q.estado as string | undefined;
+    const urgencia = q.urgencia as string | undefined;
 
     const conditions = [];
 
