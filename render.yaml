@@ -1,8 +1,10 @@
 services:
   - type: web
     name: hub-platform-api
-    env: docker
-    dockerfilePath: ./backend/Dockerfile
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/db/migrate.js; node dist/db/seed.js; node dist/index.js
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -10,7 +12,5 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3001"
       - key: CORS_ORIGIN
-        value: "https://web-a-74c5ba6d.vercel.app,https://web-oxme3iuul-a-74c5ba6d.vercel.app"
+        value: "https://web-a-74c5ba6d.vercel.app"
