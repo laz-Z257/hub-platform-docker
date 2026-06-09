@@ -43,14 +43,21 @@ async function seed() {
         .where(eq(users.documento, u.documento))
         .limit(1);
 
-      if (!existing) {
+    if (!existing) {
+      await db
+        .insert(users)
+        .values({ ...u, contrasena: password });
+      console.log(`  User created: ${u.nombre} (${u.documento})`);
+    } else {
+      console.log(`  User exists: ${u.nombre}`);
+      if (process.env.SEED_ADMIN_PASSWORD) {
         await db
-          .insert(users)
-          .values({ ...u, contrasena: password });
-        console.log(`  User created: ${u.nombre} (${u.documento})`);
-      } else {
-        console.log(`  User exists: ${u.nombre}`);
+          .update(users)
+          .set({ contrasena: password })
+          .where(eq(users.documento, u.documento));
+        console.log(`  Password updated for: ${u.nombre}`);
       }
+    }
     } catch (err) {
       console.error(`  Seed warning for ${u.documento}:`, (err as Error).message);
     }
