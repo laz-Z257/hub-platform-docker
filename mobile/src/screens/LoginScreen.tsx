@@ -3,11 +3,11 @@ import {
   View,
   Text,
   ScrollView,
-  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { User, Lock } from "lucide-react-native";
 import Logo from "../components/Logo";
 import Input from "../components/Input";
 import PrimaryButton from "../components/PrimaryButton";
@@ -18,7 +18,6 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login, loading } = useAuth();
-  const { width: screenWidth } = useWindowDimensions();
   const [errors, setErrors] = useState<FormErrors>({});
   const [loginError, setLoginError] = useState("");
   const [form, setForm] = useState<LoginFormData>({
@@ -28,17 +27,9 @@ export default function LoginScreen() {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-
-    if (!form.documento.trim()) {
-      newErrors.documento = "El documento es requerido";
-    }
-
-    if (!form.contrasena.trim()) {
-      newErrors.contrasena = "La contraseña es requerida";
-    } else if (form.contrasena.length < 4) {
-      newErrors.contrasena = "Mínimo 4 caracteres";
-    }
-
+    if (!form.documento.trim()) newErrors.documento = "El documento es requerido";
+    if (!form.contrasena.trim()) newErrors.contrasena = "La contraseña es requerida";
+    else if (form.contrasena.length < 4) newErrors.contrasena = "Mínimo 4 caracteres";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -46,65 +37,63 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!validate()) return;
     setLoginError("");
-
     try {
       await login(form.documento, form.contrasena);
       router.replace("/chat");
     } catch (err) {
-      setLoginError(
-        err instanceof Error ? err.message : "Credenciales inválidas"
-      );
+      setLoginError(err instanceof Error ? err.message : "Credenciales inválidas");
     }
   };
 
-  const cardWidth = Math.min(screenWidth * 0.92, 420);
-
   return (
-    <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingTop: insets.top + 16,
-        paddingBottom: insets.bottom + 32,
-        paddingHorizontal: 16,
-      }}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      className="flex-1 bg-gray-bg"
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1, backgroundColor: "#F5F6FA" }}
     >
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingTop: insets.top + 16,
+          paddingBottom: insets.bottom + 32,
+          paddingHorizontal: 16,
+        }}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+      >
         <View
-          style={{ width: cardWidth }}
-          className="bg-white rounded-card px-6 pt-6 pb-5"
+          style={{
+            width: "92%",
+            maxWidth: 420,
+            backgroundColor: "#FFFFFF",
+            borderRadius: 24,
+            padding: 24,
+          }}
         >
           <Logo />
 
-          <Text className="text-[26px] font-inter-bold text-text-dark mb-1 text-center">
+          <Text style={{ fontSize: 26, fontWeight: "700", color: "#111827", marginBottom: 4, textAlign: "center" }}>
             Bienvenido de nuevo
           </Text>
 
-          <Text className="text-sm font-inter text-text-muted mb-5 text-center">
+          <Text style={{ fontSize: 14, color: "#6B7280", marginBottom: 20, textAlign: "center" }}>
             Ingresa tus credenciales para continuar
           </Text>
 
           {loginError ? (
-            <View className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
-              <Text className="text-red-700 text-sm font-inter">
-                {loginError}
-              </Text>
+            <View style={{ backgroundColor: "#FEF2F2", borderWidth: 1, borderColor: "#FECACA", borderRadius: 8, padding: 12, marginBottom: 16 }}>
+              <Text style={{ color: "#DC2626", fontSize: 14 }}>{loginError}</Text>
             </View>
           ) : null}
 
           <Input
             label="Documento"
-            icon={User}
             placeholder="Ingrese su documento"
             value={form.documento}
             onChangeText={(text) => {
               setForm({ ...form, documento: text });
-              if (errors.documento) {
-                setErrors({ ...errors, documento: undefined });
-              }
+              if (errors.documento) setErrors({ ...errors, documento: undefined });
               if (loginError) setLoginError("");
             }}
             error={errors.documento}
@@ -112,21 +101,18 @@ export default function LoginScreen() {
 
           <Input
             label="Contraseña"
-            icon={Lock}
             placeholder="Ingrese su contraseña"
             isPassword
             value={form.contrasena}
             onChangeText={(text) => {
               setForm({ ...form, contrasena: text });
-              if (errors.contrasena) {
-                setErrors({ ...errors, contrasena: undefined });
-              }
+              if (errors.contrasena) setErrors({ ...errors, contrasena: undefined });
               if (loginError) setLoginError("");
             }}
             error={errors.contrasena}
           />
 
-          <View className="mb-5" />
+          <View style={{ marginBottom: 20 }} />
 
           <PrimaryButton
             title="Iniciar Sesión"
@@ -135,5 +121,6 @@ export default function LoginScreen() {
           />
         </View>
       </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
