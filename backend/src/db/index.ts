@@ -8,6 +8,7 @@ const pool = new Pool({
   max: 10,
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
+  allowExitOnIdle: true,
 });
 
 export const db = drizzle({ client: pool });
