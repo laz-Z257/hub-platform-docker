@@ -11,6 +11,8 @@ async function seed() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
     ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+    connectionTimeoutMillis: 10000,
+    query_timeout: 15000,
   });
   const db = drizzle(pool);
 
@@ -21,10 +23,10 @@ async function seed() {
     crypto.randomBytes(16).toString("hex");
 
   if (!process.env.SEED_ADMIN_PASSWORD) {
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
     console.log("  SEED ADMIN PASSWORD:", seedPassword);
-    console.log("  Guarda esta contraseña. No se volverá a mostrar.");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("  Guarda esta contrase\u00f1a. No se volver\u00e1 a mostrar.");
+    console.log("\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
   }
 
   const password = await bcrypt.hash(seedPassword, 10);
@@ -34,23 +36,27 @@ async function seed() {
   ];
 
   for (const u of seedUsers) {
-    const [existing] = await db
-      .select()
-      .from(users)
-      .where(eq(users.documento, u.documento))
-      .limit(1);
+    try {
+      const [existing] = await db
+        .select()
+        .from(users)
+        .where(eq(users.documento, u.documento))
+        .limit(1);
 
-    if (!existing) {
-      await db
-        .insert(users)
-        .values({ ...u, contrasena: password });
-      console.log(`  User created: ${u.nombre} (${u.documento})`);
-    } else {
-      console.log(`  User exists: ${u.nombre}`);
+      if (!existing) {
+        await db
+          .insert(users)
+          .values({ ...u, contrasena: password });
+        console.log(`  User created: ${u.nombre} (${u.documento})`);
+      } else {
+        console.log(`  User exists: ${u.nombre}`);
+      }
+    } catch (err) {
+      console.error(`  Seed warning for ${u.documento}:`, (err as Error).message);
     }
   }
 
-  await pool.end();
+  await pool.end().catch(() => {});
   console.log("Seed completed.");
 }
 
