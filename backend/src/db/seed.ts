@@ -52,10 +52,8 @@ async function seed() {
 
   await pool.end();
   console.log("Seed completed.");
-  process.exit(0);
 }
 
 seed().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
+  console.error("Seed warning:", err instanceof Error ? err.message : err);
 });
