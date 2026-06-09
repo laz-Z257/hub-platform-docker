@@ -68,7 +68,6 @@ export default function Input({
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType={keyboardType}
-          style={{ height: "100%" }}
         />
         {isPassword && (
           <TouchableOpacity

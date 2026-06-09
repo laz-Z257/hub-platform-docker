@@ -3,8 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -120,11 +118,7 @@ export default function ReportScreen() {
         <ReportHeader />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
-      >
-        <ScrollView
+      <ScrollView
           contentContainerStyle={{
             alignItems: "center",
             paddingTop: 24,
@@ -279,7 +273,6 @@ export default function ReportScreen() {
             </Text>
           </TouchableOpacity>
         </ScrollView>
-      </KeyboardAvoidingView>
 
       <BottomTab
         activeTab="reportar"

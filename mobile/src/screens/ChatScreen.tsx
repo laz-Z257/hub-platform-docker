@@ -3,8 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
@@ -244,11 +242,7 @@ export default function ChatScreen() {
         <ChatHeader />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={70}
-      >
+      <View style={{ flex: 1 }}>
         {loadingHistory ? (
           <View
             style={{
@@ -346,7 +340,7 @@ export default function ChatScreen() {
             setActiveTab(tab);
           }}
         />
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 }

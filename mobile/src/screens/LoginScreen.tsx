@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   useWindowDimensions,
 } from "react-native";
@@ -62,23 +60,19 @@ export default function LoginScreen() {
   const cardWidth = Math.min(screenWidth * 0.92, 420);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1"
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingTop: insets.top + 16,
+        paddingBottom: insets.bottom + 32,
+        paddingHorizontal: 16,
+      }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      className="flex-1 bg-gray-bg"
     >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: insets.top + 16,
-          paddingBottom: insets.bottom + 32,
-          paddingHorizontal: 16,
-        }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        className="flex-1 bg-gray-bg"
-      >
         <View
           style={{ width: cardWidth }}
           className="bg-white rounded-card px-6 pt-6 pb-5"
@@ -141,6 +135,5 @@ export default function LoginScreen() {
           />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
   );
 }
