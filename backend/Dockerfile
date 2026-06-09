@@ -22,8 +22,6 @@ COPY --from=build /app/drizzle ./drizzle
 
 EXPOSE 3001
 
-USER node
-
 HEALTHCHECK --interval=15s --timeout=10s --start-period=30s --retries=5 \
   CMD node -e "require('http').get('http://localhost:3001/api/health',r=>{process.exit(r.statusCode===200?0:1)})"
 
