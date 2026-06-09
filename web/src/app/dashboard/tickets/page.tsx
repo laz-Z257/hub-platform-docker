@@ -174,6 +174,26 @@ export default function TicketsPage() {
     []
   );
 
+  const handleAssignAgent = useCallback(
+    async (ticketId: string, agent: string) => {
+      try {
+        const updated = await api.patch<IncidentItem>(
+          `/incidents/${ticketId}`,
+          { agente: agent }
+        );
+        setIncidents((prev) =>
+          prev.map((inc) => (inc.id === ticketId ? updated : inc))
+        );
+      } catch (err) {
+        console.error(
+          "Assign agent error:",
+          err instanceof Error ? err.message : err
+        );
+      }
+    },
+    []
+  );
+
   const mappedTickets = useMemo(
     () =>
       incidents.map((inc) => ({
@@ -189,6 +209,7 @@ export default function TicketsPage() {
               ? "En Proceso"
               : "Resuelto",
         updatedAt: getRelativeTime(inc.updated_at),
+        agente: inc.agente,
       })),
     [incidents]
   );
@@ -260,7 +281,7 @@ export default function TicketsPage() {
       />
 
       {/* Table */}
-      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} />
+      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} onAssignAgent={handleAssignAgent} />
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-5">

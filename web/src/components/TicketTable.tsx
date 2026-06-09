@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MoreVertical, Eye, CheckCircle, Clock, Loader } from "lucide-react";
+import { MoreVertical, Eye, CheckCircle, Clock, Loader, UserPlus } from "lucide-react";
 
 interface TicketRow {
   id: string;
@@ -11,6 +11,7 @@ interface TicketRow {
   prioridad: string;
   estado: string;
   updatedAt: string;
+  agente?: string | null;
 }
 
 const PRIORITY_BADGES: Record<string, { bg: string; text: string }> = {
@@ -35,20 +36,26 @@ interface TicketTableProps {
   tickets: TicketRow[];
   onStatusChange: (ticketId: string, newStatus: string) => void;
   onViewDetail: (ticketId: string) => void;
+  onAssignAgent: (ticketId: string, agent: string) => void;
 }
 
 function ActionMenu({
   ticketId,
   currentStatus,
+  currentAgente,
   onStatusChange,
   onViewDetail,
+  onAssignAgent,
 }: {
   ticketId: string;
   currentStatus: string;
+  currentAgente?: string | null;
   onStatusChange: (id: string, status: string) => void;
   onViewDetail: (id: string) => void;
+  onAssignAgent: (id: string, agent: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [agentInput, setAgentInput] = useState(currentAgente || "");
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -64,6 +71,10 @@ function ActionMenu({
     }
   }, [open, handleClickOutside]);
 
+  useEffect(() => {
+    setAgentInput(currentAgente || "");
+  }, [currentAgente, open]);
+
   const statusOptions = [
     { label: "Pendiente", value: "pendiente", icon: Clock, color: "#3B82F6" },
     { label: "En Proceso", value: "en_proceso", icon: Loader, color: "#7C3AED" },
@@ -71,6 +82,14 @@ function ActionMenu({
   ];
 
   const safeStatus = currentStatus === "Abierto" ? "pendiente" : currentStatus === "En Proceso" ? "en_proceso" : "resuelto";
+
+  const handleAssign = () => {
+    const name = agentInput.trim();
+    if (name) {
+      onAssignAgent(ticketId, name);
+    }
+    setOpen(false);
+  };
 
   return (
     <div ref={menuRef} className="relative">
@@ -82,7 +101,7 @@ function ActionMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.12)] z-50 py-1.5">
+        <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-[#E5E7EB] rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.12)] z-50 py-1.5">
           <button
             onClick={() => {
               onViewDetail(ticketId);
@@ -93,6 +112,33 @@ function ActionMenu({
             <Eye size={15} color="#6B7280" />
             Ver detalle
           </button>
+
+          <div className="border-t border-[#F3F4F6] my-1" />
+
+          <div className="px-3 pb-1">
+            <p className="px-1 py-1.5 text-[10px] font-semibold text-[#9CA3AF] font-inter uppercase tracking-[0.5px]">
+              Asignar técnico
+            </p>
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={agentInput}
+                onChange={(e) => setAgentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAssign();
+                }}
+                placeholder="Nombre del técnico"
+                className="flex-1 h-[30px] px-2.5 rounded-md border border-[#E5E7EB] text-[12px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] bg-white"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={handleAssign}
+                className="h-[30px] px-2.5 rounded-md bg-[#25207E] border-none cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <UserPlus size={13} color="#FFFFFF" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
 
           <div className="border-t border-[#F3F4F6] my-1" />
 
@@ -123,7 +169,7 @@ function ActionMenu({
   );
 }
 
-export default function TicketTable({ tickets, onStatusChange, onViewDetail }: TicketTableProps) {
+export default function TicketTable({ tickets, onStatusChange, onViewDetail, onAssignAgent }: TicketTableProps) {
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-visible">
       <div className="grid grid-cols-[100px_1fr_140px_100px_110px_120px_60px] bg-[#EEF2FF] px-5">
@@ -204,8 +250,10 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail }: T
             <ActionMenu
               ticketId={ticket.id}
               currentStatus={ticket.estado}
+              currentAgente={ticket.agente}
               onStatusChange={onStatusChange}
               onViewDetail={onViewDetail}
+              onAssignAgent={onAssignAgent}
             />
           </div>
         </div>
