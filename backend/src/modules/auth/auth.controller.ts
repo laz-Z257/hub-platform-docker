@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
+import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 
 function userResponse(user: typeof users.$inferSelect) {
   return {
@@ -49,7 +50,10 @@ export async function register(
       userId: user.id,
       documento: user.documento,
       rol: user.rol,
+      tokenVersion: user.token_version,
     });
+
+    setCsrfCookie(res, generateCsrfToken());
 
     res.status(201).json({ user: userResponse(user) });
   } catch (error) {
@@ -89,9 +93,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       userId: user.id,
       documento: user.documento,
       rol: user.rol,
+      tokenVersion: user.token_version,
     };
 
     const { token } = setTokenCookies(res, payload);
+
+    setCsrfCookie(res, generateCsrfToken());
 
     res.json({ token, user: userResponse(user) });
   } catch (error) {
@@ -137,11 +144,26 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
     const payload = verifyRefreshToken(refreshToken);
 
+    const [user] = await db
+      .select({ token_version: users.token_version })
+      .from(users)
+      .where(eq(users.id, payload.userId))
+      .limit(1);
+
+    if (!user || user.token_version !== payload.tokenVersion) {
+      clearTokenCookies(res);
+      res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
+      return;
+    }
+
     setTokenCookies(res, {
       userId: payload.userId,
       documento: payload.documento,
       rol: payload.rol,
+      tokenVersion: user.token_version,
     });
+
+    setCsrfCookie(res, generateCsrfToken());
 
     res.json({ ok: true });
   } catch {
@@ -150,7 +172,25 @@ export async function refresh(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function logout(_req: Request, res: Response): Promise<void> {
+export async function logout(req: Request, res: Response): Promise<void> {
+  try {
+    const cookieToken = req.cookies?.token;
+    const headerToken = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : null;
+    const token = cookieToken || headerToken;
+
+    if (token) {
+      const payload = verifyToken(token);
+      db.update(users)
+        .set({ token_version: sql`token_version + 1` })
+        .where(eq(users.id, payload.userId))
+        .execute()
+        .catch(() => {});
+    }
+  } catch {
+    // Token invalid/expired — still clear cookies
+  }
   clearTokenCookies(res);
   res.json({ ok: true });
 }

@@ -5,6 +5,7 @@ export interface JwtPayload {
   userId: string;
   documento: string;
   rol: "user" | "admin";
+  tokenVersion: number;
 }
 
 const COOKIE_OPTIONS = {

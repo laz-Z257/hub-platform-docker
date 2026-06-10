@@ -3,6 +3,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/csrf-token=([^;]+)/);
+  return match?.[1] || null;
+}
+
+function requestHeaders(options: RequestInit): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  const csrf = getCsrfToken();
+  if (csrf && options.method && options.method !== "GET") {
+    headers["x-csrf-token"] = csrf;
+  }
+
+  return headers;
+}
+
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
@@ -23,10 +43,7 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...((options.headers as Record<string, string>) || {}),
-  };
+  const headers = requestHeaders(options);
 
   let res: Response;
 

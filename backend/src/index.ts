@@ -7,6 +7,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import { csrfProtection } from "./middlewares/csrf";
 import { env } from "./config/env";
 
 import authRoutes from "./modules/auth/auth.routes";
@@ -52,6 +53,7 @@ if (env.NODE_ENV !== "production") {
 }
 app.use(express.json());
 app.use(cookieParser());
+app.use(csrfProtection);
 
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
