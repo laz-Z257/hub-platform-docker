@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   boolean,
+  integer,
   pgEnum,
   index,
 } from "drizzle-orm/pg-core";
@@ -27,6 +28,7 @@ export const users = pgTable("users", {
   rol: rolEnum("rol").notNull().default("user"),
   estado: userEstadoEnum("estado").notNull().default("activo"),
   ultima_actividad: timestamp("ultima_actividad"),
+  token_version: integer("token_version").notNull().default(0),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 

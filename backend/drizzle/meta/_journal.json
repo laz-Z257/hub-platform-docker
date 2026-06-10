@@ -15,6 +15,13 @@
       "when": 1781016165913,
       "tag": "0001_giant_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781113904812,
+      "tag": "0002_curly_sally_floyd",
+      "breakpoints": true
     }
   ]
 }
