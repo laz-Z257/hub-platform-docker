@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: hub-postgres
     environment:
-      POSTGRES_USER: hub_admin
-      POSTGRES_PASSWORD: hub_secret
-      POSTGRES_DB: hub_platform
+      POSTGRES_USER: ${POSTGRES_USER:-hub_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hub_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-hub_platform}
     ports:
       - "5432:5432"
     volumes:
@@ -22,10 +22,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgres://hub_admin:hub_secret@postgres:5432/hub_platform
-      JWT_SECRET: hub_jwt_secret_dev_2026
-      PORT: "3001"
-      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL:-postgres://hub_admin:hub_secret@postgres:5432/hub_platform}
+      JWT_SECRET: ${JWT_SECRET:-hub_jwt_secret_dev_2026}
+      PORT: ${PORT:-3001}
+      NODE_ENV: ${NODE_ENV:-development}
     volumes:
       - ./src:/app/src
     depends_on:

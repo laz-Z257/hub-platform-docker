@@ -207,6 +207,11 @@ export async function addComment(
       return;
     }
 
+    if (req.user!.rol !== "admin" && incident.user_id !== req.user!.userId) {
+      res.status(403).json({ error: "No puedes comentar incidentes de otros usuarios" });
+      return;
+    }
+
     const [user] = await db
       .select({ nombre: users.nombre })
       .from(users)
