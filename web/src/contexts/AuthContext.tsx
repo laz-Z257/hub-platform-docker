@@ -10,7 +10,13 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import type { AuthUser } from "../../../shared/types/auth";
+
+export interface AuthUser {
+  id: string;
+  documento: string;
+  nombre: string;
+  rol: "user" | "admin";
+}
 
 interface AuthContextType {
   user: AuthUser | null;
