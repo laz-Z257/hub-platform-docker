@@ -13,7 +13,6 @@ const PER_PAGE = 10;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<ApiUser[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState("Todos");
@@ -35,20 +34,14 @@ export default function UsersPage() {
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("limit", String(PER_PAGE));
-    if (searchTerm) params.set("search", searchTerm);
-    if (roleFilter !== "Todos") params.set("rol", roleFilter);
     api
-      .get<{ items: ApiUser[]; total: number; totalPages: number }>(`/users?${params.toString()}`)
+      .get<{ items: ApiUser[]; total: number }>("/users?limit=200")
       .then((data) => {
-        setUsers(data.items);
-        setTotal(data.total);
+        if (Array.isArray(data?.items)) setUsers(data.items);
       })
       .catch((err) => console.error("Users:", err instanceof Error ? err.message : err))
       .finally(() => setLoading(false));
-  }, [page, searchTerm, roleFilter]);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -56,12 +49,26 @@ export default function UsersPage() {
     return () => clearInterval(interval);
   }, [fetchUsers]);
 
-  const totalUsers = total;
-  const adminCount = roleFilter === "admin" ? total : users.filter((u) => u.rol === "admin").length;
-  const userCount = roleFilter === "user" ? total : users.filter((u) => u.rol === "user").length;
+  const totalUsers = users.length;
+  const adminCount = users.filter((u) => u.rol === "admin").length;
+  const userCount = users.filter((u) => u.rol === "user").length;
 
-  const pagedUsers = users;
-  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  let filteredUsers = users;
+  if (roleFilter !== "Todos") {
+    filteredUsers = filteredUsers.filter((u) => u.rol === roleFilter);
+  }
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    filteredUsers = filteredUsers.filter(
+      (u) =>
+        u.nombre.toLowerCase().includes(term) ||
+        (u.email || "").toLowerCase().includes(term) ||
+        u.documento.includes(term)
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PER_PAGE));
+  const pagedUsers = filteredUsers.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const pages: (number | "...")[] = [];
   if (totalPages <= 7) {
@@ -113,8 +120,8 @@ export default function UsersPage() {
 
       <div className="flex items-center justify-between mt-5">
         <span className="text-[13px] text-gray-500 font-inter">
-          Mostrando {users.length > 0 ? (page - 1) * PER_PAGE + 1 : 0} a {Math.min(page * PER_PAGE, total)} de{" "}
-          {total.toLocaleString()} usuarios
+          Mostrando {Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)} a {Math.min(page * PER_PAGE, filteredUsers.length)} de{" "}
+          {filteredUsers.length.toLocaleString()} usuarios
         </span>
 
         <div className="flex items-center gap-1.5">

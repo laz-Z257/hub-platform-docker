@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
@@ -18,8 +17,7 @@ const config: Config = {
         "input-border": "#E5E7EB",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
-        inter: ["var(--font-inter)", "system-ui", "sans-serif"],
+        inter: ["Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
         card: "24px",
