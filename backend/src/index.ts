@@ -17,7 +17,22 @@ import usersRoutes from "./modules/users/users.routes";
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: env.NODE_ENV === "production"
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:"],
+            fontSrc: ["'self'"],
+            connectSrc: ["'self'"],
+          },
+        }
+      : false,
+  })
+);
 app.use(
   cors({
     origin:
