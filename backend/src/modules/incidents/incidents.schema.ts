@@ -3,21 +3,21 @@ import { z } from "zod";
 export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
 
 export const createIncidentSchema = z.object({
-  nombre: z.string().min(1, "El nombre es requerido"),
-  documento: z.string().min(1, "El documento es requerido"),
-  punto_venta: z.string().min(1, "El punto de venta es requerido"),
-  telefono: z.string().optional().default(""),
-  descripcion: z.string().min(1, "La descripción es requerida"),
+  nombre: z.string().min(1, "El nombre es requerido").max(100),
+  documento: z.string().min(1, "El documento es requerido").max(20),
+  punto_venta: z.string().min(1, "El punto de venta es requerido").max(150),
+  telefono: z.string().max(20).optional().default(""),
+  descripcion: z.string().min(1, "La descripción es requerida").max(2000),
   urgencia: z.enum(["baja", "media", "alta"]).default("media"),
 });
 
 export const updateIncidentSchema = z.object({
   estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
-  agente: z.string().optional(),
+  agente: z.string().max(100).optional(),
 });
 
 export const commentSchema = z.object({
-  texto: z.string().min(1, "El comentario es requerido"),
+  texto: z.string().min(1, "El comentario es requerido").max(5000),
 });
 
 export const listIncidentsQuerySchema = {
