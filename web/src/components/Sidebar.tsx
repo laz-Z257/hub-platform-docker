@@ -33,7 +33,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const initials = user?.nombre
     ? user.nombre
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .slice(0, 2)
         .toUpperCase()
