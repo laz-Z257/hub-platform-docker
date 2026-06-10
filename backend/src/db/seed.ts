@@ -10,7 +10,7 @@ import "dotenv/config";
 async function seed() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
-    ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
+    ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
     connectionTimeoutMillis: 10000,
     query_timeout: 15000,
   });

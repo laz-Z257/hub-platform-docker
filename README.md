@@ -265,7 +265,7 @@ Resuelta. Principales fixes aplicados:
 
 ### v2.1 (security fixes)
 - P0: Verificación de propiedad en `POST /incidents/:id/comments` (solo dueño o admin)
-- P0: SSL `rejectUnauthorized: true` en PostgreSQL (db/index, migrate, seed)
+- P0: SSL `rejectUnauthorized: false` documentado para Render (red interna, certificados no configurables)
 - P0: Secrets en `docker-compose.yml` usan variables de entorno (`${VAR:-default}`)
 - P1: `GET /incidents/stats` ahora requiere `adminOnly`
 - P2: Validación UUID en todos los params `:id` (400 en vez de 500 para IDs inválidos)
