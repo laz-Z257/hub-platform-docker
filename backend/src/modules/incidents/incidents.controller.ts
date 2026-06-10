@@ -237,17 +237,20 @@ export async function getStats(
   res: Response
 ): Promise<void> {
   try {
-    const { start, end, agente } = req.query;
+    const q = req.validatedQuery!;
+    const start = q.start as string | undefined;
+    const end = q.end as string | undefined;
+    const agente = q.agente as string | undefined;
     const conditions = [];
 
-    if (typeof agente === "string" && agente) {
+    if (agente) {
       conditions.push(eq(incidents.agente, agente));
     }
 
-    if (typeof start === "string" && start) {
+    if (start) {
       conditions.push(gte(incidents.created_at, new Date(start)));
     }
-    if (typeof end === "string" && end) {
+    if (end) {
       const endDate = new Date(end);
       endDate.setHours(23, 59, 59, 999);
       conditions.push(lte(incidents.created_at, endDate));

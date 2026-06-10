@@ -10,7 +10,6 @@ function userResponse(user: typeof users.$inferSelect) {
     id: user.id,
     documento: user.documento,
     nombre: user.nombre,
-    email: user.email,
     rol: user.rol,
   };
 }

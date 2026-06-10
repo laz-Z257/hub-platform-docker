@@ -15,6 +15,7 @@ import {
   updateIncidentSchema,
   commentSchema,
   listIncidentsQuerySchema,
+  statsQuerySchema,
   uuidParamsSchema,
 } from "./incidents.schema";
 import { authMiddleware } from "../../middlewares/auth";
@@ -26,7 +27,7 @@ router.use(authMiddleware);
 
 router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/agentes", getAgentes);
-router.get("/stats", adminOnly, getStats);
+router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
 router.patch("/:id", adminOnly, validate({ body: updateIncidentSchema, params: uuidParamsSchema }), updateIncident);

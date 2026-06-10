@@ -39,3 +39,17 @@ export const listIncidentsQuerySchema = {
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
   }),
 };
+
+export const statsQuerySchema = {
+  query: z.object({
+    start: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "start debe ser una fecha válida"),
+    end: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "end debe ser una fecha válida"),
+    agente: z.string().optional(),
+  }),
+};

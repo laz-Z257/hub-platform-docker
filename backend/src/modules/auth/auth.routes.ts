@@ -15,10 +15,18 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: "Demasiadas solicitudes. Intenta de nuevo en 1 minuto." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post("/register", authLimiter, validate(registerSchema), register);
 router.post("/login", authLimiter, validate(loginSchema), login);
 router.get("/me", authMiddleware, me);
-router.post("/refresh", refresh);
+router.post("/refresh", refreshLimiter, refresh);
 router.post("/logout", logout);
 
 export default router;
