@@ -154,7 +154,7 @@ export default function UserManagement() {
       {/* User Cards */}
       {!loading && !error && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {users.length === 0 ? (
+          {!Array.isArray(users) ? null : users.length === 0 ? (
             <p
               style={{
                 textAlign: "center",
