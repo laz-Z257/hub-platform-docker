@@ -267,6 +267,10 @@ Resuelta. Principales fixes aplicados:
 - P0: Verificación de propiedad en `POST /incidents/:id/comments` (solo dueño o admin)
 - P0: SSL `rejectUnauthorized: true` en PostgreSQL (db/index, migrate, seed)
 - P0: Secrets en `docker-compose.yml` usan variables de entorno (`${VAR:-default}`)
+- P1: `GET /incidents/stats` ahora requiere `adminOnly`
+- P2: Validación UUID en todos los params `:id` (400 en vez de 500 para IDs inválidos)
+- P2: Límite máximo 200 en `GET /chat/history?limit`
+- P2: No se puede degradar al último administrador (`updateUser`)
 - Tipos compartidos extraídos a `shared/types/` (evita duplicación web ↔ mobile)
 
 ## Errores conocidos y soluciones

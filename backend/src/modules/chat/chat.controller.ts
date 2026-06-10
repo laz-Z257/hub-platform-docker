@@ -46,7 +46,7 @@ export async function getHistory(
   res: Response
 ): Promise<void> {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = (req.validatedQuery?.limit as number) || parseInt(req.query.limit as string) || 50;
 
     const history = await db
       .select()

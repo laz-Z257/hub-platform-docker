@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, ne } from "drizzle-orm";
+import { eq, ne, and, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 
@@ -73,6 +73,26 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params as { id: string };
     const { rol, nombre, email } = req.body;
+
+    if (rol !== undefined && rol !== "admin") {
+      const [targetUser] = await db
+        .select({ rol: users.rol })
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+
+      if (targetUser && targetUser.rol === "admin") {
+        const [count] = await db
+          .select({ total: sql<number>`count(*)`.mapWith(Number) })
+          .from(users)
+          .where(and(eq(users.rol, "admin"), ne(users.id, id)));
+
+        if (count.total === 0) {
+          res.status(403).json({ error: "No se puede degradar al único administrador" });
+          return;
+        }
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
     if (rol !== undefined) updateData.rol = rol;

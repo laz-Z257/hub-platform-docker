@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
+
 export const createIncidentSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   documento: z.string().min(1, "El documento es requerido"),

@@ -15,6 +15,7 @@ import {
   updateIncidentSchema,
   commentSchema,
   listIncidentsQuerySchema,
+  uuidParamsSchema,
 } from "./incidents.schema";
 import { authMiddleware } from "../../middlewares/auth";
 import { adminOnly } from "../../middlewares/admin";
@@ -25,11 +26,11 @@ router.use(authMiddleware);
 
 router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/agentes", getAgentes);
-router.get("/stats", getStats);
+router.get("/stats", adminOnly, getStats);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
-router.get("/:id", getIncident);
-router.patch("/:id", adminOnly, validate(updateIncidentSchema), updateIncident);
-router.delete("/:id", adminOnly, deleteIncident);
-router.post("/:id/comments", validate(commentSchema), addComment);
+router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
+router.patch("/:id", adminOnly, validate({ body: updateIncidentSchema, params: uuidParamsSchema }), updateIncident);
+router.delete("/:id", adminOnly, validate({ params: uuidParamsSchema }), deleteIncident);
+router.post("/:id/comments", validate({ body: commentSchema, params: uuidParamsSchema }), addComment);
 
 export default router;

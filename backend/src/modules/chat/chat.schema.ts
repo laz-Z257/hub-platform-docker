@@ -8,3 +8,14 @@ export const sendMessageSchema = {
       .max(2000, "El mensaje es demasiado largo"),
   }),
 };
+
+export const historyQuerySchema = {
+  query: z.object({
+    limit: z
+      .string()
+      .optional()
+      .default("50")
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(200)),
+  }),
+};

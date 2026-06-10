@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
+
 export const updateUserSchema = {
   body: z.object({
     rol: z.enum(["admin", "user"]).optional(),
