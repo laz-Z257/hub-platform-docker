@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, setCsrfToken } from "@/lib/api";
 
 export interface AuthUser {
   id: string;
@@ -35,8 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    api.get<AuthUser>("/auth/me")
-      .then(setUser)
+    api.get<AuthUser & { csrfToken?: string }>("/auth/me")
+      .then((data) => {
+        setUser(data);
+        if (data.csrfToken) setCsrfToken(data.csrfToken);
+      })
       .catch(() => setUser(null))
       .finally(() => setInitializing(false));
   }, []);
@@ -45,11 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const data = await api.post<{ user: AuthUser }>(
+        const data = await api.post<{ user: AuthUser; csrfToken?: string }>(
           "/auth/login",
           { documento, contrasena }
         );
         setUser(data.user);
+        if (data.csrfToken) setCsrfToken(data.csrfToken);
         router.push("/dashboard");
       } finally {
         setLoading(false);
