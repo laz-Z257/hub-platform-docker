@@ -82,7 +82,7 @@ export async function toggleUserStatus(
     }
 
     if (user.rol === "admin") {
-      res.status(403).json({ error: "No se puede bloquear a un administrador" });
+      res.status(404).json({ error: "Usuario no encontrado" });
       return;
     }
 

@@ -57,7 +57,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
   const tickets = incidents.map((inc) => ({
     id: inc.id,
     nombre: inc.nombre || "Anónimo",
-    asunto: inc.asunto || inc.descripcion?.slice(0, 45) || "Sin descripción",
+    asunto: inc.asunto || (inc.descripcion ? (inc.descripcion.length > 45 ? inc.descripcion.slice(0, 45) + "..." : inc.descripcion) : "Sin descripción"),
     prioridad: inc.prioridad || mapPriority(inc.urgencia || "media"),
     estado: inc.estado ? mapStatus(inc.estado) : "Pendiente",
     fecha: inc.created_at ? formatDate(inc.created_at) : "—",
