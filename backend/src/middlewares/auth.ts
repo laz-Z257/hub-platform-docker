@@ -8,8 +8,21 @@ declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload;
+      cookies: Record<string, string | undefined>;
     }
   }
+}
+
+function extractToken(req: Request): string | null {
+  const cookieToken = req.cookies?.token;
+  if (cookieToken) return cookieToken;
+
+  const header = req.headers.authorization;
+  if (header && header.startsWith("Bearer ")) {
+    return header.slice(7);
+  }
+
+  return null;
 }
 
 export function authMiddleware(
@@ -17,15 +30,14 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  const header = req.headers.authorization;
+  const token = extractToken(req);
 
-  if (!header || !header.startsWith("Bearer ")) {
+  if (!token) {
     res.status(401).json({ error: "Token no proporcionado" });
     return;
   }
 
   try {
-    const token = header.slice(7);
     req.user = verifyToken(token);
 
     db.update(users)
@@ -45,11 +57,10 @@ export function optionalAuth(
   _res: Response,
   next: NextFunction
 ): void {
-  const header = req.headers.authorization;
+  const token = extractToken(req);
 
-  if (header && header.startsWith("Bearer ")) {
+  if (token) {
     try {
-      const token = header.slice(7);
       req.user = verifyToken(token);
     } catch (err) {
       console.error("optionalAuth: token verification failed", err);

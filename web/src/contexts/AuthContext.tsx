@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api, setToken, clearToken, setStoredUser, clearStoredUser, getStoredUser } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { AuthUser } from "../../../shared/types/auth";
 
 interface AuthContextType {
@@ -17,7 +17,7 @@ interface AuthContextType {
   loading: boolean;
   initializing: boolean;
   login: (documento: string, contrasena: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,36 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const stored = getStoredUser();
-    if (stored) {
-      setUser(stored);
-      api.get<AuthUser>("/auth/me")
-        .then((fresh) => {
-          setUser(fresh);
-          setStoredUser(fresh);
-        })
-        .catch(() => {
-          clearToken();
-          clearStoredUser();
-          setUser(null);
-        })
-        .finally(() => setInitializing(false));
-    } else {
-      setInitializing(false);
-    }
+    api.get<AuthUser>("/auth/me")
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setInitializing(false));
   }, []);
 
   const login = useCallback(
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const data = await api.post<{ token: string; user: AuthUser }>(
+        const data = await api.post<{ user: AuthUser }>(
           "/auth/login",
           { documento, contrasena }
         );
-
-        setToken(data.token);
-        setStoredUser(data.user);
         setUser(data.user);
         router.push("/dashboard");
       } finally {
@@ -68,9 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [router]
   );
 
-  const logout = useCallback(() => {
-    clearToken();
-    clearStoredUser();
+  const logout = useCallback(async () => {
+    await api.post("/auth/logout").catch(() => {});
     setUser(null);
     router.push("/login");
   }, [router]);

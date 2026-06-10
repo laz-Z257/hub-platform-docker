@@ -1,59 +1,32 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-function getToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/auth-token=([^;]+)/);
-  return match?.[1] || null;
-}
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
 
-function isSecure() {
-  return (
-    typeof window !== "undefined" &&
-    window.location.protocol === "https:"
-  );
-}
+async function tryRefresh(): Promise<boolean> {
+  if (isRefreshing) return refreshPromise ?? false;
+  isRefreshing = true;
+  refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  }).then((r) => r.ok);
 
-export function setToken(token: string) {
-  document.cookie = `auth-token=${token}; path=/; max-age=86400; samesite=lax${isSecure() ? "; secure" : ""}`;
-}
-
-export function clearToken() {
-  document.cookie = `auth-token=; path=/; max-age=0; samesite=lax${isSecure() ? "; secure" : ""}`;
-}
-
-export function getStoredUser() {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/auth-user=([^;]+)/);
-  if (!match) return null;
   try {
-    return JSON.parse(decodeURIComponent(match[1]));
-  } catch {
-    return null;
+    return await refreshPromise;
+  } finally {
+    isRefreshing = false;
+    refreshPromise = null;
   }
-}
-
-export function setStoredUser(user: unknown) {
-  document.cookie = `auth-user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; samesite=lax${isSecure() ? "; secure" : ""}`;
-}
-
-export function clearStoredUser() {
-  document.cookie = `auth-user=; path=/; max-age=0; samesite=lax${isSecure() ? "; secure" : ""}`;
 }
 
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   let res: Response;
 
@@ -61,6 +34,7 @@ async function request<T>(
     res = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include",
     });
   } catch (err) {
     console.error("Network error:", endpoint, err);
@@ -70,12 +44,26 @@ async function request<T>(
   }
 
   if (res.status === 401) {
-    clearToken();
-    clearStoredUser();
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      try {
+        res = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers,
+          credentials: "include",
+        });
+      } catch (err) {
+        console.error("Network error after refresh:", endpoint, err);
+        throw new Error("Error de conexión");
+      }
     }
-    throw new Error("Sesión expirada");
+
+    if (!refreshed || res.status === 401) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      throw new Error("Sesión expirada");
+    }
   }
 
   let data: unknown;

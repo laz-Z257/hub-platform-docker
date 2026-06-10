@@ -273,6 +273,18 @@ Resuelta. Principales fixes aplicados:
 - P2: No se puede degradar al último administrador (`updateUser`)
 - Tipos compartidos extraídos a `shared/types/` (evita duplicación web ↔ mobile)
 
+### 2026-06-10 (3) — JWT HttpOnly + Refresh tokens
+
+**Web:** Token JWT ahora se envía como cookie `HttpOnly; Secure; SameSite=None` en vez de `document.cookie` accesible por JS. El frontend usa `credentials: "include"` y tiene interceptor de refresh automático en 401.
+
+**Backend:**
+- `POST /auth/refresh` — renueva el access token usando el refresh token
+- `POST /auth/logout` — limpia ambas cookies
+- `authMiddleware` lee de cookie primero, luego de header `Authorization` (para mobile)
+- Access token: 1h, Refresh token: 7d
+
+**Mobile:** Sin cambios — sigue usando `Authorization: Bearer` + `expo-secure-store`. Compatible con ambos flujos.
+
 ### 2026-06-10 — Auditoría y security fixes
 
 **Auditoría completa:** 90+ archivos revisados. 16 hallazgos (3 críticos, 4 altos, 5 medios, 3 bajos). Documentado en `audit-report.md`.
