@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import {
   createIncident,
   listIncidents,
@@ -23,10 +24,19 @@ import { adminOnly } from "../../middlewares/admin";
 
 const router = Router();
 
+const incidentsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: "Demasiadas solicitudes. Intenta de nuevo en 1 minuto." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.use(authMiddleware);
+router.use(incidentsLimiter);
 
 router.post("/", validate(createIncidentSchema), createIncident);
-router.get("/agentes", getAgentes);
+router.get("/agentes", adminOnly, getAgentes);
 router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
