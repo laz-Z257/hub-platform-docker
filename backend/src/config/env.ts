@@ -9,6 +9,7 @@ export const env = {
     (() => {
       throw new Error("JWT_SECRET es requerida. Define la variable de entorno.");
     })(),
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "",
   PORT: parseInt(process.env.PORT || "3001", 10),
   NODE_ENV: process.env.NODE_ENV || "development",
 };

@@ -49,8 +49,8 @@ export default function UserManagement() {
 
   useEffect(() => {
     api
-      .get<ApiUser[]>("/users")
-      .then(setUsers)
+      .get<{ items: ApiUser[] }>("/users?limit=200")
+      .then((data) => setUsers(data.items))
       .catch((err) => {
         const msg = err instanceof Error ? err.message : "Error al cargar usuarios";
         console.error("UserManagement:", msg);

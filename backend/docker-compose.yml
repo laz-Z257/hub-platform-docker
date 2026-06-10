@@ -24,6 +24,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgres://hub_admin:hub_secret@postgres:5432/hub_platform}
       JWT_SECRET: ${JWT_SECRET:-hub_jwt_secret_dev_2026}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-hub_jwt_refresh_secret_dev_2026}
       PORT: ${PORT:-3001}
       NODE_ENV: ${NODE_ENV:-development}
     volumes:
