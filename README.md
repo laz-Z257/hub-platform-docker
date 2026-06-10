@@ -171,10 +171,12 @@ npx expo start
 
 **Backend (`backend/.env`):**
 ```
-DATABASE_URL=postgres://hub_admin:hub_secret@localhost:5432/hub_platform
-JWT_SECRET=hub_jwt_secret_dev_2026
+DATABASE_URL=postgres://user:password@localhost:5432/hub_platform
+JWT_SECRET=tu_jwt_secret_aqui
+JWT_REFRESH_SECRET=tu_refresh_secret_aqui
 PORT=3001
 NODE_ENV=development
+SEED_ADMIN_PASSWORD=admin123
 ```
 
 > El `docker-compose.yml` usa la sintaxis `${VAR:-default}`, por lo que si `.env` contiene estas variables, Docker Compose las usará automáticamente. No hay secrets hardcodeados.

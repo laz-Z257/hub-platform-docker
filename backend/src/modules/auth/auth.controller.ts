@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
-import { setTokenCookies, clearTokenCookies, verifyToken, signToken } from "../../lib/jwt";
+import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
 
 function userResponse(user: typeof users.$inferSelect) {
   return {
@@ -136,7 +136,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const payload = verifyToken(refreshToken);
+    const payload = verifyRefreshToken(refreshToken);
 
     setTokenCookies(res, {
       userId: payload.userId,

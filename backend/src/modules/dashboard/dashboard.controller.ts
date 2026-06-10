@@ -5,8 +5,10 @@ import { incidents, users } from "../../db/schema";
 
 export async function getKpis(req: Request, res: Response): Promise<void> {
   try {
-    const query = req.validatedQuery || req.query;
-    const { start, end, agente } = query;
+    const q = req.validatedQuery!;
+    const start = q.start as string | undefined;
+    const end = q.end as string | undefined;
+    const agente = q.agente as string | undefined;
     const conditions = [];
 
     if (typeof agente === "string" && agente) {
