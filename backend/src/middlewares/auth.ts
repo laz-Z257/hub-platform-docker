@@ -51,21 +51,3 @@ export function authMiddleware(
     res.status(401).json({ error: "Token inválido o expirado" });
   }
 }
-
-export function optionalAuth(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-): void {
-  const token = extractToken(req);
-
-  if (token) {
-    try {
-      req.user = verifyToken(token);
-    } catch (err) {
-      console.error("optionalAuth: token verification failed", err);
-    }
-  }
-
-  next();
-}
