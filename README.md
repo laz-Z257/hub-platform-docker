@@ -273,6 +273,25 @@ Resuelta. Principales fixes aplicados:
 - P2: No se puede degradar al último administrador (`updateUser`)
 - Tipos compartidos extraídos a `shared/types/` (evita duplicación web ↔ mobile)
 
+### 2026-06-10 — Auditoría y security fixes
+
+**Auditoría completa:** 90+ archivos revisados. 16 hallazgos (3 críticos, 4 altos, 5 medios, 3 bajos). Documentado en `audit-report.md`.
+
+**Fixes aplicados:**
+
+| Severidad | Fix | Archivos |
+|---|---|---|
+| P0 | Verificación de propiedad en `POST /incidents/:id/comments` | `incidents.controller.ts` |
+| P0 | Secrets en `docker-compose.yml` → variables de entorno (`${VAR:-default}`) | `docker-compose.yml` |
+| P0 | SSL `rejectUnauthorized: false` documentado para Render | `db/index.ts`, `migrate.ts`, `seed.ts` |
+| P1 | `GET /incidents/stats` ahora requiere `adminOnly` | `incidents.routes.ts` |
+| P2 | Validación UUID en todos los params `:id` (6 rutas incidents + 2 users) | `incidents.schema.ts`, `users.schema.ts`, `*.routes.ts` |
+| P2 | Límite máximo 200 en `GET /chat/history?limit` | `chat.schema.ts`, `chat.controller.ts` |
+| P2 | No se puede degradar al último administrador | `users.controller.ts` |
+| — | Tipos compartidos `shared/types/` (AuthUser, Incident, ApiUser, etc.) | `shared/` (7 archivos nuevos) |
+
+**Pendientes (riesgo medio/alto):** migrar JWT a cookie HttpOnly, eliminar auto-creación de usuarios, paginación en listUsers, validar sesión contra backend al iniciar.
+
 ## Errores conocidos y soluciones
 
 ### 🐛 Render Docker no arrancaba (`x-render-routing: no-server`)
