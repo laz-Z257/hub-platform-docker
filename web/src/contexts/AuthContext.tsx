@@ -32,8 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = getStoredUser();
     if (stored) {
       setUser(stored);
+      api.get<AuthUser>("/auth/me")
+        .then((fresh) => {
+          setUser(fresh);
+          setStoredUser(fresh);
+        })
+        .catch(() => {
+          clearToken();
+          clearStoredUser();
+          setUser(null);
+        })
+        .finally(() => setInitializing(false));
+    } else {
+      setInitializing(false);
     }
-    setInitializing(false);
   }, []);
 
   const login = useCallback(

@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne } from "drizzle-orm";
-import crypto from "node:crypto";
-import bcrypt from "bcryptjs";
 import { db } from "../../db";
 import { incidents, incidentComments, users } from "../../db/schema";
 
@@ -23,25 +21,6 @@ export async function createIncident(
         estado: "pendiente",
       })
       .returning();
-
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.documento, req.body.documento))
-      .limit(1);
-
-    if (!existingUser) {
-      const randomPwd = crypto.randomBytes(16).toString("hex");
-      const hashed = await bcrypt.hash(randomPwd, 10);
-
-      await db.insert(users).values({
-        documento: req.body.documento,
-        nombre: req.body.nombre,
-        email: `${req.body.documento}@hub.ai`,
-        contrasena: hashed,
-        rol: "user",
-      });
-    }
 
     res.status(201).json(incident);
   } catch (error) {
