@@ -8,6 +8,7 @@ import {
   BarChart3,
   Users,
   Ticket,
+  Monitor,
   LogOut,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: BarChart3, label: "Analítica", path: "/dashboard/analytics" },
   { icon: Users, label: "Gestión de Usuarios", path: "/dashboard/users" },
   { icon: Ticket, label: "Tickets", path: "/dashboard/tickets" },
+  { icon: Monitor, label: "Sistemas Externos", path: "/dashboard/external-systems" },
 ];
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
