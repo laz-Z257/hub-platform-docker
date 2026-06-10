@@ -35,8 +35,8 @@ export default function UsersPage() {
   const fetchUsers = useCallback(() => {
     setLoading(true);
     api
-      .get<ApiUser[]>("/users")
-      .then(setUsers)
+      .get<{ items: ApiUser[]; total: number }>("/users?limit=200")
+      .then((data) => setUsers(data.items))
       .catch((err) => console.error("Users:", err instanceof Error ? err.message : err))
       .finally(() => setLoading(false));
   }, []);

@@ -40,9 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (savedUser) {
             setUser(savedUser as AuthUser);
           }
+          try {
+            const fresh = await api.get<AuthUser>("/auth/me");
+            setUser(fresh);
+            await saveUser(fresh);
+          } catch {
+            await clearToken();
+            setUser(null);
+          }
         }
       } catch {
-        // token invalid or expired
         await clearToken();
       } finally {
         setInitializing(false);

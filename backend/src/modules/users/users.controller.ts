@@ -1,11 +1,40 @@
 import { Request, Response } from "express";
-import { eq, ne, and, sql } from "drizzle-orm";
+import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 
-export async function listUsers(_req: Request, res: Response): Promise<void> {
+export async function listUsers(req: Request, res: Response): Promise<void> {
   try {
-    const allUsers = await db
+    const q = req.validatedQuery!;
+    const page = q.page as number;
+    const limit = q.limit as number;
+    const offset = (page - 1) * limit;
+    const search = q.search as string | undefined;
+    const rol = q.rol as string | undefined;
+
+    const conditions: ReturnType<typeof eq>[] = [];
+
+    if (rol) {
+      conditions.push(eq(users.rol, rol as "admin" | "user"));
+    } else {
+      conditions.push(ne(users.rol, "admin") as ReturnType<typeof eq>);
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.nombre, `%${search}%`),
+          ilike(users.documento, `%${search}%`),
+          ilike(users.email, `%${search}%`)
+        ) as ReturnType<typeof eq>
+      );
+    }
+
+    const whereClause = and(...conditions);
+
+    const totalResult = await db.$count(users, whereClause);
+
+    const items = await db
       .select({
         id: users.id,
         documento: users.documento,
@@ -17,9 +46,17 @@ export async function listUsers(_req: Request, res: Response): Promise<void> {
         created_at: users.created_at,
       })
       .from(users)
-      .where(ne(users.rol, "admin"));
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset);
 
-    res.json(allUsers);
+    res.json({
+      items,
+      total: totalResult,
+      page,
+      limit,
+      totalPages: Math.ceil(totalResult / limit),
+    });
   } catch (error) {
     console.error("List users error:", error);
     res.status(500).json({ error: "Error al listar usuarios" });
