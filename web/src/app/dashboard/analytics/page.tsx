@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
       .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
       .then((stats) => {
         setAreaData(
-          stats.timeline.map((d) => ({
+          (Array.isArray(stats.timeline) ? stats.timeline : []).map((d) => ({
             name: d.fecha,
             trafico: d.incidentes,
             conversiones: d.resueltos,

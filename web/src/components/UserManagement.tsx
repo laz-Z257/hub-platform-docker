@@ -50,7 +50,13 @@ export default function UserManagement() {
   useEffect(() => {
     api
       .get<{ items: ApiUser[] }>("/users?limit=200")
-      .then((data) => setUsers(data.items))
+      .then((data) => {
+        console.log("[UserManagement] Valor recibido:", typeof data, data);
+        console.log("[UserManagement] Es array:", Array.isArray(data));
+        const items = Array.isArray(data) ? data : (data?.items ?? []);
+        console.log("[UserManagement] Items extraídos:", Array.isArray(items), items?.length);
+        setUsers(items);
+      })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : "Error al cargar usuarios";
         console.error("UserManagement:", msg);

@@ -190,7 +190,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
           <p className="text-sm text-[#9CA3AF] font-inter">No se encontraron tickets</p>
         </div>
       )}
-      {tickets.map((ticket) => (
+      {(Array.isArray(tickets) ? tickets : []).map((ticket) => (
         <div
           key={ticket.id}
           className="grid grid-cols-[100px_1fr_140px_100px_110px_120px_60px] px-5 border-t border-[#F3F4F6] items-center min-h-[56px]"

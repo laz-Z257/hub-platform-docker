@@ -16,7 +16,7 @@ interface AnalyticsMetricsProps {
 export default function AnalyticsMetrics({ metrics }: AnalyticsMetricsProps) {
   return (
     <div className="grid grid-cols-4 gap-4 mb-7">
-      {metrics.map((metric) => (
+      {(Array.isArray(metrics) ? metrics : []).map((metric) => (
         <div
           key={metric.title}
           className="bg-white border border-gray-200 rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2"

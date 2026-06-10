@@ -54,7 +54,8 @@ interface TicketsTableProps {
 }
 
 export default function TicketsTable({ incidents }: TicketsTableProps) {
-  const tickets = incidents.map((inc) => ({
+  const safeIncidents = Array.isArray(incidents) ? incidents : [];
+  const tickets = safeIncidents.map((inc) => ({
     id: inc.id,
     nombre: inc.nombre || "Anónimo",
     asunto: inc.asunto || (inc.descripcion ? (inc.descripcion.length > 45 ? inc.descripcion.slice(0, 45) + "..." : inc.descripcion) : "Sin descripción"),

@@ -24,7 +24,7 @@ export default function UsersPage() {
     setActionLoading(user.id);
     try {
       const updated = await api.patch<ApiUser>(`/users/${user.id}/toggle-status`);
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+      setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
     } catch (err) {
       console.error("Toggle status:", err instanceof Error ? err.message : err);
     } finally {
@@ -172,7 +172,7 @@ export default function UsersPage() {
           user={editingUser}
           onClose={() => setEditingUser(null)}
           onSaved={(updated) => {
-            setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+            setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? updated : u)));
             setEditingUser(null);
           }}
         />

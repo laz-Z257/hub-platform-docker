@@ -145,7 +145,7 @@ export default function TicketsPage() {
           { estado: newStatus }
         );
         setIncidents((prev) =>
-          prev.map((inc) => (inc.id === ticketId ? updated : inc))
+          (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
       } catch (err) {
         console.error(
@@ -182,7 +182,7 @@ export default function TicketsPage() {
           { agente: agent }
         );
         setIncidents((prev) =>
-          prev.map((inc) => (inc.id === ticketId ? updated : inc))
+          (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
       } catch (err) {
         console.error(
@@ -195,8 +195,9 @@ export default function TicketsPage() {
   );
 
   const mappedTickets = useMemo(
-    () =>
-      incidents.map((inc) => ({
+    () => {
+      const safe = Array.isArray(incidents) ? incidents : [];
+      return safe.map((inc) => ({
         id: inc.id,
         asunto: formatDescription(inc.descripcion),
         categoria: inc.punto_venta,
@@ -210,7 +211,8 @@ export default function TicketsPage() {
               : "Resuelto",
         updatedAt: getRelativeTime(inc.updated_at),
         agente: inc.agente,
-      })),
+      }));
+    },
     [incidents]
   );
 

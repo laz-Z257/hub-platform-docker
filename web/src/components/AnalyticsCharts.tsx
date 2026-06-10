@@ -74,12 +74,13 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ data }: DonutChartProps) {
+  const safeData = Array.isArray(data) ? data : [];
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
       <ResponsiveContainer width="100%" height={240}>
         <PieChart>
           <Pie
-            data={data}
+            data={safeData}
             cx="50%"
             cy="50%"
             innerRadius={70}
@@ -88,7 +89,7 @@ export function DonutChart({ data }: DonutChartProps) {
             dataKey="value"
             strokeWidth={0}
           >
-            {data.map((entry, index) => (
+            {safeData.map((entry, index) => (
               <Cell key={index} fill={entry.color} />
             ))}
           </Pie>
@@ -102,7 +103,7 @@ export function DonutChart({ data }: DonutChartProps) {
         </PieChart>
       </ResponsiveContainer>
       <div style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap" }}>
-        {data.map((item) => (
+        {safeData.map((item) => (
           <div key={item.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: item.color }} />
             <span style={{ fontSize: "13px", color: "#6B7280", fontFamily: "Inter, sans-serif" }}>
@@ -120,7 +121,8 @@ interface StatusBarChartProps {
 }
 
 export function StatusBarChart({ data }: StatusBarChartProps) {
-  if (data.length === 0) {
+  const safeData = Array.isArray(data) ? data : [];
+  if (safeData.length === 0) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280 }}>
         <span style={{ fontSize: "14px", color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
@@ -132,7 +134,7 @@ export function StatusBarChart({ data }: StatusBarChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart data={safeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
         <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
