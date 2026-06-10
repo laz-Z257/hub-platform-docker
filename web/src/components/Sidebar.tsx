@@ -9,6 +9,7 @@ import {
   Users,
   Ticket,
   Monitor,
+  Settings,
   LogOut,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Users, label: "Gestión de Usuarios", path: "/dashboard/users" },
   { icon: Ticket, label: "Tickets", path: "/dashboard/tickets" },
   { icon: Monitor, label: "Sistemas Externos", path: "/dashboard/external-systems" },
+  { icon: Settings, label: "Configuración", path: "/dashboard/settings" },
 ];
 
 export default function Sidebar({ onLogout }: { onLogout: () => void }) {
