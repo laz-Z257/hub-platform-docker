@@ -13,13 +13,7 @@ import {
   saveUser,
   getSavedUser,
 } from "../services/api";
-
-export interface AuthUser {
-  id: string;
-  documento: string;
-  nombre: string;
-  rol: "user" | "admin";
-}
+import type { AuthUser } from "../../../shared/types/auth";
 
 interface AuthContextType {
   user: AuthUser | null;

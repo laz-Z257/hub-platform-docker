@@ -1,11 +1,25 @@
 # Shared
 
-Esta carpeta se reserva para código compartido entre los distintos subproyectos.
+Tipos y utilidades compartidas entre `web/`, `mobile/` y `backend/`.
 
-Por ejemplo:
+## Estructura
 
-- tipos compartidos
-- utilidades comunes
-- constantes y configuraciones cross-platform
+```
+shared/
+├── types/
+│   ├── auth.ts       # AuthUser, LoginInput, RegisterInput, AuthResponse
+│   ├── user.ts       # ApiUser
+│   ├── incident.ts   # Incident, IncidentComment, CreateIncidentInput, etc.
+│   └── api.ts        # PaginatedResponse<T>
+└── index.ts          # Barrel export
+```
 
-Actualmente no contiene archivos implementados.
+## Uso
+
+Desde cualquier subproyecto:
+
+```ts
+import type { AuthUser } from "../../shared/types/auth";
+import type { Incident } from "../../shared/types/incident";
+import type { PaginatedResponse } from "../../shared/types/api";
+```
