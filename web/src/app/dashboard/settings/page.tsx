@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Save, X } from "lucide-react";
+import { Save, X, Sun, Moon } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
 const TABS = [
@@ -48,6 +48,7 @@ function SettingsTabBar({
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   return (
     <div className="min-h-full bg-[#F7F8FC] px-8 py-7">
@@ -68,7 +69,7 @@ export default function SettingsPage() {
       {/* Tabs */}
       <SettingsTabBar active={activeTab} onChange={setActiveTab} />
 
-      {/* Tab Content */}
+      {/* Tab Content - Empresa */}
       {activeTab === "empresa" && (
         <div className="flex gap-6 mt-7">
           {/* Left column */}
@@ -90,7 +91,7 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Lumina Enterprise S.A."
+                    defaultValue="XXXXXXXXXXXX"
                     className="w-full h-[42px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors"
                   />
                 </div>
@@ -100,7 +101,7 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="ESA-992200-XX1"
+                    defaultValue="XXXXXXXXXXXX"
                     className="w-full h-[42px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors"
                   />
                 </div>
@@ -112,7 +113,7 @@ export default function SettingsPage() {
                   Dirección Fiscal
                 </label>
                 <textarea
-                  defaultValue="Avenida de la Tecnología 404, Edificio Quantum, Nivel 12, Ciudad de México, CP 11000"
+                  defaultValue="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                   rows={3}
                   className="w-full h-[80px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors resize-none"
                 />
@@ -144,8 +145,58 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Tab Content - Apariencia */}
+      {activeTab === "apariencia" && (
+        <div className="mt-7">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 max-w-lg">
+            <h2
+              className="font-inter font-bold text-[#1F2937] mb-6"
+              style={{ fontSize: "30px", lineHeight: 1.2 }}
+            >
+              Modo de Visualización
+            </h2>
+            <p className="text-[14px] text-[#6B7280] font-inter mb-6">
+              Selecciona el tema visual para la plataforma.
+            </p>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setTheme("light")}
+                className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
+                  theme === "light"
+                    ? "border-[#25207E] bg-[#F3F0FF]"
+                    : "border-[#E5E7EB] bg-white hover:bg-gray-50"
+                }`}
+              >
+                <Sun size={32} color={theme === "light" ? "#25207E" : "#6B7280"} />
+                <span className={`text-[14px] font-inter ${
+                  theme === "light" ? "font-semibold text-[#25207E]" : "font-medium text-[#6B7280]"
+                }`}>
+                  Claro
+                </span>
+              </button>
+              <button
+                onClick={() => setTheme("dark")}
+                className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
+                  theme === "dark"
+                    ? "border-[#25207E] bg-[#F3F0FF]"
+                    : "border-[#E5E7EB] bg-white hover:bg-gray-50"
+                }`}
+              >
+                <Moon size={32} color={theme === "dark" ? "#25207E" : "#6B7280"} />
+                <span className={`text-[14px] font-inter ${
+                  theme === "dark" ? "font-semibold text-[#25207E]" : "font-medium text-[#6B7280]"
+                }`}>
+                  Oscuro
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
-      {activeTab === "empresa" && (
+      {(activeTab === "empresa" || activeTab === "apariencia") && (
         <div className="flex justify-end gap-3 mt-6">
           <button className="h-[44px] px-5 bg-white border border-[#D1D5DB] rounded-lg text-[14px] font-medium text-[#4B5563] font-inter flex items-center gap-2 hover:bg-gray-50 transition-colors">
             <X size={16} />
