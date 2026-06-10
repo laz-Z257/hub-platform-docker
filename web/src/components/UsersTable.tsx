@@ -63,12 +63,12 @@ export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTable
         ))}
       </div>
 
-      {users.length === 0 && (
+      {!Array.isArray(users) ? null : users.length === 0 && (
         <div className="text-center py-12">
           <p className="text-sm text-[#9CA3AF] font-inter">No se encontraron usuarios</p>
         </div>
       )}
-      {users.map((user) => (
+      {Array.isArray(users) && users.map((user) => (
         <div
           key={user.id}
           className="grid grid-cols-[1fr_100px_110px_120px_140px] px-5 border-t border-gray-100 items-center"
