@@ -53,9 +53,10 @@ export async function register(
       tokenVersion: user.token_version,
     });
 
-    setCsrfCookie(res, generateCsrfToken());
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
-    res.status(201).json({ user: userResponse(user) });
+    res.status(201).json({ user: userResponse(user), csrfToken });
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ error: "Error al registrar usuario" });
@@ -98,9 +99,10 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     const { token } = setTokenCookies(res, payload);
 
-    setCsrfCookie(res, generateCsrfToken());
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
-    res.json({ token, user: userResponse(user) });
+    res.json({ token, user: userResponse(user), csrfToken });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Error interno del servidor" });
@@ -126,7 +128,10 @@ export async function me(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    res.json(user);
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
+
+    res.json({ ...user, csrfToken });
   } catch (error) {
     console.error("Me error:", error);
     res.status(500).json({ error: "Error interno del servidor" });
@@ -163,9 +168,10 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       tokenVersion: user.token_version,
     });
 
-    setCsrfCookie(res, generateCsrfToken());
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
-    res.json({ ok: true });
+    res.json({ ok: true, csrfToken });
   } catch {
     clearTokenCookies(res);
     res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });

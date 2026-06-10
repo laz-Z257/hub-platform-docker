@@ -1,9 +1,25 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const FALLBACK_API_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://hub-platform-api.onrender.com/api"
+    : "http://localhost:3001/api";
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL &&
+  process.env.NEXT_PUBLIC_API_URL !== "http://localhost:3001/api"
+    ? process.env.NEXT_PUBLIC_API_URL
+    : FALLBACK_API_URL;
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
+let csrfToken: string | null = null;
+
+export function setCsrfToken(token: string | null) {
+  csrfToken = token;
+}
 
 function getCsrfToken(): string | null {
+  if (csrfToken) return csrfToken;
+  // Dev fallback: read from cookie (same-origin)
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(/csrf-token=([^;]+)/);
   return match?.[1] || null;
@@ -29,7 +45,13 @@ async function tryRefresh(): Promise<boolean> {
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     credentials: "include",
-  }).then((r) => r.ok);
+  }).then(async (r) => {
+    if (r.ok) {
+      const body = await r.json().catch(() => ({}));
+      if (body.csrfToken) setCsrfToken(body.csrfToken);
+    }
+    return r.ok;
+  });
 
   try {
     return await refreshPromise;
