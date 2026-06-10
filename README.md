@@ -177,6 +177,8 @@ PORT=3001
 NODE_ENV=development
 ```
 
+> El `docker-compose.yml` usa la sintaxis `${VAR:-default}`, por lo que si `.env` contiene estas variables, Docker Compose las usará automáticamente. No hay secrets hardcodeados.
+
 **Web (`web/.env`):**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
@@ -260,6 +262,12 @@ Resuelta. Principales fixes aplicados:
 - Seed simplificado (solo admin, sin incidentes falsos)
 - Dashboard sin datos hardcodeados
 - Next.js 15.5.19 (security patch)
+
+### v2.1 (security fixes)
+- P0: Verificación de propiedad en `POST /incidents/:id/comments` (solo dueño o admin)
+- P0: SSL `rejectUnauthorized: true` en PostgreSQL (db/index, migrate, seed)
+- P0: Secrets en `docker-compose.yml` usan variables de entorno (`${VAR:-default}`)
+- Tipos compartidos extraídos a `shared/types/` (evita duplicación web ↔ mobile)
 
 ## Errores conocidos y soluciones
 
