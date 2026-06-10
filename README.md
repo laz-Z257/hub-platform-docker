@@ -292,6 +292,24 @@ Resuelta. Principales fixes aplicados:
 
 **Pendientes (riesgo medio/alto):** migrar JWT a cookie HttpOnly, eliminar auto-creación de usuarios, paginación en listUsers, validar sesión contra backend al iniciar.
 
+### 2026-06-10 (2) — EAS Update (OTA)
+
+**Setup:** `expo-updates` + config en `app.json` y `eas.json` con canales `preview` y `production`.
+
+**Uso para futuros cambios JS (pantallas, estilos, lógica, bug fixes):**
+```bash
+cd mobile
+eas update --channel preview --message "descripción del cambio"   # ~30 segundos
+```
+Los usuarios reciben la update automáticamente al abrir la app.
+
+**Solo usar `eas build` para:** nuevo paquete nativo, upgrade de Expo SDK, cambios en app.json nativo.
+
+**Revertir una update rota:**
+```bash
+eas update:rollback --channel preview
+```
+
 ## Errores conocidos y soluciones
 
 ### 🐛 Render Docker no arrancaba (`x-render-routing: no-server`)

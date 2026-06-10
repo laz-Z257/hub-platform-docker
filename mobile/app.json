@@ -7,6 +7,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "hub-platform",
+    "updates": {
+      "url": "https://u.expo.dev/10965177-584d-46f0-937a-d6fdcf8bf046",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hubplatform.aiapp"
