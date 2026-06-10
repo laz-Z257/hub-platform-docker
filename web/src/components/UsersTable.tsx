@@ -51,12 +51,12 @@ interface UsersTableProps {
 
 export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTableProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="grid grid-cols-[1fr_100px_110px_120px_140px] bg-[#EEF2FF] px-5">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+      <div className="grid grid-cols-[1fr_100px_110px_120px_140px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
         {["USUARIO", "ROL", "ESTADO", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
           <div
             key={col}
-            className="py-3.5 px-2 text-[11px] font-semibold text-gray-600 font-inter uppercase tracking-[0.5px]"
+            className="py-3.5 px-2 text-[11px] font-semibold text-gray-600 dark:text-gray-400 font-inter uppercase tracking-[0.5px]"
           >
             {col}
           </div>
@@ -65,20 +65,20 @@ export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTable
 
       {!Array.isArray(users) ? null : users.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-sm text-[#9CA3AF] font-inter">No se encontraron usuarios</p>
+          <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter">No se encontraron usuarios</p>
         </div>
       )}
       {Array.isArray(users) && users.map((user) => (
         <div
           key={user.id}
-          className="grid grid-cols-[1fr_100px_110px_120px_140px] px-5 border-t border-gray-100 items-center"
+          className="grid grid-cols-[1fr_100px_110px_120px_140px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
         >
           <div className="flex items-center gap-3 py-3 px-2">
             <div className="w-9 h-9 rounded-full bg-[#F3F0FF] flex items-center justify-center text-[#25207E] text-[13px] font-semibold font-inter shrink-0">
               {getInitials(user)}
             </div>
             <div>
-              <p className="text-[13px] font-semibold text-gray-800 font-inter">
+              <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 font-inter">
                 {displayName(user)}
               </p>
               {hasName(user) && (
@@ -114,7 +114,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTable
           </div>
 
           <div className="py-3 px-2">
-            <span className="text-[13px] text-gray-500 font-inter">
+            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
               {formatLastActivity(user.ultima_actividad)}
             </span>
           </div>
@@ -122,7 +122,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTable
           <div className="flex items-center gap-2 py-3 px-2 justify-end">
             <button
               onClick={() => onEdit(user)}
-              className="h-[30px] px-3 rounded-md border border-gray-200 bg-white cursor-pointer text-xs font-medium font-inter text-gray-700 hover:bg-gray-50"
+              className="h-[30px] px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer text-xs font-medium font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               Editar
             </button>

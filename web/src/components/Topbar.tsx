@@ -18,7 +18,7 @@ export default function Topbar({ userName }: { userName?: string }) {
         : "Buscar en el sistema...";
 
   return (
-    <header className="fixed top-0 left-[250px] right-0 h-[72px] bg-white border-b border-gray-200 flex items-center px-6 z-30">
+    <header className="fixed top-0 left-[250px] right-0 h-[72px] bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-700 flex items-center px-6 z-30">
       <div className="relative w-80">
         <Search
           size={18}
@@ -29,7 +29,7 @@ export default function Topbar({ userName }: { userName?: string }) {
         <input
           type="text"
           placeholder={placeholder}
-          className="w-full h-[42px] border border-gray-200 rounded-[20px] bg-[#EEF2FF] pl-10 pr-4 text-[13px] font-inter text-gray-800 outline-none"
+          className="w-full h-[42px] border border-gray-200 dark:border-gray-700 rounded-[20px] bg-[#EEF2FF] dark:bg-gray-800 pl-10 pr-4 text-[13px] font-inter text-gray-800 dark:text-gray-100 outline-none"
         />
       </div>
 

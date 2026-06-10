@@ -14,7 +14,7 @@ interface TicketFiltersProps {
 }
 
 const selectClass =
-  "h-9 px-3 border border-[#E5E7EB] rounded-lg bg-white text-[13px] font-inter text-[#1F2937] outline-none cursor-pointer appearance-none pr-8";
+  "h-9 px-3 border border-[#E5E7EB] dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-[13px] font-inter text-[#1F2937] dark:text-gray-100 outline-none cursor-pointer appearance-none pr-8";
 
 export default function TicketFilters({
   searchTerm,
@@ -27,7 +27,7 @@ export default function TicketFilters({
   onDateChange,
 }: TicketFiltersProps) {
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-[10px] h-[60px] flex items-center px-4 gap-3 mb-5">
+    <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-[10px] h-[60px] flex items-center px-4 gap-3 mb-5">
       <div className="relative flex-1 max-w-[340px]">
         <Search
           size={16}
@@ -40,7 +40,7 @@ export default function TicketFilters({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Filtrar por asunto o ID..."
-          className="w-full h-9 pl-9 pr-3 border border-[#E5E7EB] rounded-lg bg-white text-[13px] font-inter text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
+          className="w-full h-9 pl-9 pr-3 border border-[#E5E7EB] dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-[13px] font-inter text-[#1F2937] dark:text-gray-100 outline-none placeholder:text-[#9CA3AF] dark:placeholder:text-gray-400"
         />
       </div>
 
@@ -98,7 +98,7 @@ export default function TicketFilters({
         />
       </div>
 
-      <button className="w-9 h-9 flex items-center justify-center border border-[#E5E7EB] rounded-lg bg-white cursor-pointer">
+      <button className="w-9 h-9 flex items-center justify-center border border-[#E5E7EB] dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 cursor-pointer">
         <Download size={16} color="#6B7280" strokeWidth={2} />
       </button>
     </div>

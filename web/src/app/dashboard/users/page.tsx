@@ -84,7 +84,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="bg-[#F8F8FC] min-h-[calc(100vh-72px)] p-8">
+    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <UserSummaryCards
         totalUsers={totalUsers}
         adminCount={adminCount}
@@ -119,7 +119,7 @@ export default function UsersPage() {
       <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} />
 
       <div className="flex items-center justify-between mt-5">
-        <span className="text-[13px] text-gray-500 font-inter">
+        <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
           Mostrando {Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)} a {Math.min(page * PER_PAGE, filteredUsers.length)} de{" "}
           {filteredUsers.length.toLocaleString()} usuarios
         </span>
@@ -128,7 +128,7 @@ export default function UsersPage() {
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
             style={{ opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? "default" : "pointer" }}
           >
             <ChevronLeft size={14} color="#6B7280" strokeWidth={2} />
@@ -159,7 +159,7 @@ export default function UsersPage() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
             style={{ opacity: page === totalPages ? 0.5 : 1, cursor: page === totalPages ? "default" : "pointer" }}
           >
             <ChevronRight size={14} color="#6B7280" strokeWidth={2} />

@@ -42,12 +42,12 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="bg-[#F8F8FC] min-h-[calc(100vh-70px)] p-8">
+    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-70px)] p-8">
       <div className="mb-8">
         <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
           Panel de Control
         </h1>
-        <p className="mt-1.5 text-sm text-gray-500 font-inter">
+        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 font-inter">
           Bienvenido de nuevo. Aquí tienes un vistazo del estado actual de tu ecosistema.
         </p>
       </div>

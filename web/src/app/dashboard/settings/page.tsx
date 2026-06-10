@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Save, X, Sun, Moon } from "lucide-react";
 import logoImg from "@/assets/logo.png";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const TABS = [
   { label: "Perfil de la Empresa", key: "empresa" },
@@ -20,7 +21,7 @@ function SettingsTabBar({
   onChange: (key: string) => void;
 }) {
   return (
-    <div className="border-b border-[#E5E7EB]">
+    <div className="border-b border-[#E5E7EB] dark:border-gray-700">
       <div className="flex gap-0">
         {TABS.map((tab) => {
           const isActive = tab.key === active;
@@ -31,7 +32,7 @@ function SettingsTabBar({
               className={`relative px-5 py-3 text-[13px] font-inter transition-colors duration-150 ${
                 isActive
                   ? "font-semibold text-[#25207E]"
-                  : "font-normal text-[#6B7280]"
+                  : "font-normal text-[#6B7280] dark:text-gray-400"
               }`}
             >
               {tab.label}
@@ -48,10 +49,10 @@ function SettingsTabBar({
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-full bg-[#F7F8FC] px-8 py-7">
+    <div className="min-h-full bg-[#F7F8FC] dark:bg-gray-950 px-8 py-7">
       {/* Header */}
       <div className="mb-7">
         <h1
@@ -60,7 +61,7 @@ export default function SettingsPage() {
         >
           Configuración del Sistema
         </h1>
-        <p className="text-[14px] text-[#6B7280] font-inter mt-2 max-w-[640px]">
+        <p className="text-[14px] text-[#6B7280] dark:text-gray-400 font-inter mt-2 max-w-[640px]">
           Administra la identidad de tu empresa, la seguridad y las preferencias
           globales de la plataforma.
         </p>
@@ -75,9 +76,9 @@ export default function SettingsPage() {
           {/* Left column */}
           <div className="flex-[7]">
             {/* General Information Card */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
               <h2
-                className="font-inter font-bold text-[#1F2937] mb-6"
+                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6"
                 style={{ fontSize: "30px", lineHeight: 1.2 }}
               >
                 Información General
@@ -86,36 +87,36 @@ export default function SettingsPage() {
               {/* Row 1 */}
               <div className="flex gap-5 mb-5">
                 <div className="flex-1">
-                  <label className="block text-[14px] font-medium text-[#374151] font-inter mb-1.5">
+                    <label className="block text-[14px] font-medium text-[#374151] dark:text-gray-300 font-inter mb-1.5">
                     Nombre de la Empresa
                   </label>
                   <input
                     type="text"
                     defaultValue="XXXXXXXXXXXX"
-                    className="w-full h-[42px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors"
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[14px] font-medium text-[#374151] font-inter mb-1.5">
+                  <label className="block text-[14px] font-medium text-[#374151] dark:text-gray-300 font-inter mb-1.5">
                     ID de Contribuyente
                   </label>
                   <input
                     type="text"
                     defaultValue="XXXXXXXXXXXX"
-                    className="w-full h-[42px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors"
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors"
                   />
                 </div>
               </div>
 
               {/* Row 2 */}
               <div>
-                <label className="block text-[14px] font-medium text-[#374151] font-inter mb-1.5">
+                <label className="block text-[14px] font-medium text-[#374151] dark:text-gray-300 font-inter mb-1.5">
                   Dirección Fiscal
                 </label>
                 <textarea
                   defaultValue="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                   rows={3}
-                  className="w-full h-[80px] bg-[#F9FAFB] border border-[#D1D5DB] rounded-md px-3 py-2 text-[14px] text-[#1F2937] font-inter outline-none focus:border-[#25207E] transition-colors resize-none"
+                  className="w-full h-[80px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 py-2 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors resize-none"
                 />
               </div>
             </div>
@@ -124,14 +125,14 @@ export default function SettingsPage() {
           {/* Right column */}
           <div className="flex-[3]">
             {/* Logo Card */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 flex flex-col items-center">
+            <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 flex flex-col items-center">
               <h2
-                className="font-inter font-bold text-[#1F2937] mb-6 self-start"
+                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 self-start"
                 style={{ fontSize: "30px", lineHeight: 1.2 }}
               >
                 Logo Corporativo
               </h2>
-              <div className="w-[140px] h-[140px] bg-[#F8FAFC] border-2 border-dashed border-[#CBD5E1] rounded-full flex items-center justify-center">
+              <div className="w-[140px] h-[140px] bg-[#F8FAFC] dark:bg-gray-800 border-2 border-dashed border-[#CBD5E1] dark:border-gray-600 rounded-full flex items-center justify-center">
                 <Image
                   src={logoImg}
                   alt="Company Logo"
@@ -148,14 +149,14 @@ export default function SettingsPage() {
       {/* Tab Content - Apariencia */}
       {activeTab === "apariencia" && (
         <div className="mt-7">
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 max-w-lg">
+          <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 max-w-lg">
             <h2
-              className="font-inter font-bold text-[#1F2937] mb-6"
+              className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6"
               style={{ fontSize: "30px", lineHeight: 1.2 }}
             >
               Modo de Visualización
             </h2>
-            <p className="text-[14px] text-[#6B7280] font-inter mb-6">
+            <p className="text-[14px] text-[#6B7280] dark:text-gray-400 font-inter mb-6">
               Selecciona el tema visual para la plataforma.
             </p>
             
@@ -165,7 +166,7 @@ export default function SettingsPage() {
                 className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
                   theme === "light"
                     ? "border-[#25207E] bg-[#F3F0FF]"
-                    : "border-[#E5E7EB] bg-white hover:bg-gray-50"
+                    : "border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 <Sun size={32} color={theme === "light" ? "#25207E" : "#6B7280"} />
@@ -180,7 +181,7 @@ export default function SettingsPage() {
                 className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
                   theme === "dark"
                     ? "border-[#25207E] bg-[#F3F0FF]"
-                    : "border-[#E5E7EB] bg-white hover:bg-gray-50"
+                    : "border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 <Moon size={32} color={theme === "dark" ? "#25207E" : "#6B7280"} />
@@ -198,7 +199,7 @@ export default function SettingsPage() {
       {/* Action Buttons */}
       {(activeTab === "empresa" || activeTab === "apariencia") && (
         <div className="flex justify-end gap-3 mt-6">
-          <button className="h-[44px] px-5 bg-white border border-[#D1D5DB] rounded-lg text-[14px] font-medium text-[#4B5563] font-inter flex items-center gap-2 hover:bg-gray-50 transition-colors">
+          <button className="h-[44px] px-5 bg-white dark:bg-gray-900 border border-[#D1D5DB] dark:border-gray-600 rounded-lg text-[14px] font-medium text-[#4B5563] dark:text-gray-300 font-inter flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <X size={16} />
             Descartar Cambios
           </button>

@@ -12,7 +12,7 @@ export default function ExternalSystemFrame({
   title = "Sistema Externo",
 }: ExternalSystemFrameProps) {
   return (
-    <div className="w-[95%] h-[620px] bg-[#EEF2FF] rounded-lg border border-[#E5E7EB] relative overflow-hidden flex items-center justify-center">
+    <div className="w-[95%] h-[620px] bg-[#EEF2FF] dark:bg-gray-800 rounded-lg border border-[#E5E7EB] dark:border-gray-700 relative overflow-hidden flex items-center justify-center">
       {/* X guideline */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"

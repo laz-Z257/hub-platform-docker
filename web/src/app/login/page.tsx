@@ -51,8 +51,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-[#F5F4FC] min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white w-[420px] rounded-xl border border-gray-200 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-9">
+    <div className="bg-[#F5F4FC] dark:bg-gray-950 min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 w-[420px] rounded-xl border border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-9">
         <div className="flex justify-center mb-6">
           <Image
             src={logoImg}
@@ -63,11 +63,11 @@ export default function LoginPage() {
           />
         </div>
 
-        <h1 className="font-inter text-[22px] font-bold text-gray-800 text-center">
+        <h1 className="font-inter text-[22px] font-bold text-gray-800 dark:text-gray-100 text-center">
           Bienvenido de nuevo
         </h1>
 
-        <p className="font-inter text-sm font-normal text-gray-500 text-center mt-1.5 mb-[34px]">
+        <p className="font-inter text-sm font-normal text-gray-500 dark:text-gray-400 text-center mt-1.5 mb-[34px]">
           Accede a tu panel corporativo seguro.
         </p>
 
@@ -79,11 +79,11 @@ export default function LoginPage() {
           )}
 
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-700 font-inter mb-1.5 ml-0.5">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 font-inter mb-1.5 ml-0.5">
               Número de Documento
             </label>
             <div
-              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] overflow-hidden"
+              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden"
               style={{
                 border: errors.documento ? "1px solid #EF4444" : "1px solid #D1D5DB",
               }}
@@ -102,7 +102,7 @@ export default function LoginPage() {
                 placeholder="Ej: 123456789"
                 autoComplete="off"
                 autoCapitalize="off"
-                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] pr-3"
+                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] dark:text-gray-100 pr-3"
               />
             </div>
             {errors.documento && (
@@ -113,11 +113,11 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-xs font-medium text-gray-700 font-inter mb-1.5 ml-0.5">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 font-inter mb-1.5 ml-0.5">
               Contraseña
             </label>
             <div
-              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] overflow-hidden"
+              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden"
               style={{
                 border: errors.contrasena ? "1px solid #EF4444" : "1px solid #D1D5DB",
               }}
@@ -138,7 +138,7 @@ export default function LoginPage() {
                 }}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] pr-1"
+                className="flex-1 h-full border-none outline-none bg-transparent text-[15px] font-inter text-[#111827] dark:text-gray-100 pr-1"
               />
               <button
                 type="button"
@@ -201,7 +201,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="h-px bg-gray-200 mt-6" />
+        <div className="h-px bg-gray-200 dark:bg-gray-700 mt-6" />
       </div>
     </div>
   );

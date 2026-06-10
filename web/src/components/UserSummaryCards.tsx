@@ -39,7 +39,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
       {cards.map((card) => (
         <div
           key={card.title}
-          className="bg-white border border-gray-200 rounded-xl p-[18px] min-h-[110px] flex flex-col justify-center gap-2.5"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-[18px] min-h-[110px] flex flex-col justify-center gap-2.5"
         >
           <div
             className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
@@ -48,7 +48,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
             <card.icon size={19} color={card.iconColor} strokeWidth={2} />
           </div>
           <div>
-            <p className="text-[13px] font-medium text-gray-500 font-inter">{card.title}</p>
+            <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 font-inter">{card.title}</p>
             <p className="text-[36px] font-bold text-[#25207E] font-inter leading-tight mt-0.5">
               {card.value}
             </p>

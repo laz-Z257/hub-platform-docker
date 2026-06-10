@@ -61,7 +61,7 @@ export default function TicketSummaryCards({
       {cards.map((card) => (
         <div
           key={card.title}
-          className="bg-white border border-[#E5E7EB] rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2.5"
+          className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2.5"
         >
           <div
             className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
@@ -70,7 +70,7 @@ export default function TicketSummaryCards({
             <card.icon size={19} color={card.iconColor} strokeWidth={2} />
           </div>
           <div>
-            <p className="text-[13px] font-medium text-[#6B7280] font-inter">
+            <p className="text-[13px] font-medium text-[#6B7280] dark:text-gray-400 font-inter">
               {card.title}
             </p>
             <p className="text-[32px] font-bold text-[#25207E] font-inter leading-none mt-1">

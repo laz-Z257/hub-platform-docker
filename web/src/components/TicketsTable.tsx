@@ -65,9 +65,9 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
   }));
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-lg font-bold text-gray-800 font-inter">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-inter">
           Tickets Recientes
         </h3>
         <Link
@@ -99,10 +99,10 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
           <tbody>
             {tickets.map((ticket, i) => (
               <tr key={ticket.id} className="border-t border-gray-100">
-                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 font-inter">
+                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
                   {ticket.nombre}
                 </td>
-                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 font-inter">
+                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
                   {ticket.asunto}
                 </td>
                 <td className="px-3 py-3">
@@ -118,7 +118,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
                     {ticket.prioridad}
                   </span>
                 </td>
-                <td className="px-3 py-3 text-[13px] text-gray-500 font-inter">
+                <td className="px-3 py-3 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
                   {ticket.fecha}
                 </td>
                 <td className="px-3 py-3">
@@ -130,7 +130,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
                           STATUS_COLORS[ticket.estado] || "#D1D5DB",
                       }}
                     />
-                    <span className="text-[13px] text-gray-700 font-inter">
+                    <span className="text-[13px] text-gray-700 dark:text-gray-300 font-inter">
                       {ticket.estado}
                     </span>
                   </div>

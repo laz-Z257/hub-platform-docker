@@ -161,13 +161,13 @@ export default function AnalyticsPage() {
     : "Resumen de soporte corporativo — últimos 30 días.";
 
   return (
-    <div className="bg-[#F8F8FC] min-h-[calc(100vh-72px)] p-8">
+    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
         <div>
-          <h1 className="text-[42px] font-bold text-gray-800 font-inter leading-tight">
+          <h1 className="text-[42px] font-bold text-gray-800 dark:text-gray-100 font-inter leading-tight">
             Panel de Analítica
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500 font-inter">
+          <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 font-inter">
             {subtitle}
           </p>
         </div>
@@ -175,12 +175,12 @@ export default function AnalyticsPage() {
         <div className="flex flex-col gap-3 items-end">
           <div className="flex items-center gap-3">
             {agentes.length > 0 && (
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 h-11">
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 h-11">
                 <User size={16} color="#6B7280" strokeWidth={2} />
                 <select
                   value={selectedAgente}
                   onChange={(e) => handleAgentChange(e.target.value)}
-                  className="h-full border-none bg-transparent text-[13px] font-medium text-gray-700 font-inter cursor-pointer outline-none min-w-[140px]"
+                  className="h-full border-none bg-transparent text-[13px] font-medium text-gray-700 dark:text-gray-300 font-inter cursor-pointer outline-none min-w-[140px]"
                 >
                   <option value="">Todos los técnicos</option>
                   {agentes.map((a) => (
@@ -213,36 +213,36 @@ export default function AnalyticsPage() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="flex items-start justify-between mb-5">
             <div>
-              <h3 className="text-base font-bold text-gray-800 font-inter">
+              <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
                 Incidentes vs. Resueltos
               </h3>
-              <p className="mt-1 text-[13px] text-gray-500 font-inter">
+              <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
                 Evolución de tickets en el tiempo
               </p>
             </div>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-[#25207E]" />
-                <span className="text-xs text-gray-500 font-inter">Incidentes</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Incidentes</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-[#A1A1AA]" />
-                <span className="text-xs text-gray-500 font-inter">Resueltos</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Resueltos</span>
               </div>
             </div>
           </div>
           <TrafficChart data={areaData} />
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
-            <h3 className="text-base font-bold text-gray-800 font-inter">
+            <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
               Distribución por Urgencia
             </h3>
-            <p className="mt-1 text-[13px] text-gray-500 font-inter">
+            <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
               Desglose de incidentes por nivel
             </p>
           </div>
@@ -252,27 +252,27 @@ export default function AnalyticsPage() {
 
       {/* Status Bar Chart */}
       <div className="mt-6">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
-            <h3 className="text-base font-bold text-gray-800 font-inter">
+            <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
               Incidentes por Estado
             </h3>
-            <p className="mt-1 text-[13px] text-gray-500 font-inter">
+            <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
               {selectedAgente ? `Técnico: ${selectedAgente}` : "Todos los técnicos"} — Pendientes, en proceso y resueltos
             </p>
           </div>
           <div className="flex items-center gap-6 mb-4">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-[#3B82F6]" />
-              <span className="text-xs text-gray-500 font-inter">Pendientes</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Pendientes</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-[#7C3AED]" />
-              <span className="text-xs text-gray-500 font-inter">En Proceso</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">En Proceso</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-[#22C55E]" />
-              <span className="text-xs text-gray-500 font-inter">Resueltos</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Resueltos</span>
             </div>
           </div>
           <StatusBarChart data={statusData} />

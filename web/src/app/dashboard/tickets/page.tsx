@@ -232,14 +232,14 @@ export default function TicketsPage() {
   }
 
   return (
-    <div className="bg-[#F7F8FC] min-h-[calc(100vh-72px)] p-8">
+    <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       {/* Page Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
           <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
             Gestión de Tickets
           </h1>
-          <p className="mt-1.5 text-sm text-[#6B7280] font-inter max-w-[650px]">
+          <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
             Administre las solicitudes de soporte, supervise el progreso del
             equipo y mantenga altos estándares de resolución para sus clientes
             externos e internos.
@@ -287,7 +287,7 @@ export default function TicketsPage() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-5">
-        <span className="text-[13px] text-[#6B7280] font-inter">
+        <span className="text-[13px] text-[#6B7280] dark:text-gray-400 font-inter">
           Mostrando {(page - 1) * LIMIT + 1}-{Math.min(page * LIMIT, total)}{" "}
           de {total.toLocaleString()} tickets
         </span>
@@ -296,7 +296,7 @@ export default function TicketsPage() {
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900"
             style={{
               cursor: page === 1 ? "default" : "pointer",
               opacity: page === 1 ? 0.5 : 1,
@@ -309,7 +309,7 @@ export default function TicketsPage() {
             p === "..." ? (
               <span
                 key={`dot-${i}`}
-                className="w-8 h-8 flex items-center justify-center text-[13px] text-[#9CA3AF] font-inter"
+                className="w-8 h-8 flex items-center justify-center text-[13px] text-[#9CA3AF] dark:text-gray-400 font-inter"
               >
                 ...
               </span>
@@ -333,7 +333,7 @@ export default function TicketsPage() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900"
             style={{
               cursor: page === totalPages ? "default" : "pointer",
               opacity: page === totalPages ? 0.5 : 1,

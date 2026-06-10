@@ -38,30 +38,30 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl p-7 w-[380px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+        className="bg-white dark:bg-gray-900 rounded-2xl p-7 w-[380px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] dark:shadow-gray-900/30"
       >
-        <h2 className="text-lg font-bold text-gray-800 font-inter mb-1.5">Editar Usuario</h2>
-        <p className="text-[13px] text-gray-500 font-inter mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-inter mb-1.5">Editar Usuario</h2>
+        <p className="text-[13px] text-gray-500 dark:text-gray-400 font-inter mb-6">
           {user.documento}
         </p>
 
         <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-700 font-inter mb-1.5">Nombre</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Nombre</label>
           <input
             type="text"
             value={editNombre}
             onChange={(e) => setEditNombre(e.target.value)}
-            className="w-full h-11 px-3.5 rounded-lg border border-gray-300 bg-[#F9FAFB] text-sm font-inter text-gray-800 outline-none"
+            className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none"
             placeholder="Nombre del usuario"
           />
         </div>
 
         <div className="mb-5">
-          <label className="block text-xs font-semibold text-gray-700 font-inter mb-1.5">Rol</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Rol</label>
           <select
             value={editRole}
             onChange={(e) => setEditRole(e.target.value as "admin" | "user")}
-            className="w-full h-11 px-3.5 rounded-lg border border-gray-300 bg-[#F9FAFB] text-sm font-inter text-gray-800 outline-none cursor-pointer"
+            className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none cursor-pointer"
           >
             <option value="user">Usuario</option>
             <option value="admin">Admin</option>
@@ -71,7 +71,7 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
         <div className="flex justify-end gap-2.5">
           <button
             onClick={onClose}
-            className="h-10 px-[18px] rounded-lg border border-gray-200 bg-white cursor-pointer text-[13px] font-medium font-inter text-gray-700"
+            className="h-10 px-[18px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer text-[13px] font-medium font-inter text-gray-700 dark:text-gray-300"
           >
             Cancelar
           </button>

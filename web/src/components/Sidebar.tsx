@@ -45,7 +45,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const displayName = user?.nombre || "Usuario";
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-[250px] bg-white border-r border-gray-200 flex flex-col z-40">
+    <aside className="fixed top-0 left-0 bottom-0 w-[250px] bg-white dark:bg-[#0f172a] border-r border-gray-200 dark:border-gray-700 flex flex-col z-40">
       <div className="flex items-center px-5 py-5 pb-6 gap-2.5">
         <Image
           src={logoImg}
@@ -54,7 +54,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
           height={32}
           style={{ borderRadius: "6px" }}
         />
-        <span className="text-sm font-medium text-gray-700 font-inter">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter">
           Admin Dashboard
         </span>
       </div>
@@ -88,18 +88,18 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
         })}
       </nav>
 
-      <div className="p-5 border-t border-gray-200">
+      <div className="p-5 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-9 h-9 rounded-full bg-[#25207E] flex items-center justify-center text-white text-sm font-semibold font-inter">
             {initials}
           </div>
-          <span className="text-[13px] font-medium text-gray-800 font-inter">
+          <span className="text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
             {displayName}
           </span>
         </div>
         <button
           onClick={onLogout}
-          className="w-full h-9 rounded-lg border border-gray-200 bg-white cursor-pointer text-[13px] font-medium font-inter text-red-600 flex items-center justify-center gap-1.5"
+          className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] cursor-pointer text-[13px] font-medium font-inter text-red-600 flex items-center justify-center gap-1.5"
         >
           <LogOut size={16} />
           Cerrar Sesión
