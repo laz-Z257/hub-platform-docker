@@ -64,6 +64,7 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
             className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none cursor-pointer"
           >
             <option value="user">Usuario</option>
+            <option value="asesor">Asesor</option>
             <option value="admin">Admin</option>
           </select>
         </div>

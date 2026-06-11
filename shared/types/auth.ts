@@ -2,7 +2,7 @@ export interface AuthUser {
   id: string;
   documento: string;
   nombre: string;
-  rol: "user" | "admin";
+  rol: "user" | "asesor" | "admin";
 }
 
 export interface LoginInput {

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const roles = z.enum(["user", "asesor", "admin"]);
+
 export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
 
 export const listUsersQuerySchema = {
@@ -17,7 +19,7 @@ export const listUsersQuerySchema = {
       .transform(Number)
       .pipe(z.number().int().min(1).max(200)),
     search: z.string().optional(),
-    rol: z.enum(["admin", "user"]).optional(),
+    rol: roles.optional(),
   }),
 };
 
@@ -25,12 +27,12 @@ export const createUserSchema = z.object({
   documento: z.string().min(1, "El documento es requerido").max(20),
   nombre: z.string().min(1, "El nombre es requerido").max(100),
   contrasena: z.string().min(6, "Mínimo 6 caracteres"),
-  rol: z.enum(["admin", "user"]).optional().default("user"),
+  rol: roles.optional().default("user"),
 });
 
 export const updateUserSchema = {
   body: z.object({
-    rol: z.enum(["admin", "user"]).optional(),
+    rol: roles.optional(),
     nombre: z.string().min(1).max(100).optional(),
     email: z.string().email().optional().or(z.literal("")),
   }),

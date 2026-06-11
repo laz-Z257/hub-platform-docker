@@ -7,6 +7,7 @@ import type { ApiUser } from "@/types/user";
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#F3F0FF", color: "#25207E" },
+  asesor: { bg: "#FEF3C7", color: "#D97706" },
   user: { bg: "#DBEAFE", color: "#2563EB" },
 };
 
