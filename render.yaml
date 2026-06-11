@@ -13,4 +13,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        value: "https://web-a-74c5ba6d.vercel.app"
+        value: "https://web-a-74c5ba6d.vercel.app,https://web-seven-ruby-46.vercel.app"
