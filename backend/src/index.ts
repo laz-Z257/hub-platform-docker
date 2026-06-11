@@ -44,9 +44,10 @@ app.use(
             "http://localhost:19006",
             /^https?:\/\/localhost(:\d+)?$/,
           ]
-        : process.env.CORS_ORIGIN?.split(",") ?? (() => {
-            throw new Error("CORS_ORIGIN es requerida en producción");
-          })(),
+        : [
+            ...(process.env.CORS_ORIGIN?.split(",") || []),
+            /^https:\/\/.*\.vercel\.app$/,
+          ],
     credentials: true,
   })
 );
