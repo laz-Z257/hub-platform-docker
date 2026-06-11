@@ -1,10 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, HelpCircle, Search, UserPlus } from "lucide-react";
 
 export default function Topbar({ userName }: { userName?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAnalytics = pathname === "/dashboard/analytics";
   const isUsers = pathname === "/dashboard/users";
   const isTickets = pathname === "/dashboard/tickets";
@@ -50,7 +51,10 @@ export default function Topbar({ userName }: { userName?: string }) {
         </span>
 
         {isUsers && (
-          <button className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white">
+          <button
+            onClick={() => router.push("/dashboard/users?create=true")}
+            className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
+          >
             <UserPlus size={16} strokeWidth={2.5} />
             Añadir Usuario
           </button>
