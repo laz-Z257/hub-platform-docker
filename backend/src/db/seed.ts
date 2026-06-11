@@ -23,10 +23,8 @@ async function seed() {
     crypto.randomBytes(16).toString("hex");
 
   if (!process.env.SEED_ADMIN_PASSWORD) {
-    console.log("\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
-    console.log("  SEED ADMIN PASSWORD:", seedPassword);
-    console.log("  Guarda esta contrase\u00f1a. No se volver\u00e1 a mostrar.");
-    console.log("\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+    console.log("  SEED ADMIN PASSWORD generada automáticamente.");
+    console.log("  Define SEED_ADMIN_PASSWORD para controlarla.");
   }
 
   const password = await bcrypt.hash(seedPassword, 10);

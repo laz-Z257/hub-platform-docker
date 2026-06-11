@@ -70,7 +70,7 @@ export default function IncidentDetailScreen() {
     api
       .get<IncidentDetail>(`/incidents/${id}`)
       .then(setIncident)
-      .catch(console.error)
+      .catch((err) => console.error("Error al cargar incidente:", err))
       .finally(() => setLoading(false));
   }, [id]);
 
