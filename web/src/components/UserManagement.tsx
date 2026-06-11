@@ -51,10 +51,7 @@ export default function UserManagement() {
     api
       .get<{ items: ApiUser[] }>("/users?limit=200")
       .then((data) => {
-        console.log("[UserManagement] Valor recibido:", typeof data, data);
-        console.log("[UserManagement] Es array:", Array.isArray(data));
         const items = Array.isArray(data) ? data : (data?.items ?? []);
-        console.log("[UserManagement] Items extraídos:", Array.isArray(items), items?.length);
         setUsers(items);
       })
       .catch((err) => {
