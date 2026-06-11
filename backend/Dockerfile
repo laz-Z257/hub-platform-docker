@@ -25,4 +25,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=15s --timeout=10s --start-period=45s --retries=5 \
   CMD node -e "require('http').get('http://localhost:3001/api/health',r=>{process.exit(r.statusCode===200?0:1)})"
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "timeout 40 node dist/db/migrate.js; timeout 40 node dist/db/seed.js; node dist/index.js"]

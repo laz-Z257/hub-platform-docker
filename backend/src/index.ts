@@ -44,10 +44,7 @@ app.use(
             "http://localhost:19006",
             /^https?:\/\/localhost(:\d+)?$/,
           ]
-        : [
-            ...(process.env.CORS_ORIGIN?.split(",") || []),
-            /^https:\/\/.*\.vercel\.app$/,
-          ],
+        : process.env.CORS_ORIGIN?.split(",") || "http://localhost:3000",
     credentials: true,
   })
 );
