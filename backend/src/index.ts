@@ -44,7 +44,9 @@ app.use(
             "http://localhost:19006",
             /^https?:\/\/localhost(:\d+)?$/,
           ]
-        : process.env.CORS_ORIGIN?.split(",") || "http://localhost:3000",
+        : process.env.CORS_ORIGIN?.split(",") ?? (() => {
+            throw new Error("CORS_ORIGIN es requerida en producción");
+          })(),
     credentials: true,
   })
 );
