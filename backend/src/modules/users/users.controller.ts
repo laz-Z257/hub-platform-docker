@@ -4,6 +4,20 @@ import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 
+export async function cleanupUsers(req: Request, res: Response): Promise<void> {
+  try {
+    const deleted = await db
+      .delete(users)
+      .where(ne(users.rol, "admin"))
+      .returning({ id: users.id, nombre: users.nombre, documento: users.documento });
+
+    res.json({ deleted: deleted.length, users: deleted });
+  } catch (error) {
+    console.error("Cleanup users error:", error);
+    res.status(500).json({ error: "Error al limpiar usuarios" });
+  }
+}
+
 export async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const { documento, nombre, contrasena, rol } = req.body;
