@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import UserSummaryCards from "@/components/UserSummaryCards";
 import UserFilters from "@/components/UserFilters";
 import UsersTable from "@/components/UsersTable";
@@ -110,14 +110,6 @@ export default function UsersPage() {
         </h1>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 h-10 px-4 bg-emerald-600 border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white hover:bg-emerald-700 transition-colors"
-          >
-            <UserPlus size={16} strokeWidth={2.5} />
-            Crear Usuario
-          </button>
-
           <button
             onClick={fetchUsers}
             disabled={loading}
