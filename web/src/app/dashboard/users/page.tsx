@@ -1,24 +1,36 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, RefreshCw, UserPlus } from "lucide-react";
 import UserSummaryCards from "@/components/UserSummaryCards";
 import UserFilters from "@/components/UserFilters";
 import UsersTable from "@/components/UsersTable";
 import EditUserModal from "@/components/EditUserModal";
+import CreateUserModal from "@/components/CreateUserModal";
 import { api } from "@/lib/api";
 import type { ApiUser } from "@/types/user";
 
 const PER_PAGE = 10;
 
 export default function UsersPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(searchParams.get("create") === "true");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setShowCreateModal(true);
+      router.replace("/dashboard/users");
+    }
+  }, [searchParams, router]);
 
   const handleToggleStatus = useCallback(async (user: ApiUser) => {
     setActionLoading(user.id);
@@ -99,6 +111,14 @@ export default function UsersPage() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 h-10 px-4 bg-emerald-600 border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white hover:bg-emerald-700 transition-colors"
+          >
+            <UserPlus size={16} strokeWidth={2.5} />
+            Crear Usuario
+          </button>
+
+          <button
             onClick={fetchUsers}
             disabled={loading}
             className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
@@ -166,6 +186,15 @@ export default function UsersPage() {
           </button>
         </div>
       </div>
+
+      {showCreateModal && (
+        <CreateUserModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={(created) => {
+            setUsers((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+          }}
+        />
+      )}
 
       {editingUser && (
         <EditUserModal

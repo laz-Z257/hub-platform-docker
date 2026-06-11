@@ -1,7 +1,51 @@
 import { Request, Response } from "express";
+import bcrypt from "bcryptjs";
 import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
+
+export async function createUser(req: Request, res: Response): Promise<void> {
+  try {
+    const { documento, nombre, contrasena, rol } = req.body;
+
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(eq(users.documento, documento))
+      .limit(1);
+
+    if (existing) {
+      res.status(409).json({ error: "El documento ya está registrado" });
+      return;
+    }
+
+    const hashed = await bcrypt.hash(contrasena, 10);
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        documento,
+        nombre,
+        contrasena: hashed,
+        email: `${documento}@hub.ai`,
+        rol: rol || "user",
+      })
+      .returning();
+
+    res.status(201).json({
+      id: user.id,
+      documento: user.documento,
+      nombre: user.nombre,
+      email: user.email,
+      rol: user.rol,
+      estado: user.estado,
+      created_at: user.created_at,
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+    res.status(500).json({ error: "Error al crear usuario" });
+  }
+}
 
 export async function listUsers(req: Request, res: Response): Promise<void> {
   try {
