@@ -27,7 +27,7 @@ import Animated, {
 import Logo from "../src/components/Logo";
 
 function shortTicketId(id: string): string {
-  const clean = id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const clean = id.replace(/-/g, "").slice(-8).toUpperCase();
   return `#TK-${clean}`;
 }
 
