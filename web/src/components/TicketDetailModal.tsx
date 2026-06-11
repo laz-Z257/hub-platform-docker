@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function formatTicketId(id: string): string {
-  const short = id.slice(-4).toUpperCase();
+  const short = id.replace(/-/g, "").slice(-8).toUpperCase();
   return `#TK-${short}`;
 }
 

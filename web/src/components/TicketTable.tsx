@@ -28,7 +28,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 };
 
 function formatTicketId(id: string): string {
-  const short = id.slice(-4).toUpperCase();
+  const short = id.replace(/-/g, "").slice(-8).toUpperCase();
   return `#TK-${short}`;
 }
 
