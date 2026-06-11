@@ -13,7 +13,7 @@ import {
   saveUser,
   getSavedUser,
 } from "../services/api";
-import type { AuthUser } from "../../../shared/types/auth";
+import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
   user: AuthUser | null;
