@@ -2,32 +2,85 @@
 
 App móvil Expo/React Native para reporte de incidentes y chat de soporte con IA.
 
-## Qué incluye
+## Stack técnico
 
-- Login con JWT (documento + contraseña)
-- Chat de soporte con IA (conectado al backend)
-- Reporte de incidentes con campos validados
-- Historial de tickets con pull-to-refresh
-- Detalle de incidente con comentarios
-- Pantalla de éxito post-reporte
-- Rutas con `expo-router`
-- Estilos con `nativewind`
-- Almacenamiento seguro de sesión (`expo-secure-store`)
+| Componente | Tecnología |
+|---|---|
+| Framework | React Native 0.85.3 + Expo SDK 56 |
+| Navegación | expo-router (file-based routing) |
+| Estilos | NativeWind v4 (TailwindCSS para RN) + StyleSheet |
+| Iconos | lucide-react-native |
+| Animaciones | react-native-reanimated 4.3.1 |
+| Gestos | react-native-gesture-handler |
+| Fuentes | Inter vía @expo-google-fonts/inter |
+| Auth storage | expo-secure-store (native) / localStorage (web) |
+| Estado | React Context (AuthContext) |
+| Notificaciones | (pendiente) |
+| Offline | (pendiente) |
+
+## Pantallas
+
+| Ruta | Pantalla | Auth | Descripción |
+|------|----------|------|-------------|
+| `/` | LoginScreen | No | Login con documento + contraseña, validación client-side |
+| `/chat` | ChatScreen | Sí | Chatbot IA con menú interactivo expandible |
+| `/reportar` | ReportScreen | Sí | Formulario de reporte de incidentes (5 campos + urgencia) |
+| `/historial` | — | Sí | Lista de tickets con pull-to-refresh |
+| `/exito` | — | Sí | Confirmación post-reporte con animaciones + copy ticket ID |
+| `/incidente/[id]` | — | Sí | Detalle completo del incidente con comentarios |
+
+## Funcionalidades actuales
+
+- [x] Login con JWT + persistencia en SecureStore
+- [x] Chatbot con respuestas automáticas y menú interactivo
+- [x] Menú del bot: Consultar saldo, Estado solicitud, Soporte técnico (expandible), Hablar con agente
+- [x] Reporte de incidentes con validación (nombre, documento, punto_venta, teléfono, descripción, urgencia)
+- [x] Historial de tickets con pull-to-refresh
+- [x] Detalle de ticket con info completa + comentarios timeline
+- [x] Pantalla de éxito con animaciones y copia al portapapeles
+- [x] Bottom tab navigation (Chatbot - Reportar - Historial)
+- [x] Dark mode (herencia del sistema)
+- [x] Splash screen animada con fuentes Inter
+- [x] Sesión persistente al cerrar/reabrir la app
+
+## API Endpoints que consume
+
+| Método | Endpoint | Uso |
+|--------|----------|-----|
+| POST | `/auth/login` | Login |
+| GET | `/auth/me` | Validar sesión al iniciar |
+| POST | `/auth/logout` | Logout |
+| GET | `/chat/history?limit=30` | Historial del chat |
+| POST | `/chat/message` | Enviar mensaje al bot |
+| GET | `/incidents?limit=50` | Listar incidentes |
+| GET | `/incidents?limit=1` | Último incidente (banner) |
+| POST | `/incidents` | Crear incidente |
+| GET | `/incidents/{id}` | Detalle del incidente |
+
+## Mejoras pendientes (propuestas)
+
+| Prioridad | Mejora | Descripción |
+|-----------|--------|-------------|
+| 🟡 Media | Refresh token | Implementar renovación silenciosa de token en lugar de forzar re-login |
+| 🟡 Media | TypeScript stable | Migrar de TS 6.0 (pre-release) a TS 5.7+ |
+| 🔵 Baja | Filtros en historial | Filtrar tickets por estado, fecha o urgencia |
+| 🔵 Baja | Adjuntar fotos | Agregar imágenes al reportar incidente |
+| 🔵 Baja | Editar perfil | Pantalla de perfil de usuario |
+| 🔵 Baja | Cambiar contraseña | Desde la app |
+| 🔵 Baja | Biometric auth | Huella/FaceID para login |
+| 🔵 Baja | Notificaciones push | Alertas de cambio de estado de tickets |
+| 🔵 Baja | Offline mode | Cache con AsyncStorage + sincronización |
+| 🔵 Baja | Navegación por gestos | Swipe entre tabs |
 
 ## Comandos
 
 ```bash
 cd mobile
 npm install
-npm start
-```
-
-Para ejecutar en Android, iOS o web:
-
-```bash
-npm run android
-npm run ios
-npm run web
+npm start          # Iniciar en modo desarrollo
+npm run android    # Android
+npm run ios        # iOS
+npm run web        # Web
 ```
 
 ## Build APK (EAS)
@@ -71,3 +124,4 @@ EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 - La app usa `expo-clipboard` (no `react-native/Clipboard`) para evitar warnings en SDK 56
 - El `SplashScreen.preventAutoHideAsync()` está envuelto en try/catch para evitar crashes en reload
 - Las animaciones (`ExpandableMenu`) limpian sus timeouts al desmontar para evitar memory leaks
+- El import de tipos compartidos usa ruta relativa (`../../../shared/`) — pendiente de migrar a alias/workspace

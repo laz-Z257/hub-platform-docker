@@ -1,13 +1,5 @@
-const FALLBACK_API_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://hub-platform-api.onrender.com/api"
-    : "http://localhost:3001/api";
-
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL &&
-  process.env.NEXT_PUBLIC_API_URL !== "http://localhost:3001/api"
-    ? process.env.NEXT_PUBLIC_API_URL
-    : FALLBACK_API_URL;
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
