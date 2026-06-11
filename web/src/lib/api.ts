@@ -93,7 +93,7 @@ async function request<T>(
     }
 
     if (!refreshed || res.status === 401) {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
       throw new Error("Sesión expirada");
