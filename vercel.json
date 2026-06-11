@@ -1,3 +1,5 @@
 {
-  "rootDirectory": "web"
+  "github": {
+    "silent": true
+  }
 }
