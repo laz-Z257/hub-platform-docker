@@ -21,6 +21,7 @@ export default function UserFilters({ roleFilter, searchTerm, onRoleChange, onSe
         >
           <option value="Todos">Todos</option>
           <option value="admin">Admin</option>
+          <option value="asesor">Asesor</option>
           <option value="user">Usuario</option>
         </select>
       </div>
