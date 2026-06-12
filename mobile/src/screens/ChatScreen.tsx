@@ -206,7 +206,6 @@ export default function ChatScreen() {
             onMenuPress={handleMenuPress}
             isResolvedNotification={isResolved}
             onRateService={() => handleSend("Quiero puntuar el servicio")}
-            onNewRequest={() => router.push("/reportar")}
           />
         );
       }
@@ -230,7 +229,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, router, handleSend]
+    [handleSubmenuPress, handleSend]
   );
 
   const msgList = typing

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import ExpandableMenu from "./ExpandableMenu";
 
@@ -9,7 +9,6 @@ interface BotMessageCardProps {
   onMenuPress?: (label: string) => void;
   isResolvedNotification?: boolean;
   onRateService?: () => void;
-  onNewRequest?: () => void;
 }
 
 export default function BotMessageCard({
@@ -19,8 +18,9 @@ export default function BotMessageCard({
   onMenuPress,
   isResolvedNotification,
   onRateService,
-  onNewRequest,
 }: BotMessageCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
       <View
@@ -50,7 +50,7 @@ export default function BotMessageCard({
           {message}
         </Text>
 
-        {isResolvedNotification ? (
+        {isResolvedNotification && !showMenu ? (
           <View style={{ marginTop: 12, gap: 8 }}>
             <TouchableOpacity
               onPress={onRateService}
@@ -69,7 +69,7 @@ export default function BotMessageCard({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={onNewRequest}
+              onPress={() => setShowMenu(true)}
               activeOpacity={0.8}
               style={{
                 backgroundColor: "#F3F0FF",
