@@ -6,6 +6,7 @@ import TicketSummaryCards from "@/components/TicketSummaryCards";
 import TicketFilters from "@/components/TicketFilters";
 import TicketTable from "@/components/TicketTable";
 import TicketDetailModal from "@/components/TicketDetailModal";
+import ResolveTicketModal from "@/components/ResolveTicketModal";
 import { api } from "@/lib/api";
 
 interface IncidentItem {
@@ -75,6 +76,7 @@ export default function TicketsPage() {
   const [estadoFilter, setEstadoFilter] = useState("Todos");
   const [dateFilter, setDateFilter] = useState("30d");
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
+  const [resolvingTicket, setResolvingTicket] = useState<string | null>(null);
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
 
   const LIMIT = 10;
@@ -170,6 +172,21 @@ export default function TicketsPage() {
       }
     },
     []
+  );
+
+  const handleResolve = useCallback(
+    (ticketId: string) => {
+      setResolvingTicket(ticketId);
+    },
+    []
+  );
+
+  const handleResolved = useCallback(
+    (ticketId: string) => {
+      fetchTickets();
+      fetchStats();
+    },
+    [fetchTickets, fetchStats]
   );
 
   const handleAssignAgent = useCallback(
@@ -276,7 +293,7 @@ export default function TicketsPage() {
       />
 
       {/* Table */}
-      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} onAssignAgent={handleAssignAgent} />
+      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} onAssignAgent={handleAssignAgent} onResolve={handleResolve} />
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-5">
@@ -340,6 +357,18 @@ export default function TicketsPage() {
         <TicketDetailModal
           incident={selectedIncident}
           onClose={() => setSelectedIncident(null)}
+        />
+      )}
+
+      {resolvingTicket && (
+        <ResolveTicketModal
+          ticketId={resolvingTicket}
+          ticketLabel={(() => {
+            const match = mappedTickets.find((t) => t.id === resolvingTicket);
+            return match ? `${match.asunto}` : resolvingTicket;
+          })()}
+          onClose={() => setResolvingTicket(null)}
+          onResolved={handleResolved}
         />
       )}
     </div>

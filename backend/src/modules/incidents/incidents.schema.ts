@@ -14,6 +14,8 @@ export const createIncidentSchema = z.object({
 export const updateIncidentSchema = z.object({
   estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
   agente: z.string().max(100).optional(),
+  solucion: z.string().max(5000).optional(),
+  imagen_url: z.string().max(500).optional(),
 });
 
 export const commentSchema = z.object({

@@ -37,6 +37,7 @@ interface TicketTableProps {
   onStatusChange: (ticketId: string, newStatus: string) => void;
   onViewDetail: (ticketId: string) => void;
   onAssignAgent: (ticketId: string, agent: string) => void;
+  onResolve?: (ticketId: string) => void;
 }
 
 function ActionMenu({
@@ -46,6 +47,7 @@ function ActionMenu({
   onStatusChange,
   onViewDetail,
   onAssignAgent,
+  onResolve,
 }: {
   ticketId: string;
   currentStatus: string;
@@ -53,6 +55,7 @@ function ActionMenu({
   onStatusChange: (id: string, status: string) => void;
   onViewDetail: (id: string) => void;
   onAssignAgent: (id: string, agent: string) => void;
+  onResolve?: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [agentInput, setAgentInput] = useState(currentAgente || "");
@@ -153,7 +156,11 @@ function ActionMenu({
                     <button
                       key={opt.value}
                       onClick={() => {
-                        onStatusChange(ticketId, opt.value);
+                        if (opt.value === "resuelto" && onResolve) {
+                          onResolve(ticketId);
+                        } else {
+                          onStatusChange(ticketId, opt.value);
+                        }
                         setOpen(false);
                       }}
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-inter bg-transparent border-none cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-gray-800 rounded-md text-left"
@@ -172,7 +179,7 @@ function ActionMenu({
   );
 }
 
-export default function TicketTable({ tickets, onStatusChange, onViewDetail, onAssignAgent }: TicketTableProps) {
+export default function TicketTable({ tickets, onStatusChange, onViewDetail, onAssignAgent, onResolve }: TicketTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl overflow-visible">
       <div className="grid grid-cols-[100px_1fr_140px_100px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
@@ -257,6 +264,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
               onStatusChange={onStatusChange}
               onViewDetail={onViewDetail}
               onAssignAgent={onAssignAgent}
+              onResolve={onResolve}
             />
           </div>
         </div>
