@@ -103,13 +103,19 @@ async function handleExport(
 
   const totalIncidents = incidents.length;
 
+  // ── Compute stats ──
+  const daysWithData = areaData.length;
+  const sumCreated = areaData.reduce((s, d) => s + d.trafico, 0);
+  const sumResolved = areaData.reduce((s, d) => s + d.conversiones, 0);
+  const avgPerDay = daysWithData > 0 ? (sumCreated / daysWithData).toFixed(1) : "0";
+  const resolutionRate = sumCreated > 0 ? `${Math.round((sumResolved / sumCreated) * 100)}%` : "0%";
+  const busiestDay = areaData.reduce((max, d) => d.trafico > (max?.trafico ?? 0) ? d : max, areaData[0]);
+
   // ──────────────────────────────────────
   // HOJA 1: Dashboard
   // ──────────────────────────────────────
   const ws = wb.addWorksheet("Dashboard");
-  ws.columns = totalIncidents > 0
-    ? [{ width: 30 }, { width: 16 }, { width: 22 }, { width: 16 }, { width: 16 }]
-    : [{ width: 30 }, { width: 16 }, { width: 16 }];
+  ws.columns = [{ width: 30 }, { width: 16 }, { width: 16 }, { width: 22 }, { width: 16 }];
 
   const title = ws.getCell("A1");
   title.value = "HUB Platform — Reporte de Analítica";
@@ -122,45 +128,89 @@ async function handleExport(
   ws.mergeCells("A2:E2");
 
   // ── KPIs ──
-  const rowKpiHeader = 4;
-  const kpiLabels = ["Métrica", "Valor", "Descripción"];
-  kpiLabels.forEach((l, i) => {
-    const cell = ws.getCell(rowKpiHeader, i + 1);
-    cell.value = l;
-    Object.assign(cell, headerStyle("FF25207E"));
-  });
-
+  const rKpi = 4;
+  ["Métrica", "Valor", "Descripción"].forEach((l, i) => Object.assign(ws.getCell(rKpi, i + 1), { value: l }, headerStyle("FF25207E")));
   const allMetrics = [
     ...metrics,
     { title: "Alta Urgencia", value: incidents.filter((i) => i.urgencia === "alta").length.toLocaleString(), desc: "Incidentes con prioridad alta" },
-    { title: "Agentes Activos", value: [...new Set(incidents.filter((i) => i.agente).map((i) => i.agente))].length.toLocaleString(), desc: "Técnicos con incidentes asignados" },
+    { title: "Agentes que atendieron", value: [...new Set(incidents.filter((i) => i.agente).map((i) => i.agente))].length.toLocaleString(), desc: "Técnicos con incidentes asignados" },
   ];
   allMetrics.forEach((m, i) => {
-    const r = ws.getRow(rowKpiHeader + 1 + i);
-    r.getCell(1).value = m.title;
-    r.getCell(1).font = { bold: true, size: 11 };
-    r.getCell(2).value = m.value;
-    r.getCell(2).font = { size: 14, bold: true, color: { argb: "FF25207E" } };
-    r.getCell(2).alignment = { horizontal: "center" };
-    r.getCell(3).value = m.desc;
-    r.getCell(3).font = { size: 10, color: { argb: "FF9CA3AF" } };
+    const r = ws.getRow(rKpi + 1 + i);
+    r.getCell(1).value = m.title; r.getCell(1).font = { bold: true, size: 11 };
+    r.getCell(2).value = m.value; r.getCell(2).font = { size: 14, bold: true, color: { argb: "FF25207E" } }; r.getCell(2).alignment = { horizontal: "center" };
+    r.getCell(3).value = m.desc; r.getCell(3).font = { size: 10, color: { argb: "FF9CA3AF" } };
     [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
-  // ── Urgencia table ──
-  const urgRow = rowKpiHeader + allMetrics.length + 2;
-  const urgTitle = ws.getCell(urgRow, 1);
-  urgTitle.value = "Distribución por Urgencia";
-  urgTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
-  ws.mergeCells(urgRow, 1, urgRow, 3);
+  // ── Insights ──
+  const rIns = rKpi + allMetrics.length + 2;
+  ws.getCell(rIns, 1).value = "Estadísticas del Período";
+  ws.getCell(rIns, 1).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rIns, 1, rIns, 5);
 
-  const urgHeader = ws.getRow(urgRow + 1);
-  ["Urgencia", "Cantidad", "%"].forEach((l, i) => {
-    const cell = urgHeader.getCell(i + 1);
-    cell.value = l;
-    Object.assign(cell, headerStyle("FF25207E"));
+  const insLabels = ["Métrica", "Valor", "", "", ""];
+  insLabels.forEach((l, i) => Object.assign(ws.getRow(rIns + 1).getCell(i + 1), { value: l }, headerStyle("FF25207E")));
+
+  const insights = [
+    { label: "Días con actividad", value: `${daysWithData} días` },
+    { label: "Promedio diario", value: `${avgPerDay} incidentes/día` },
+    { label: "Total creados", value: sumCreated.toLocaleString() },
+    { label: "Total resueltos", value: sumResolved.toLocaleString() },
+    { label: "Tasa de resolución", value: resolutionRate },
+    { label: "Día más activo", value: busiestDay ? `${busiestDay.name} (${busiestDay.trafico} incidentes)` : "N/A" },
+  ];
+  insights.forEach((ins, i) => {
+    const r = ws.getRow(rIns + 2 + i);
+    r.getCell(1).value = ins.label; r.getCell(1).font = { bold: true, size: 11 };
+    r.getCell(2).value = ins.value; r.getCell(2).font = { size: 12, color: { argb: "FF25207E" } };
+    [1, 2].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
+  // ── Timeline table ──
+  const rTimeline = rIns + 2 + insights.length + 1;
+  ws.getCell(rTimeline, 1).value = "Evolución Diaria";
+  ws.getCell(rTimeline, 1).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rTimeline, 1, rTimeline, 5);
+
+  ["Fecha", "Creados", "Resueltos", "Netos", "Acumulado"].forEach((l, i) => Object.assign(ws.getRow(rTimeline + 1).getCell(i + 1), { value: l }, headerStyle("FF25207E")));
+
+  let runningTotal = 0;
+  areaData.forEach((d, i) => {
+    const netos = d.trafico - d.conversiones;
+    runningTotal += netos;
+    const r = ws.getRow(rTimeline + 2 + i);
+    r.getCell(1).value = d.name;
+    r.getCell(2).value = d.trafico; r.getCell(2).numFmt = "#,##0";
+    r.getCell(3).value = d.conversiones; r.getCell(3).numFmt = "#,##0";
+    r.getCell(4).value = netos; r.getCell(4).numFmt = "#,##0";
+    r.getCell(4).font = { color: { argb: netos > 0 ? "FFEF4444" : netos < 0 ? "FF22C55E" : "FF6B7280" } };
+    r.getCell(5).value = runningTotal; r.getCell(5).numFmt = "#,##0";
+    r.getCell(5).font = { bold: true, color: { argb: runningTotal > 0 ? "FF25207E" : "FF6B7280" } };
+    [1, 2, 3, 4, 5].forEach((c) => Object.assign(r.getCell(c), cellBorder));
+  });
+
+  const rSum = rTimeline + 2 + areaData.length;
+  ws.getRow(rSum).getCell(1).value = "TOTAL";
+  ws.getRow(rSum).getCell(1).font = { bold: true, size: 12, color: { argb: "FF25207E" } };
+  ws.getRow(rSum).getCell(2).value = sumCreated; ws.getRow(rSum).getCell(2).font = { bold: true, size: 12 }; ws.getRow(rSum).getCell(2).numFmt = "#,##0";
+  ws.getRow(rSum).getCell(3).value = sumResolved; ws.getRow(rSum).getCell(3).font = { bold: true, size: 12 }; ws.getRow(rSum).getCell(3).numFmt = "#,##0";
+  ws.getRow(rSum).getCell(4).value = sumCreated - sumResolved; ws.getRow(rSum).getCell(4).font = { bold: true, size: 12 }; ws.getRow(rSum).getCell(4).numFmt = "#,##0";
+  ws.getRow(rSum).getCell(5).value = runningTotal; ws.getRow(rSum).getCell(5).font = { bold: true, size: 12, color: { argb: "FF25207E" } }; ws.getRow(rSum).getCell(5).numFmt = "#,##0";
+  [1, 2, 3, 4, 5].forEach((c) => Object.assign(ws.getRow(rSum).getCell(c), cellBorder));
+
+  // ── Side tables (urgency + status + agents) ──
+  const sideCol = 6;
+  ws.getColumn(sideCol).width = 3;
+  const dataCol = 7;
+
+  // Urgencia
+  const rUrg = 4;
+  ws.getCell(rUrg, dataCol).value = "Distribución por Urgencia";
+  ws.getCell(rUrg, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rUrg, dataCol, rUrg, dataCol + 2);
+
+  ["Urgencia", "Cant.", "%"].forEach((l, i) => Object.assign(ws.getRow(rUrg + 1).getCell(dataCol + i), { value: l }, headerStyle("FF25207E")));
   const urgenciaMap = { alta: 0, media: 0, baja: 0 };
   for (const inc of incidents) {
     if (inc.urgencia === "alta") urgenciaMap.alta++;
@@ -170,61 +220,43 @@ async function handleExport(
   const tot = totalIncidents || 1;
   const urgColors: Record<string, string> = { alta: "FFEF4444", media: "FFF59E0B", baja: "FF22C55E" };
   ["alta", "media", "baja"].forEach((key, i) => {
-    const r = ws.getRow(urgRow + 2 + i);
-    r.getCell(1).value = key.charAt(0).toUpperCase() + key.slice(1);
-    r.getCell(1).font = { bold: true, size: 11, color: { argb: urgColors[key] } };
-    r.getCell(2).value = urgenciaMap[key as keyof typeof urgenciaMap];
-    r.getCell(2).numFmt = "#,##0";
-    r.getCell(3).value = `${Math.round((urgenciaMap[key as keyof typeof urgenciaMap] / tot) * 100)}%`;
-    [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
+    const r = ws.getRow(rUrg + 2 + i);
+    r.getCell(dataCol).value = key.charAt(0).toUpperCase() + key.slice(1); r.getCell(dataCol).font = { bold: true, size: 11, color: { argb: urgColors[key] } };
+    r.getCell(dataCol + 1).value = urgenciaMap[key as keyof typeof urgenciaMap]; r.getCell(dataCol + 1).numFmt = "#,##0";
+    r.getCell(dataCol + 2).value = `${Math.round((urgenciaMap[key as keyof typeof urgenciaMap] / tot) * 100)}%`;
+    [dataCol, dataCol + 1, dataCol + 2].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
-  // ── Status table ──
-  const stRow = urgRow + 6;
-  const stTitle = ws.getCell(stRow, 1);
-  stTitle.value = "Incidentes por Estado";
-  stTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
-  ws.mergeCells(stRow, 1, stRow, 3);
+  // Estado
+  const rEst = rUrg + 6;
+  ws.getCell(rEst, dataCol).value = "Incidentes por Estado";
+  ws.getCell(rEst, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rEst, dataCol, rEst, dataCol + 2);
 
-  const stHeader = ws.getRow(stRow + 1);
-  ["Estado", "Cantidad", "%"].forEach((l, i) => {
-    const cell = stHeader.getCell(i + 1);
-    cell.value = l;
-    Object.assign(cell, headerStyle("FF25207E"));
-  });
-
+  ["Estado", "Cant.", "%"].forEach((l, i) => Object.assign(ws.getRow(rEst + 1).getCell(dataCol + i), { value: l }, headerStyle("FF25207E")));
   const estadoMap = { pendiente: 0, en_proceso: 0, resuelto: 0 };
   for (const inc of incidents) {
     if (inc.estado === "pendiente") estadoMap.pendiente++;
     else if (inc.estado === "en_proceso") estadoMap.en_proceso++;
     else if (inc.estado === "resuelto") estadoMap.resuelto++;
   }
-  const estadoColors: Record<string, string> = { pendiente: "FF3B82F6", en_proceso: "FF7C3AED", resuelto: "FF22C55E" };
-  const estadoLabels: Record<string, string> = { pendiente: "Pendiente", en_proceso: "En Proceso", resuelto: "Resuelto" };
+  const eColors: Record<string, string> = { pendiente: "FF3B82F6", en_proceso: "FF7C3AED", resuelto: "FF22C55E" };
+  const eLabels: Record<string, string> = { pendiente: "Pendiente", en_proceso: "En Proceso", resuelto: "Resuelto" };
   ["pendiente", "en_proceso", "resuelto"].forEach((key, i) => {
-    const r = ws.getRow(stRow + 2 + i);
-    r.getCell(1).value = estadoLabels[key];
-    r.getCell(1).font = { bold: true, size: 11, color: { argb: estadoColors[key] } };
-    r.getCell(2).value = estadoMap[key as keyof typeof estadoMap];
-    r.getCell(2).numFmt = "#,##0";
-    r.getCell(3).value = totalIncidents > 0 ? `${Math.round((estadoMap[key as keyof typeof estadoMap] / totalIncidents) * 100)}%` : "0%";
-    [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
+    const r = ws.getRow(rEst + 2 + i);
+    r.getCell(dataCol).value = eLabels[key]; r.getCell(dataCol).font = { bold: true, size: 11, color: { argb: eColors[key] } };
+    r.getCell(dataCol + 1).value = estadoMap[key as keyof typeof estadoMap]; r.getCell(dataCol + 1).numFmt = "#,##0";
+    r.getCell(dataCol + 2).value = totalIncidents > 0 ? `${Math.round((estadoMap[key as keyof typeof estadoMap] / totalIncidents) * 100)}%` : "0%";
+    [dataCol, dataCol + 1, dataCol + 2].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
-  // ── Agentes table ──
-  const agRow = stRow + 6;
-  const agTitle = ws.getCell(agRow, 1);
-  agTitle.value = "Resumen por Agente";
-  agTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
-  ws.mergeCells(agRow, 1, agRow, 5);
+  // Agentes
+  const rAg = rEst + 6;
+  ws.getCell(rAg, dataCol).value = "Resumen por Agente";
+  ws.getCell(rAg, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rAg, dataCol, rAg, dataCol + 4);
 
-  const agHeader = ws.getRow(agRow + 1);
-  ["Agente", "Pendientes", "En Proceso", "Resueltos", "Total"].forEach((l, i) => {
-    const cell = agHeader.getCell(i + 1);
-    cell.value = l;
-    Object.assign(cell, headerStyle("FF25207E"));
-  });
-
+  ["Agente", "Pend.", "Proceso", "Res.", "Total"].forEach((l, i) => Object.assign(ws.getRow(rAg + 1).getCell(dataCol + i), { value: l }, headerStyle("FF25207E")));
   const agMap = new Map<string, { p: number; ep: number; r: number }>();
   for (const inc of incidents) {
     const ag = inc.agente || "Sin asignar";
@@ -236,77 +268,20 @@ async function handleExport(
   }
   const agRows = Array.from(agMap.entries()).map(([ag, c]) => ({ ag, ...c, total: c.p + c.ep + c.r }));
   agRows.forEach((r, i) => {
-    const row = ws.getRow(agRow + 2 + i);
-    row.getCell(1).value = r.ag;
-    row.getCell(2).value = r.p;
-    row.getCell(3).value = r.ep;
-    row.getCell(4).value = r.r;
-    row.getCell(5).value = r.total;
-    [1, 2, 3, 4, 5].forEach((c) => Object.assign(row.getCell(c), cellBorder));
+    const row = ws.getRow(rAg + 2 + i);
+    row.getCell(dataCol).value = r.ag;
+    row.getCell(dataCol + 1).value = r.p;
+    row.getCell(dataCol + 2).value = r.ep;
+    row.getCell(dataCol + 3).value = r.r;
+    row.getCell(dataCol + 4).value = r.total;
+    [dataCol, dataCol + 1, dataCol + 2, dataCol + 3, dataCol + 4].forEach((c) => Object.assign(row.getCell(c), cellBorder));
   });
 
   // ──────────────────────────────────────
-  // HOJA 2: Timeline
+  // HOJA 2: Detalle
   // ──────────────────────────────────────
-  const ws2 = wb.addWorksheet("Timeline");
+  const ws2 = wb.addWorksheet("Detalle");
   ws2.columns = [
-    { header: "Fecha", key: "fecha", width: 16 },
-    { header: "Creados", key: "creados", width: 12 },
-    { header: "Resueltos", key: "resueltos", width: 12 },
-    { header: "Abiertos Netos", key: "netos", width: 16 },
-    { header: "Acumulado", key: "acum", width: 14 },
-  ];
-  const h2 = ws2.getRow(1);
-  ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
-
-  let runningTotal = 0;
-  let sumCreated = 0;
-  let sumResolved = 0;
-  areaData.forEach((d, i) => {
-    const netos = d.trafico - d.conversiones;
-    runningTotal += netos;
-    sumCreated += d.trafico;
-    sumResolved += d.conversiones;
-    const row = ws2.getRow(2 + i);
-    row.getCell("A").value = d.name;
-    row.getCell("B").value = d.trafico;
-    row.getCell("B").numFmt = "#,##0";
-    row.getCell("C").value = d.conversiones;
-    row.getCell("C").numFmt = "#,##0";
-    row.getCell("D").value = netos;
-    row.getCell("D").numFmt = "#,##0";
-    row.getCell("D").font = { color: { argb: netos > 0 ? "FFEF4444" : netos < 0 ? "FF22C55E" : "FF6B7280" } };
-    row.getCell("E").value = runningTotal;
-    row.getCell("E").numFmt = "#,##0";
-    row.getCell("E").font = { bold: true, color: { argb: runningTotal > 0 ? "FF25207E" : "FF6B7280" } };
-    ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
-  });
-
-  // Summary row
-  const sumRow = ws2.getRow(areaData.length + 2);
-  sumRow.getCell("A").value = "TOTAL";
-  sumRow.getCell("A").font = { bold: true, size: 12, color: { argb: "FF25207E" } };
-  sumRow.getCell("B").value = sumCreated;
-  sumRow.getCell("B").font = { bold: true, size: 12 };
-  sumRow.getCell("B").numFmt = "#,##0";
-  sumRow.getCell("C").value = sumResolved;
-  sumRow.getCell("C").font = { bold: true, size: 12 };
-  sumRow.getCell("C").numFmt = "#,##0";
-  sumRow.getCell("D").value = sumCreated - sumResolved;
-  sumRow.getCell("D").font = { bold: true, size: 12 };
-  sumRow.getCell("D").numFmt = "#,##0";
-  sumRow.getCell("E").value = runningTotal;
-  sumRow.getCell("E").font = { bold: true, size: 12, color: { argb: "FF25207E" } };
-  sumRow.getCell("E").numFmt = "#,##0";
-  ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(sumRow.getCell(col), cellBorder));
-
-  ws2.autoFilter = { from: "A1", to: `E${areaData.length + 1}` };
-
-  // ──────────────────────────────────────
-  // HOJA 3: Detalle
-  // ──────────────────────────────────────
-  const ws3 = wb.addWorksheet("Detalle");
-  ws3.columns = [
     { header: "Documento", key: "doc", width: 16 },
     { header: "Nombre", key: "nombre", width: 22 },
     { header: "Punto de Venta", key: "pv", width: 22 },
@@ -316,10 +291,10 @@ async function handleExport(
     { header: "Descripción", key: "desc", width: 50 },
     { header: "Creado", key: "creado", width: 18 },
   ];
-  const h3 = ws3.getRow(1);
-  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(h3.getCell(col), headerStyle("FF25207E")));
+  const h2 = ws2.getRow(1);
+  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
   incidents.forEach((inc, i) => {
-    const row = ws3.getRow(2 + i);
+    const row = ws2.getRow(2 + i);
     row.getCell("A").value = inc.documento;
     row.getCell("B").value = inc.nombre;
     row.getCell("C").value = inc.punto_venta;
@@ -330,7 +305,7 @@ async function handleExport(
     row.getCell("H").value = fmtDateTime(inc.created_at);
     ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
   });
-  ws3.autoFilter = { from: "A1", to: `H${incidents.length + 1}` };
+  ws2.autoFilter = { from: "A1", to: `H${incidents.length + 1}` };
 
   // ── Guardar ──
   const buffer = await wb.xlsx.writeBuffer();
