@@ -27,17 +27,6 @@ interface IncidentExport {
   }[];
 }
 
-interface UserExport {
-  id: string;
-  documento: string;
-  nombre: string;
-  email: string | null;
-  rol: string;
-  estado: string;
-  ultima_actividad: string | null;
-  created_at: string;
-}
-
 interface AnalyticsFiltersProps {
   filter: "30d" | "custom";
   showDatePicker: boolean;
@@ -105,63 +94,161 @@ async function handleExport(
   const rangeLabel = appliedRange ? `Rango: ${formatDateRange(appliedRange.start, appliedRange.end)}` : "Últimos 30 días";
   const rangeSuffix = appliedRange ? `_${appliedRange.start}_${appliedRange.end}` : "";
 
-  // ── Fetch data ──
   let incidents: IncidentExport[] = [];
-  let users: UserExport[] = [];
   try {
     const qs = appliedRange ? `?start=${appliedRange.start}&end=${appliedRange.end}` : "";
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export${qs}`);
     incidents = incData.items || [];
   } catch { /* ignore */ }
-  try {
-    const userData = await api.get<{ items: UserExport[] }>("/users?limit=200");
-    users = userData.items || [];
-  } catch { /* ignore */ }
 
   const totalIncidents = incidents.length;
 
-  // ── Hoja 1: Resumen ──
-  const ws1 = wb.addWorksheet("Resumen");
-  ws1.columns = [
-    { header: "Métrica", key: "title", width: 30 },
-    { header: "Valor", key: "value", width: 18 },
-    { header: "Descripción", key: "desc", width: 55 },
-  ];
+  // ──────────────────────────────────────
+  // HOJA 1: Dashboard
+  // ──────────────────────────────────────
+  const ws = wb.addWorksheet("Dashboard");
+  ws.columns = totalIncidents > 0
+    ? [{ width: 30 }, { width: 16 }, { width: 22 }, { width: 16 }, { width: 16 }]
+    : [{ width: 30 }, { width: 16 }, { width: 16 }];
 
-  ws1.mergeCells("A1:C1");
-  ws1.getCell("A1").value = "HUB Platform — Reporte de Analítica";
-  ws1.getCell("A1").font = { bold: true, size: 16, color: { argb: "FF25207E" } };
+  const title = ws.getCell("A1");
+  title.value = "HUB Platform — Reporte de Analítica";
+  title.font = { bold: true, size: 16, color: { argb: "FF25207E" } };
+  ws.mergeCells("A1:E1");
 
-  ws1.mergeCells("A2:C2");
-  ws1.getCell("A2").value = `${rangeLabel} — Generado: ${generatedAt}`;
-  ws1.getCell("A2").font = { size: 11, color: { argb: "FF6B7280" } };
+  const sub = ws.getCell("A2");
+  sub.value = `${rangeLabel} — Generado: ${generatedAt}`;
+  sub.font = { size: 11, color: { argb: "FF6B7280" } };
+  ws.mergeCells("A2:E2");
 
-  const hr1 = ws1.getRow(4);
-  hr1.getCell("A").value = "Métrica";
-  hr1.getCell("B").value = "Valor";
-  hr1.getCell("C").value = "Descripción";
-  ["A", "B", "C"].forEach((col) => Object.assign(hr1.getCell(col), headerStyle("FF25207E")));
+  // ── KPIs ──
+  const rowKpiHeader = 4;
+  const kpiLabels = ["Métrica", "Valor", "Descripción"];
+  kpiLabels.forEach((l, i) => {
+    const cell = ws.getCell(rowKpiHeader, i + 1);
+    cell.value = l;
+    Object.assign(cell, headerStyle("FF25207E"));
+  });
 
   const allMetrics = [
     ...metrics,
     { title: "Alta Urgencia", value: incidents.filter((i) => i.urgencia === "alta").length.toLocaleString(), desc: "Incidentes con prioridad alta" },
-    { title: "Usuarios Registrados", value: users.length.toLocaleString(), desc: "Total de usuarios en la plataforma" },
     { title: "Agentes Activos", value: [...new Set(incidents.filter((i) => i.agente).map((i) => i.agente))].length.toLocaleString(), desc: "Técnicos con incidentes asignados" },
   ];
   allMetrics.forEach((m, i) => {
-    const row = ws1.getRow(5 + i);
-    row.getCell("A").value = m.title;
-    row.getCell("A").font = { bold: true, size: 11 };
-    row.getCell("B").value = m.value;
-    row.getCell("B").font = { size: 14, bold: true, color: { argb: "FF25207E" } };
-    row.getCell("B").alignment = { horizontal: "center" };
-    row.getCell("C").value = m.desc;
-    row.getCell("C").font = { size: 10, color: { argb: "FF9CA3AF" } };
-    ["A", "B", "C"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
+    const r = ws.getRow(rowKpiHeader + 1 + i);
+    r.getCell(1).value = m.title;
+    r.getCell(1).font = { bold: true, size: 11 };
+    r.getCell(2).value = m.value;
+    r.getCell(2).font = { size: 14, bold: true, color: { argb: "FF25207E" } };
+    r.getCell(2).alignment = { horizontal: "center" };
+    r.getCell(3).value = m.desc;
+    r.getCell(3).font = { size: 10, color: { argb: "FF9CA3AF" } };
+    [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
-  // ── Hoja 2: Incidentes por Día ──
-  const ws2 = wb.addWorksheet("Incidentes por Día");
+  // ── Urgencia table ──
+  const urgRow = rowKpiHeader + allMetrics.length + 2;
+  const urgTitle = ws.getCell(urgRow, 1);
+  urgTitle.value = "Distribución por Urgencia";
+  urgTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(urgRow, 1, urgRow, 3);
+
+  const urgHeader = ws.getRow(urgRow + 1);
+  ["Urgencia", "Cantidad", "%"].forEach((l, i) => {
+    const cell = urgHeader.getCell(i + 1);
+    cell.value = l;
+    Object.assign(cell, headerStyle("FF25207E"));
+  });
+
+  const urgenciaMap = { alta: 0, media: 0, baja: 0 };
+  for (const inc of incidents) {
+    if (inc.urgencia === "alta") urgenciaMap.alta++;
+    else if (inc.urgencia === "media") urgenciaMap.media++;
+    else urgenciaMap.baja++;
+  }
+  const tot = totalIncidents || 1;
+  const urgColors: Record<string, string> = { alta: "FFEF4444", media: "FFF59E0B", baja: "FF22C55E" };
+  ["alta", "media", "baja"].forEach((key, i) => {
+    const r = ws.getRow(urgRow + 2 + i);
+    r.getCell(1).value = key.charAt(0).toUpperCase() + key.slice(1);
+    r.getCell(1).font = { bold: true, size: 11, color: { argb: urgColors[key] } };
+    r.getCell(2).value = urgenciaMap[key as keyof typeof urgenciaMap];
+    r.getCell(2).numFmt = "#,##0";
+    r.getCell(3).value = `${Math.round((urgenciaMap[key as keyof typeof urgenciaMap] / tot) * 100)}%`;
+    [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
+  });
+
+  // ── Status table ──
+  const stRow = urgRow + 6;
+  const stTitle = ws.getCell(stRow, 1);
+  stTitle.value = "Incidentes por Estado";
+  stTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(stRow, 1, stRow, 3);
+
+  const stHeader = ws.getRow(stRow + 1);
+  ["Estado", "Cantidad", "%"].forEach((l, i) => {
+    const cell = stHeader.getCell(i + 1);
+    cell.value = l;
+    Object.assign(cell, headerStyle("FF25207E"));
+  });
+
+  const estadoMap = { pendiente: 0, en_proceso: 0, resuelto: 0 };
+  for (const inc of incidents) {
+    if (inc.estado === "pendiente") estadoMap.pendiente++;
+    else if (inc.estado === "en_proceso") estadoMap.en_proceso++;
+    else if (inc.estado === "resuelto") estadoMap.resuelto++;
+  }
+  const estadoColors: Record<string, string> = { pendiente: "FF3B82F6", en_proceso: "FF7C3AED", resuelto: "FF22C55E" };
+  const estadoLabels: Record<string, string> = { pendiente: "Pendiente", en_proceso: "En Proceso", resuelto: "Resuelto" };
+  ["pendiente", "en_proceso", "resuelto"].forEach((key, i) => {
+    const r = ws.getRow(stRow + 2 + i);
+    r.getCell(1).value = estadoLabels[key];
+    r.getCell(1).font = { bold: true, size: 11, color: { argb: estadoColors[key] } };
+    r.getCell(2).value = estadoMap[key as keyof typeof estadoMap];
+    r.getCell(2).numFmt = "#,##0";
+    r.getCell(3).value = totalIncidents > 0 ? `${Math.round((estadoMap[key as keyof typeof estadoMap] / totalIncidents) * 100)}%` : "0%";
+    [1, 2, 3].forEach((c) => Object.assign(r.getCell(c), cellBorder));
+  });
+
+  // ── Agentes table ──
+  const agRow = stRow + 6;
+  const agTitle = ws.getCell(agRow, 1);
+  agTitle.value = "Resumen por Agente";
+  agTitle.font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(agRow, 1, agRow, 5);
+
+  const agHeader = ws.getRow(agRow + 1);
+  ["Agente", "Pendientes", "En Proceso", "Resueltos", "Total"].forEach((l, i) => {
+    const cell = agHeader.getCell(i + 1);
+    cell.value = l;
+    Object.assign(cell, headerStyle("FF25207E"));
+  });
+
+  const agMap = new Map<string, { p: number; ep: number; r: number }>();
+  for (const inc of incidents) {
+    const ag = inc.agente || "Sin asignar";
+    const e = agMap.get(ag) || { p: 0, ep: 0, r: 0 };
+    if (inc.estado === "pendiente") e.p++;
+    else if (inc.estado === "en_proceso") e.ep++;
+    else if (inc.estado === "resuelto") e.r++;
+    agMap.set(ag, e);
+  }
+  const agRows = Array.from(agMap.entries()).map(([ag, c]) => ({ ag, ...c, total: c.p + c.ep + c.r }));
+  agRows.forEach((r, i) => {
+    const row = ws.getRow(agRow + 2 + i);
+    row.getCell(1).value = r.ag;
+    row.getCell(2).value = r.p;
+    row.getCell(3).value = r.ep;
+    row.getCell(4).value = r.r;
+    row.getCell(5).value = r.total;
+    [1, 2, 3, 4, 5].forEach((c) => Object.assign(row.getCell(c), cellBorder));
+  });
+
+  // ──────────────────────────────────────
+  // HOJA 2: Timeline
+  // ──────────────────────────────────────
+  const ws2 = wb.addWorksheet("Timeline");
   ws2.columns = [
     { header: "Fecha", key: "fecha", width: 16 },
     { header: "Creados", key: "creados", width: 14 },
@@ -180,157 +267,35 @@ async function handleExport(
   });
   ws2.autoFilter = { from: "A1", to: `C${areaData.length + 1}` };
 
-  // ── Hoja 3: Distribución por Urgencia ──
-  const ws3 = wb.addWorksheet("Distribución por Urgencia");
+  // ──────────────────────────────────────
+  // HOJA 3: Detalle
+  // ──────────────────────────────────────
+  const ws3 = wb.addWorksheet("Detalle");
   ws3.columns = [
-    { header: "Categoría", key: "cat", width: 28 },
-    { header: "Porcentaje", key: "pct", width: 16 },
-    { header: "Cantidad", key: "qty", width: 14 },
-  ];
-  const h3 = ws3.getRow(1);
-  ["A", "B", "C"].forEach((col) => Object.assign(h3.getCell(col), headerStyle("FF25207E")));
-  const urgenciaCounts = { alta: incidents.filter((i) => i.urgencia === "alta").length, media: incidents.filter((i) => i.urgencia === "media").length, baja: incidents.filter((i) => i.urgencia === "baja").length };
-  const urgenciaTot = totalIncidents || 1;
-  [
-    { name: "Alta", count: urgenciaCounts.alta, color: "#EF4444" },
-    { name: "Media", count: urgenciaCounts.media, color: "#F59E0B" },
-    { name: "Baja", count: urgenciaCounts.baja, color: "#22C55E" },
-  ].forEach((item, i) => {
-    const row = ws3.getRow(2 + i);
-    row.getCell("A").value = item.name;
-    row.getCell("B").value = `${Math.round((item.count / urgenciaTot) * 100)}%`;
-    row.getCell("C").value = item.count;
-    row.getCell("C").numFmt = "#,##0";
-    row.getCell("A").font = { bold: true, size: 11, color: { argb: item.color.slice(1) } };
-    ["A", "B", "C"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
-  });
-
-  // ── Hoja 4: Detalle de Incidentes ──
-  const ws4 = wb.addWorksheet("Detalle de Incidentes");
-  ws4.columns = [
-    { header: "ID", key: "id", width: 36 },
     { header: "Documento", key: "doc", width: 16 },
     { header: "Nombre", key: "nombre", width: 22 },
     { header: "Punto de Venta", key: "pv", width: 22 },
-    { header: "Teléfono", key: "tel", width: 16 },
     { header: "Urgencia", key: "urg", width: 12 },
     { header: "Estado", key: "est", width: 14 },
     { header: "Agente", key: "agente", width: 20 },
     { header: "Descripción", key: "desc", width: 50 },
     { header: "Creado", key: "creado", width: 18 },
-    { header: "Actualizado", key: "act", width: 18 },
   ];
-  const h4 = ws4.getRow(1);
-  ws4.columns.forEach((_, idx) => {
-    const colLetter = String.fromCharCode(65 + idx);
-    Object.assign(h4.getCell(colLetter), headerStyle("FF25207E"));
-  });
+  const h3 = ws3.getRow(1);
+  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(h3.getCell(col), headerStyle("FF25207E")));
   incidents.forEach((inc, i) => {
-    const row = ws4.getRow(2 + i);
-    row.getCell("A").value = inc.id;
-    row.getCell("B").value = inc.documento;
-    row.getCell("C").value = inc.nombre;
-    row.getCell("D").value = inc.punto_venta;
-    row.getCell("E").value = inc.telefono;
-    row.getCell("F").value = inc.urgencia;
-    row.getCell("G").value = inc.estado;
-    row.getCell("H").value = inc.agente || "";
-    row.getCell("I").value = inc.descripcion;
-    row.getCell("J").value = fmtDateTime(inc.created_at);
-    row.getCell("K").value = fmtDateTime(inc.updated_at);
-    ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
+    const row = ws3.getRow(2 + i);
+    row.getCell("A").value = inc.documento;
+    row.getCell("B").value = inc.nombre;
+    row.getCell("C").value = inc.punto_venta;
+    row.getCell("D").value = inc.urgencia;
+    row.getCell("E").value = inc.estado;
+    row.getCell("F").value = inc.agente || "";
+    row.getCell("G").value = inc.descripcion;
+    row.getCell("H").value = fmtDateTime(inc.created_at);
+    ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
   });
-  ws4.autoFilter = { from: "A1", to: `K${incidents.length + 1}` };
-
-  // ── Hoja 5: Comentarios ──
-  const allComments = incidents.flatMap((inc) =>
-    (inc.comments || []).map((c) => ({ ...c, incident_documento: inc.documento, incident_nombre: inc.nombre }))
-  );
-  const ws5 = wb.addWorksheet("Comentarios");
-  ws5.columns = [
-    { header: "ID Incidente", key: "incId", width: 36 },
-    { header: "Documento", key: "doc", width: 16 },
-    { header: "Nombre", key: "nombre", width: 22 },
-    { header: "Autor", key: "autor", width: 22 },
-    { header: "Comentario", key: "texto", width: 60 },
-    { header: "Fecha", key: "fecha", width: 18 },
-  ];
-  const h5 = ws5.getRow(1);
-  ["A", "B", "C", "D", "E", "F"].forEach((col) => Object.assign(h5.getCell(col), headerStyle("FF25207E")));
-  allComments.forEach((c, i) => {
-    const row = ws5.getRow(2 + i);
-    row.getCell("A").value = c.incident_id;
-    row.getCell("B").value = c.incident_documento;
-    row.getCell("C").value = c.incident_nombre;
-    row.getCell("D").value = c.autor;
-    row.getCell("E").value = c.texto;
-    row.getCell("F").value = fmtDateTime(c.fecha);
-    ["A", "B", "C", "D", "E", "F"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
-  });
-  ws5.autoFilter = { from: "A1", to: `F${allComments.length + 1}` };
-
-  // ── Hoja 6: Usuarios ──
-  const ws6 = wb.addWorksheet("Usuarios");
-  ws6.columns = [
-    { header: "Documento", key: "doc", width: 16 },
-    { header: "Nombre", key: "nombre", width: 22 },
-    { header: "Email", key: "email", width: 30 },
-    { header: "Rol", key: "rol", width: 12 },
-    { header: "Estado", key: "estado", width: 12 },
-    { header: "Última Actividad", key: "act", width: 20 },
-    { header: "Creado", key: "creado", width: 18 },
-  ];
-  const h6 = ws6.getRow(1);
-  ["A", "B", "C", "D", "E", "F", "G"].forEach((col) => Object.assign(h6.getCell(col), headerStyle("FF25207E")));
-  users.forEach((u, i) => {
-    const row = ws6.getRow(2 + i);
-    row.getCell("A").value = u.documento;
-    row.getCell("B").value = u.nombre;
-    row.getCell("C").value = u.email || "";
-    row.getCell("D").value = u.rol;
-    row.getCell("E").value = u.estado;
-    row.getCell("F").value = u.ultima_actividad ? fmtDateTime(u.ultima_actividad) : "Sin actividad";
-    row.getCell("G").value = fmtDate(u.created_at);
-    ["A", "B", "C", "D", "E", "F", "G"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
-  });
-  ws6.autoFilter = { from: "A1", to: `G${users.length + 1}` };
-
-  // ── Hoja 7: Resumen por Agente ──
-  const agenteMap = new Map<string, { pendientes: number; enProceso: number; resueltos: number }>();
-  for (const inc of incidents) {
-    const agente = inc.agente || "Sin asignar";
-    const entry = agenteMap.get(agente) || { pendientes: 0, enProceso: 0, resueltos: 0 };
-    if (inc.estado === "pendiente") entry.pendientes++;
-    else if (inc.estado === "en_proceso") entry.enProceso++;
-    else if (inc.estado === "resuelto") entry.resueltos++;
-    agenteMap.set(agente, entry);
-  }
-  const agenteRows = Array.from(agenteMap.entries()).map(([agente, counts]) => ({
-    agente,
-    ...counts,
-    total: counts.pendientes + counts.enProceso + counts.resueltos,
-  }));
-
-  const ws7 = wb.addWorksheet("Resumen por Agente");
-  ws7.columns = [
-    { header: "Agente", key: "agente", width: 24 },
-    { header: "Pendientes", key: "pendientes", width: 14 },
-    { header: "En Proceso", key: "enProceso", width: 14 },
-    { header: "Resueltos", key: "resueltos", width: 14 },
-    { header: "Total", key: "total", width: 12 },
-  ];
-  const h7 = ws7.getRow(1);
-  ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(h7.getCell(col), headerStyle("FF25207E")));
-  agenteRows.forEach((r, i) => {
-    const row = ws7.getRow(2 + i);
-    row.getCell("A").value = r.agente;
-    row.getCell("B").value = r.pendientes;
-    row.getCell("C").value = r.enProceso;
-    row.getCell("D").value = r.resueltos;
-    row.getCell("E").value = r.total;
-    ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
-  });
-  ws7.autoFilter = { from: "A1", to: `E${agenteRows.length + 1}` };
+  ws3.autoFilter = { from: "A1", to: `H${incidents.length + 1}` };
 
   // ── Guardar ──
   const buffer = await wb.xlsx.writeBuffer();
