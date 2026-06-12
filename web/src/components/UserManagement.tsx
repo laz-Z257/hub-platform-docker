@@ -63,6 +63,12 @@ export default function UserManagement() {
       .finally(() => setLoading(false));
   }, []);
 
+  const sortedUsers = [...users].sort((a, b) => {
+    const dateA = new Date(a.ultima_actividad || a.created_at).getTime();
+    const dateB = new Date(b.ultima_actividad || b.created_at).getTime();
+    return dateB - dateA;
+  }).slice(0, 5);
+
   return (
     <div
       style={{
@@ -158,7 +164,7 @@ export default function UserManagement() {
       {/* User Cards */}
       {!loading && !error && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {!Array.isArray(users) ? null : users.length === 0 ? (
+          {!Array.isArray(sortedUsers) ? null : sortedUsers.length === 0 ? (
             <p
               style={{
                 textAlign: "center",
@@ -170,7 +176,7 @@ export default function UserManagement() {
               No hay usuarios registrados.
             </p>
           ) : (
-            users.map((user) => (
+            sortedUsers.map((user) => (
               <div
                 key={user.id}
                 style={{
