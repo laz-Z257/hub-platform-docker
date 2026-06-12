@@ -150,6 +150,41 @@ export async function toggleUserStatus(
   }
 }
 
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { contrasena } = req.body;
+
+    const hashed = await bcrypt.hash(contrasena, 10);
+
+    const [updated] = await db
+      .update(users)
+      .set({
+        contrasena: hashed,
+        intentos_fallidos: 0,
+        estado: "activo",
+      })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        documento: users.documento,
+        nombre: users.nombre,
+        rol: users.rol,
+        estado: users.estado,
+      });
+
+    if (!updated) {
+      res.status(404).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    res.json({ message: "Contraseña restablecida exitosamente", user: updated });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Error al restablecer la contraseña" });
+  }
+}
+
 export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params as { id: string };

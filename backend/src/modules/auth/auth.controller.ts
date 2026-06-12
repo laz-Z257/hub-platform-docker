@@ -6,6 +6,8 @@ import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
 import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 
+const MAX_LOGIN_ATTEMPTS = parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10);
+
 function userResponse(user: typeof users.$inferSelect) {
   return {
     id: user.id,
@@ -79,16 +81,37 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     if (user.estado === "bloqueado") {
-      res.status(403).json({ error: "Usuario bloqueado. Contacta al administrador." });
+      res.status(403).json({ error: "Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador." });
       return;
     }
 
     const valid = await bcrypt.compare(contrasena, user.contrasena);
 
     if (!valid) {
+      const newCount = (user.intentos_fallidos || 0) + 1;
+
+      if (newCount >= MAX_LOGIN_ATTEMPTS) {
+        await db
+          .update(users)
+          .set({ intentos_fallidos: newCount, estado: "bloqueado" })
+          .where(eq(users.id, user.id));
+        res.status(403).json({ error: `Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador.` });
+        return;
+      }
+
+      await db
+        .update(users)
+        .set({ intentos_fallidos: newCount })
+        .where(eq(users.id, user.id));
+
       res.status(401).json({ error: "Documento o contraseña incorrectos" });
       return;
     }
+
+    await db
+      .update(users)
+      .set({ intentos_fallidos: 0 })
+      .where(eq(users.id, user.id));
 
     const payload = {
       userId: user.id,

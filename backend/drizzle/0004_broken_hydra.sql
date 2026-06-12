@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "intentos_fallidos" integer DEFAULT 0 NOT NULL;

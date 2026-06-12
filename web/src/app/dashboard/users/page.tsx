@@ -8,6 +8,7 @@ import UserFilters from "@/components/UserFilters";
 import UsersTable from "@/components/UsersTable";
 import EditUserModal from "@/components/EditUserModal";
 import CreateUserModal from "@/components/CreateUserModal";
+import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { api } from "@/lib/api";
 import type { ApiUser } from "@/types/user";
 
@@ -23,6 +24,7 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(searchParams.get("create") === "true");
+  const [resetPasswordUser, setResetPasswordUser] = useState<ApiUser | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
@@ -128,7 +130,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} />
+      <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
 
       <div className="flex items-center justify-between mt-5">
         <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
@@ -195,6 +197,17 @@ export default function UsersPage() {
           onSaved={(updated) => {
             setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? updated : u)));
             setEditingUser(null);
+          }}
+        />
+      )}
+
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          userId={resetPasswordUser.id}
+          userDocument={resetPasswordUser.documento}
+          onClose={() => setResetPasswordUser(null)}
+          onSuccess={() => {
+            fetchUsers();
           }}
         />
       )}

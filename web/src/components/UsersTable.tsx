@@ -48,9 +48,10 @@ interface UsersTableProps {
   users: ApiUser[];
   onEdit: (user: ApiUser) => void;
   onToggleStatus: (user: ApiUser) => void;
+  onResetPassword: (user: ApiUser) => void;
 }
 
-export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTableProps) {
+export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassword }: UsersTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
       <div className="grid grid-cols-[1fr_100px_110px_120px_140px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
@@ -126,6 +127,12 @@ export default function UsersTable({ users, onEdit, onToggleStatus }: UsersTable
               className="h-[30px] px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer text-xs font-medium font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               Editar
+            </button>
+            <button
+              onClick={() => onResetPassword(user)}
+              className="h-[30px] px-3 rounded-md border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer text-xs font-medium font-inter"
+            >
+              Reset
             </button>
             <button
               onClick={() => onToggleStatus(user)}

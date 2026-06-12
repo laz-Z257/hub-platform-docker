@@ -37,3 +37,7 @@ export const updateUserSchema = {
     email: z.string().email().optional().or(z.literal("")),
   }),
 };
+
+export const resetPasswordSchema = z.object({
+  contrasena: z.string().min(6, "Mínimo 6 caracteres"),
+});
