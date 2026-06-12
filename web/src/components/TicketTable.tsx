@@ -140,29 +140,32 @@ function ActionMenu({
             </div>
           </div>
 
-          <div className="border-t border-[#F3F4F6] dark:border-gray-700 my-1" />
-
-          <div className="px-2 pb-1">
-            <p className="px-2 py-1.5 text-[10px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.5px]">
-              Cambiar estado
-            </p>
-            {statusOptions
-              .filter((opt) => opt.value !== safeStatus)
-              .map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    onStatusChange(ticketId, opt.value);
-                    setOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-inter bg-transparent border-none cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-gray-800 rounded-md text-left"
-                  style={{ color: opt.color }}
-                >
-                  <opt.icon size={13} />
-                  <span className="font-medium">{opt.label}</span>
-                </button>
-              ))}
-          </div>
+          {safeStatus !== "resuelto" && (
+            <>
+              <div className="border-t border-[#F3F4F6] dark:border-gray-700 my-1" />
+              <div className="px-2 pb-1">
+                <p className="px-2 py-1.5 text-[10px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.5px]">
+                  Cambiar estado
+                </p>
+                {statusOptions
+                  .filter((opt) => opt.value !== safeStatus)
+                  .map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        onStatusChange(ticketId, opt.value);
+                        setOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-inter bg-transparent border-none cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-gray-800 rounded-md text-left"
+                      style={{ color: opt.color }}
+                    >
+                      <opt.icon size={13} />
+                      <span className="font-medium">{opt.label}</span>
+                    </button>
+                  ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
