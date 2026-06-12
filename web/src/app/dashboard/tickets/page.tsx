@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import TicketSummaryCards from "@/components/TicketSummaryCards";
+import TicketFilters from "@/components/TicketFilters";
 import TicketTable from "@/components/TicketTable";
 import TicketDetailModal from "@/components/TicketDetailModal";
 import { api } from "@/lib/api";
@@ -41,11 +42,39 @@ function formatDescription(desc: string): string {
   return desc.length > 50 ? desc.slice(0, 50) + "..." : desc;
 }
 
+function getDateRange(filter: string): { start?: string; end?: string } {
+  const now = new Date();
+  const end = now.toISOString().split("T")[0];
+  switch (filter) {
+    case "7d": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7);
+      return { start: d.toISOString().split("T")[0], end };
+    }
+    case "30d": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 30);
+      return { start: d.toISOString().split("T")[0], end };
+    }
+    case "90d": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 90);
+      return { start: d.toISOString().split("T")[0], end };
+    }
+    default:
+      return {};
+  }
+}
+
 export default function TicketsPage() {
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [estadoFilter, setEstadoFilter] = useState("Todos");
+  const [prioridadFilter, setPrioridadFilter] = useState("Todas");
+  const [dateFilter, setDateFilter] = useState("30d");
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
 
@@ -56,6 +85,13 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
+    if (searchTerm) params.set("search", searchTerm);
+    if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
+    if (prioridadFilter !== "Todas") params.set("urgencia", prioridadFilter);
+
+    const range = getDateRange(dateFilter);
+    if (range.start) params.set("start", range.start);
+    if (range.end) params.set("end", range.end);
 
     api
       .get<{ items: IncidentItem[]; total: number }>(
@@ -69,12 +105,17 @@ export default function TicketsPage() {
         console.error("Tickets:", err instanceof Error ? err.message : err)
       )
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, searchTerm, estadoFilter, prioridadFilter, dateFilter]);
 
   const fetchStats = useCallback(() => {
+    const range = getDateRange(dateFilter);
+    const params = new URLSearchParams();
+    if (range.start) params.set("start", range.start);
+    if (range.end) params.set("end", range.end);
+
     api
       .get<{ pendientes: number; enProceso: number; resueltos: number }>(
-        `/dashboard/kpis`
+        `/dashboard/kpis?${params.toString()}`
       )
       .then((data) => {
         setStats({
@@ -86,7 +127,7 @@ export default function TicketsPage() {
       .catch((err) =>
         console.error("Stats:", err instanceof Error ? err.message : err)
       );
-  }, []);
+  }, [dateFilter]);
 
   useEffect(() => {
     fetchTickets();
@@ -218,6 +259,27 @@ export default function TicketsPage() {
         enProceso={stats.enProceso}
         resueltos={stats.resueltos}
         loading={loading}
+      />
+
+      {/* Filter Bar */}
+      <TicketFilters
+        searchTerm={searchTerm}
+        estadoFilter={estadoFilter}
+        prioridadFilter={prioridadFilter}
+        dateFilter={dateFilter}
+        onSearchChange={(v) => {
+          setSearchTerm(v);
+          setPage(1);
+        }}
+        onEstadoChange={(v) => {
+          setEstadoFilter(v);
+          setPage(1);
+        }}
+        onPrioridadChange={(v) => {
+          setPrioridadFilter(v);
+          setPage(1);
+        }}
+        onDateChange={setDateFilter}
       />
 
       {/* Table */}
