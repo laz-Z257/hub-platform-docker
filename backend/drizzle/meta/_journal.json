@@ -36,6 +36,13 @@
       "when": 1781270298825,
       "tag": "0004_broken_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781299099479,
+      "tag": "0005_useful_nightcrawler",
+      "breakpoints": true
     }
   ]
 }

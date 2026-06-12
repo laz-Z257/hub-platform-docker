@@ -15,6 +15,7 @@ import incidentsRoutes from "./modules/incidents/incidents.routes";
 import chatRoutes from "./modules/chat/chat.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import usersRoutes from "./modules/users/users.routes";
+import uploadRoutes from "./modules/upload/upload.routes";
 
 const app = express();
 
@@ -70,12 +71,16 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Serve uploads
+app.use("/uploads", express.static("uploads"));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/incidents", incidentsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // 404
 app.use((_req, res) => {

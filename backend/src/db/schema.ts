@@ -48,6 +48,8 @@ export const incidents = pgTable(
     urgencia: urgenciaEnum("urgencia").notNull().default("media"),
     estado: estadoEnum("estado").notNull().default("pendiente"),
     agente: varchar("agente", { length: 100 }),
+    solucion: text("solucion"),
+    imagen_url: varchar("imagen_url", { length: 500 }),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },

@@ -143,11 +143,13 @@ export async function updateIncident(
 ): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { estado, agente } = req.body;
+    const { estado, agente, solucion, imagen_url } = req.body;
 
     const updateData: Record<string, unknown> = { updated_at: new Date() };
     if (estado) updateData.estado = estado;
     if (agente !== undefined) updateData.agente = agente;
+    if (solucion !== undefined) updateData.solucion = solucion;
+    if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
 
     const [updated] = await db
       .update(incidents)
@@ -163,7 +165,7 @@ export async function updateIncident(
     // Send chat notification when ticket is resolved
     if (estado === "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
-      const botMessage = `✅ Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\nSi necesitas más ayuda, no dudes en escribirnos. ¡Gracias por contactarnos!`;
+      const botMessage = `✅ Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solución:** ${solucion}\n\n` : ""}Si necesitas más ayuda, no dudes en escribirnos. ¡Gracias por contactarnos!`;
 
       await db.insert(messages).values({
         user_id: updated.user_id,
