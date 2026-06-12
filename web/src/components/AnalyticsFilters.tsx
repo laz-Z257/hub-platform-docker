@@ -251,21 +251,56 @@ async function handleExport(
   const ws2 = wb.addWorksheet("Timeline");
   ws2.columns = [
     { header: "Fecha", key: "fecha", width: 16 },
-    { header: "Creados", key: "creados", width: 14 },
-    { header: "Resueltos", key: "resueltos", width: 14 },
+    { header: "Creados", key: "creados", width: 12 },
+    { header: "Resueltos", key: "resueltos", width: 12 },
+    { header: "Abiertos Netos", key: "netos", width: 16 },
+    { header: "Acumulado", key: "acum", width: 14 },
   ];
   const h2 = ws2.getRow(1);
-  ["A", "B", "C"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
+  ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
+
+  let runningTotal = 0;
+  let sumCreated = 0;
+  let sumResolved = 0;
   areaData.forEach((d, i) => {
+    const netos = d.trafico - d.conversiones;
+    runningTotal += netos;
+    sumCreated += d.trafico;
+    sumResolved += d.conversiones;
     const row = ws2.getRow(2 + i);
     row.getCell("A").value = d.name;
     row.getCell("B").value = d.trafico;
     row.getCell("B").numFmt = "#,##0";
     row.getCell("C").value = d.conversiones;
     row.getCell("C").numFmt = "#,##0";
-    ["A", "B", "C"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
+    row.getCell("D").value = netos;
+    row.getCell("D").numFmt = "#,##0";
+    row.getCell("D").font = { color: { argb: netos > 0 ? "FFEF4444" : netos < 0 ? "FF22C55E" : "FF6B7280" } };
+    row.getCell("E").value = runningTotal;
+    row.getCell("E").numFmt = "#,##0";
+    row.getCell("E").font = { bold: true, color: { argb: runningTotal > 0 ? "FF25207E" : "FF6B7280" } };
+    ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
   });
-  ws2.autoFilter = { from: "A1", to: `C${areaData.length + 1}` };
+
+  // Summary row
+  const sumRow = ws2.getRow(areaData.length + 2);
+  sumRow.getCell("A").value = "TOTAL";
+  sumRow.getCell("A").font = { bold: true, size: 12, color: { argb: "FF25207E" } };
+  sumRow.getCell("B").value = sumCreated;
+  sumRow.getCell("B").font = { bold: true, size: 12 };
+  sumRow.getCell("B").numFmt = "#,##0";
+  sumRow.getCell("C").value = sumResolved;
+  sumRow.getCell("C").font = { bold: true, size: 12 };
+  sumRow.getCell("C").numFmt = "#,##0";
+  sumRow.getCell("D").value = sumCreated - sumResolved;
+  sumRow.getCell("D").font = { bold: true, size: 12 };
+  sumRow.getCell("D").numFmt = "#,##0";
+  sumRow.getCell("E").value = runningTotal;
+  sumRow.getCell("E").font = { bold: true, size: 12, color: { argb: "FF25207E" } };
+  sumRow.getCell("E").numFmt = "#,##0";
+  ["A", "B", "C", "D", "E"].forEach((col) => Object.assign(sumRow.getCell(col), cellBorder));
+
+  ws2.autoFilter = { from: "A1", to: `E${areaData.length + 1}` };
 
   // ──────────────────────────────────────
   // HOJA 3: Detalle
