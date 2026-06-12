@@ -74,7 +74,7 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
         <MoreVertical size={16} color="#6B7280" strokeWidth={2} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[999] py-1">
           <button
             onClick={() => { setOpen(false); onEdit(user); }}
             className="w-full text-left px-4 py-2 text-[13px] font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
@@ -103,7 +103,7 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
 
 export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassword }: UsersTableProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
       <div className="grid grid-cols-[1fr_100px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
         {["USUARIO", "ROL", "ESTADO", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
           <div
