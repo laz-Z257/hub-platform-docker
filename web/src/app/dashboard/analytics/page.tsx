@@ -120,39 +120,42 @@ export default function AnalyticsPage() {
       setShowDatePicker(false);
       setAppliedRange(null);
       const range = getDefaultRange();
+      setStartDate(range.start);
+      setEndDate(range.end);
       fetchData(range.start, range.end, selectedAgente);
     } else {
       setFilter("custom");
       setShowDatePicker(true);
       if (!startDate) {
-        const today = new Date();
-        const thirtyAgo = new Date(today);
-        thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-        setStartDate(thirtyAgo.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        const range = getDefaultRange();
+        setStartDate(range.start);
+        setEndDate(range.end);
       }
     }
   };
 
   const handleAgentChange = (agente: string) => {
     setSelectedAgente(agente);
-    const range = appliedRange || getDefaultRange();
+    const range = filter === "custom" && appliedRange ? appliedRange : getDefaultRange();
     fetchData(range.start, range.end, agente || undefined);
   };
 
   const handleApplyRange = useCallback(() => {
-    if (startDate && endDate && startDate <= endDate) {
-      setAppliedRange({ start: startDate, end: endDate });
-      setShowDatePicker(false);
-      fetchData(startDate, endDate, selectedAgente);
-    }
+    if (!startDate || !endDate) return;
+    if (startDate > endDate) return;
+    setAppliedRange({ start: startDate, end: endDate });
+    setShowDatePicker(false);
+    setFilter("custom");
+    fetchData(startDate, endDate, selectedAgente || undefined);
   }, [startDate, endDate, selectedAgente]);
 
   const handleCancelRange = useCallback(() => {
+    const range = getDefaultRange();
     setShowDatePicker(false);
     setFilter("30d");
     setAppliedRange(null);
-    const range = getDefaultRange();
+    setStartDate(range.start);
+    setEndDate(range.end);
     fetchData(range.start, range.end, selectedAgente);
   }, [selectedAgente]);
 
