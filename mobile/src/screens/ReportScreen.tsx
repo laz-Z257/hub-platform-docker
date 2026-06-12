@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -22,18 +22,12 @@ import Animated, {
 import ReportHeader from "../components/ReportHeader";
 import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
-import UrgencySelector from "../components/UrgencySelector";
 import Logo from "../components/Logo";
 import { api } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const AnimatedTouchable =
   Animated.createAnimatedComponent(TouchableOpacity);
-
-const URGENCY_OPTIONS = [
-  { label: "Baja", value: "baja" },
-  { label: "Media", value: "media" },
-  { label: "Alta", value: "alta" },
-];
 
 interface FormErrors {
   nombre?: string;
@@ -45,6 +39,7 @@ interface FormErrors {
 export default function ReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -55,7 +50,18 @@ export default function ReportScreen() {
   const [puntoVenta, setPuntoVenta] = useState("");
   const [telefono, setTelefono] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [urgencia, setUrgencia] = useState("media");
+
+  useEffect(() => {
+    if (user) {
+      setNombre(user.nombre);
+      setDocumento(user.documento);
+    }
+    api.get<{ items: { telefono: string }[] }>("/incidents?limit=1").then((data) => {
+      if (data?.items?.length > 0 && data.items[0].telefono) {
+        setTelefono(data.items[0].telefono);
+      }
+    }).catch(() => {});
+  }, [user]);
 
   const scale = useSharedValue(1);
 
@@ -98,7 +104,6 @@ export default function ReportScreen() {
         punto_venta: puntoVenta,
         telefono,
         descripcion,
-        urgencia,
       });
 
       router.replace({
@@ -223,12 +228,6 @@ export default function ReportScreen() {
                   setErrors({ ...errors, descripcion: undefined });
               }}
               error={errors.descripcion}
-            />
-
-            <UrgencySelector
-              options={URGENCY_OPTIONS}
-              selected={urgencia}
-              onSelect={setUrgencia}
             />
 
             <AnimatedTouchable

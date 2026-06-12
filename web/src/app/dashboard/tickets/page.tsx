@@ -73,7 +73,6 @@ export default function TicketsPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("Todos");
-  const [prioridadFilter, setPrioridadFilter] = useState("Todas");
   const [dateFilter, setDateFilter] = useState("30d");
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
@@ -87,7 +86,6 @@ export default function TicketsPage() {
     params.set("limit", String(LIMIT));
     if (searchTerm) params.set("search", searchTerm);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
-    if (prioridadFilter !== "Todas") params.set("urgencia", prioridadFilter);
 
     const range = getDateRange(dateFilter);
     if (range.start) params.set("start", range.start);
@@ -105,7 +103,7 @@ export default function TicketsPage() {
         console.error("Tickets:", err instanceof Error ? err.message : err)
       )
       .finally(() => setLoading(false));
-  }, [page, searchTerm, estadoFilter, prioridadFilter, dateFilter]);
+  }, [page, searchTerm, estadoFilter, dateFilter]);
 
   const fetchStats = useCallback(() => {
     const range = getDateRange(dateFilter);
@@ -265,7 +263,6 @@ export default function TicketsPage() {
       <TicketFilters
         searchTerm={searchTerm}
         estadoFilter={estadoFilter}
-        prioridadFilter={prioridadFilter}
         dateFilter={dateFilter}
         onSearchChange={(v) => {
           setSearchTerm(v);
@@ -273,10 +270,6 @@ export default function TicketsPage() {
         }}
         onEstadoChange={(v) => {
           setEstadoFilter(v);
-          setPage(1);
-        }}
-        onPrioridadChange={(v) => {
-          setPrioridadFilter(v);
           setPage(1);
         }}
         onDateChange={setDateFilter}
