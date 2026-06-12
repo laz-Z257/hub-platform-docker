@@ -16,16 +16,18 @@ async function runMigrations() {
 
   console.log("Running migrations...");
   try {
-    await Promise.race([
-      migrate(db, { migrationsFolder: "./drizzle" }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Migration timeout after 30s")), 30000)
-      ),
-    ]);
+    await migrate(db, { migrationsFolder: "./drizzle" });
     console.log("Migrations completed.");
   } catch (err) {
     console.error("Migration warning:", (err as Error).message);
     console.log("Continuing anyway...");
+  }
+
+  try {
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS intentos_fallidos integer DEFAULT 0 NOT NULL");
+    console.log("Column intentos_fallidos verified.");
+  } catch (err) {
+    console.error("Column migration warning:", (err as Error).message);
   }
 
   await pool.end().catch(() => {});
