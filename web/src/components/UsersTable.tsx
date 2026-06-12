@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
+import { MoreVertical } from "lucide-react";
 import type { ApiUser } from "@/types/user";
 
 const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
@@ -51,10 +53,58 @@ interface UsersTableProps {
   onResetPassword: (user: ApiUser) => void;
 }
 
+function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { user: ApiUser; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+      >
+        <MoreVertical size={16} color="#6B7280" strokeWidth={2} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1">
+          <button
+            onClick={() => { setOpen(false); onEdit(user); }}
+            className="w-full text-left px-4 py-2 text-[13px] font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => { setOpen(false); onResetPassword(user); }}
+            className="w-full text-left px-4 py-2 text-[13px] font-inter text-orange-700 dark:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+          >
+            Resetear contraseña
+          </button>
+          <button
+            onClick={() => { setOpen(false); onToggleStatus(user); }}
+            className={`w-full text-left px-4 py-2 text-[13px] font-inter cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
+              user.estado === "activo" ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400"
+            }`}
+          >
+            {user.estado === "activo" ? "Bloquear" : "Activar"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassword }: UsersTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-      <div className="grid grid-cols-[1fr_100px_110px_120px_140px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
+      <div className="grid grid-cols-[1fr_100px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
         {["USUARIO", "ROL", "ESTADO", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
           <div
             key={col}
@@ -73,7 +123,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
       {Array.isArray(users) && users.map((user) => (
         <div
           key={user.id}
-          className="grid grid-cols-[1fr_100px_110px_120px_140px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
+          className="grid grid-cols-[1fr_100px_110px_120px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
         >
           <div className="flex items-center gap-3 py-3 px-2">
             <div className="w-9 h-9 rounded-full bg-[#F3F0FF] flex items-center justify-center text-[#25207E] text-[13px] font-semibold font-inter shrink-0">
@@ -121,29 +171,8 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
             </span>
           </div>
 
-          <div className="flex items-center gap-2 py-3 px-2 justify-end">
-            <button
-              onClick={() => onEdit(user)}
-              className="h-[30px] px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer text-xs font-medium font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Editar
-            </button>
-            <button
-              onClick={() => onResetPassword(user)}
-              className="h-[30px] px-3 rounded-md border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 cursor-pointer text-xs font-medium font-inter"
-            >
-              Reset
-            </button>
-            <button
-              onClick={() => onToggleStatus(user)}
-              className={`h-[30px] px-3 rounded-md border cursor-pointer text-xs font-medium font-inter ${
-                user.estado === "activo"
-                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-              }`}
-            >
-              {user.estado === "activo" ? "Bloquear" : "Activar"}
-            </button>
+          <div className="py-3 px-2 flex justify-end">
+            <UserActionsMenu user={user} onEdit={onEdit} onToggleStatus={onToggleStatus} onResetPassword={onResetPassword} />
           </div>
         </div>
       ))}
