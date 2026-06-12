@@ -13,6 +13,8 @@ interface IncidentExport {
   punto_venta: string;
   telefono: string;
   descripcion: string;
+  solucion: string | null;
+  imagen_url: string | null;
   urgencia: string;
   estado: string;
   agente: string | null;
@@ -134,6 +136,7 @@ async function handleExport(
     ...metrics,
     { title: "Alta Urgencia", value: incidents.filter((i) => i.urgencia === "alta").length.toLocaleString(), desc: "Incidentes con prioridad alta" },
     { title: "Agentes que atendieron", value: [...new Set(incidents.filter((i) => i.agente).map((i) => i.agente))].length.toLocaleString(), desc: "Técnicos con incidentes asignados" },
+    { title: "Resueltos con solución", value: incidents.filter((i) => i.estado === "resuelto" && i.solucion).length.toLocaleString(), desc: "Tickets cerrados con descripción de solución" },
   ];
   allMetrics.forEach((m, i) => {
     const r = ws.getRow(rKpi + 1 + i);
@@ -289,10 +292,12 @@ async function handleExport(
     { header: "Estado", key: "est", width: 14 },
     { header: "Agente", key: "agente", width: 20 },
     { header: "Descripción", key: "desc", width: 50 },
+    { header: "Solución", key: "sol", width: 50 },
+    { header: "Imagen", key: "img", width: 40 },
     { header: "Creado", key: "creado", width: 18 },
   ];
   const h2 = ws2.getRow(1);
-  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
+  ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
   incidents.forEach((inc, i) => {
     const row = ws2.getRow(2 + i);
     row.getCell("A").value = inc.documento;
@@ -302,10 +307,12 @@ async function handleExport(
     row.getCell("E").value = inc.estado;
     row.getCell("F").value = inc.agente || "";
     row.getCell("G").value = inc.descripcion;
-    row.getCell("H").value = fmtDateTime(inc.created_at);
-    ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
+    row.getCell("H").value = inc.solucion || "";
+    row.getCell("I").value = inc.imagen_url || "";
+    row.getCell("J").value = fmtDateTime(inc.created_at);
+    ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
   });
-  ws2.autoFilter = { from: "A1", to: `H${incidents.length + 1}` };
+  ws2.autoFilter = { from: "A1", to: `J${incidents.length + 1}` };
 
   // ── Guardar ──
   const buffer = await wb.xlsx.writeBuffer();
