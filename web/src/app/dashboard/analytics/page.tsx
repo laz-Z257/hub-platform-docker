@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { ClipboardList, CheckCircle, Clock, Activity, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ClipboardList, CheckCircle, Clock, Activity } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   TrafficChart,
@@ -12,7 +12,6 @@ import {
   type StatusBarDataPoint,
 } from "@/components/AnalyticsCharts";
 import AnalyticsMetrics from "@/components/AnalyticsMetrics";
-import AnalyticsFilters from "@/components/AnalyticsFilters";
 import { api } from "@/lib/api";
 
 interface KpiResponse {
@@ -22,14 +21,6 @@ interface KpiResponse {
   resueltos: number;
   altaUrgencia: number;
   usuariosActivos: number;
-}
-
-function formatDateRange(start: string, end: string): string {
-  const s = new Date(start + "T00:00:00");
-  const e = new Date(end + "T00:00:00");
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
-  return `${fmt(s)} – ${fmt(e)}`;
 }
 
 function getDefaultRange(): { start: string; end: string } {
@@ -44,30 +35,14 @@ function getDefaultRange(): { start: string; end: string } {
 
 
 export default function AnalyticsPage() {
-  const [filter, setFilter] = useState<"30d" | "custom">("30d");
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [appliedRange, setAppliedRange] = useState<{
-    start: string;
-    end: string;
-  } | null>(null);
   const [metrics, setMetrics] = useState<{ icon: LucideIcon; title: string; value: string; desc: string }[]>([]);
   const [areaData, setAreaData] = useState<AreaDataPoint[]>([]);
   const [donutData, setDonutData] = useState<DonutDataPoint[]>([]);
   const [statusData, setStatusData] = useState<StatusBarDataPoint[]>([]);
-  const [agentes, setAgentes] = useState<string[]>([]);
-  const [selectedAgente, setSelectedAgente] = useState("");
 
   useEffect(() => {
-    api.get<string[]>("/incidents/agentes")
-      .then(setAgentes)
-      .catch(() => {});
-  }, []);
-
-  function fetchData(start: string, end: string, agente?: string) {
-    const params = new URLSearchParams({ start, end });
-    if (agente) params.set("agente", agente);
+    const range = getDefaultRange();
+    const params = new URLSearchParams({ start: range.start, end: range.end });
     const qs = `?${params.toString()}`;
 
     api
@@ -97,7 +72,7 @@ export default function AnalyticsPage() {
         setDonutData(stats.distribution);
         if (stats.statusCounts) {
           setStatusData([{
-            name: selectedAgente || "General",
+            name: "General",
             pendientes: stats.statusCounts.pendientes,
             enProceso: stats.statusCounts.enProceso,
             resueltos: stats.statusCounts.resueltos,
@@ -107,106 +82,17 @@ export default function AnalyticsPage() {
       .catch((err) => {
         console.error("Analytics stats:", err instanceof Error ? err.message : err);
       });
-  }
-
-  useEffect(() => {
-    const range = getDefaultRange();
-    fetchData(range.start, range.end);
   }, []);
-
-  const handleFilterChange = (newFilter: "30d" | "custom") => {
-    if (newFilter === "30d") {
-      setFilter("30d");
-      setShowDatePicker(false);
-      setAppliedRange(null);
-      const range = getDefaultRange();
-      fetchData(range.start, range.end, selectedAgente);
-    } else {
-      setFilter("custom");
-      setShowDatePicker(true);
-      if (!startDate) {
-        const today = new Date();
-        const thirtyAgo = new Date(today);
-        thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-        setStartDate(thirtyAgo.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
-      }
-    }
-  };
-
-  const handleAgentChange = (agente: string) => {
-    setSelectedAgente(agente);
-    const range = appliedRange || getDefaultRange();
-    fetchData(range.start, range.end, agente || undefined);
-  };
-
-  const handleApplyRange = useCallback(() => {
-    if (startDate && endDate && startDate <= endDate) {
-      setAppliedRange({ start: startDate, end: endDate });
-      setShowDatePicker(false);
-      fetchData(startDate, endDate, selectedAgente);
-    }
-  }, [startDate, endDate, selectedAgente]);
-
-  const handleCancelRange = useCallback(() => {
-    setShowDatePicker(false);
-    setFilter("30d");
-    setAppliedRange(null);
-    const range = getDefaultRange();
-    fetchData(range.start, range.end, selectedAgente);
-  }, [selectedAgente]);
-
-  const subtitle = appliedRange
-    ? `Rango: ${formatDateRange(appliedRange.start, appliedRange.end)}`
-    : "Resumen de soporte corporativo — últimos 30 días.";
 
   return (
     <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
-      <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
-        <div>
-          <h1 className="text-[42px] font-bold text-gray-800 dark:text-gray-100 font-inter leading-tight">
-            Panel de Analítica
-          </h1>
-          <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 font-inter">
-            {subtitle}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 items-end">
-          <div className="flex items-center gap-3">
-            {agentes.length > 0 && (
-              <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 h-11">
-                <User size={16} color="#6B7280" strokeWidth={2} />
-                <select
-                  value={selectedAgente}
-                  onChange={(e) => handleAgentChange(e.target.value)}
-                  className="h-full border-none bg-transparent text-[13px] font-medium text-gray-700 dark:text-gray-300 font-inter cursor-pointer outline-none min-w-[140px]"
-                >
-                  <option value="">Todos los técnicos</option>
-                  {agentes.map((a) => (
-                    <option key={a} value={a}>{a}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <AnalyticsFilters
-              filter={filter}
-              showDatePicker={showDatePicker}
-              startDate={startDate}
-              endDate={endDate}
-              appliedRange={appliedRange}
-              metrics={metrics}
-              areaData={areaData}
-              donutData={donutData}
-              onFilterChange={handleFilterChange}
-              onStartChange={setStartDate}
-              onEndChange={setEndDate}
-              onApplyRange={handleApplyRange}
-              onCancelRange={handleCancelRange}
-            />
-          </div>
-        </div>
+      <div className="mb-7">
+        <h1 className="text-[42px] font-bold text-gray-800 dark:text-gray-100 font-inter leading-tight">
+          Panel de Analítica
+        </h1>
+        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 font-inter">
+          Resumen de soporte corporativo — últimos 30 días.
+        </p>
       </div>
 
       <AnalyticsMetrics metrics={metrics} />
@@ -258,7 +144,7 @@ export default function AnalyticsPage() {
               Incidentes por Estado
             </h3>
             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-              {selectedAgente ? `Técnico: ${selectedAgente}` : "Todos los técnicos"} — Pendientes, en proceso y resueltos
+              Todos los técnicos — Pendientes, en proceso y resueltos
             </p>
           </div>
           <div className="flex items-center gap-6 mb-4">

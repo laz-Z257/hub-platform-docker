@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import UserSummaryCards from "@/components/UserSummaryCards";
-import UserFilters from "@/components/UserFilters";
 import UsersTable from "@/components/UsersTable";
 import EditUserModal from "@/components/EditUserModal";
 import CreateUserModal from "@/components/CreateUserModal";
@@ -20,8 +19,6 @@ export default function UsersPage() {
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [roleFilter, setRoleFilter] = useState("Todos");
-  const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(searchParams.get("create") === "true");
   const [resetPasswordUser, setResetPasswordUser] = useState<ApiUser | null>(null);
@@ -67,22 +64,8 @@ export default function UsersPage() {
   const adminCount = users.filter((u) => u.rol === "admin").length;
   const userCount = users.filter((u) => u.rol === "user").length;
 
-  let filteredUsers = users;
-  if (roleFilter !== "Todos") {
-    filteredUsers = filteredUsers.filter((u) => u.rol === roleFilter);
-  }
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    filteredUsers = filteredUsers.filter(
-      (u) =>
-        u.nombre.toLowerCase().includes(term) ||
-        (u.email || "").toLowerCase().includes(term) ||
-        u.documento.includes(term)
-    );
-  }
-
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PER_PAGE));
-  const pagedUsers = filteredUsers.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(users.length / PER_PAGE));
+  const pagedUsers = users.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const pages: (number | "...")[] = [];
   if (totalPages <= 7) {
@@ -111,31 +94,22 @@ export default function UsersPage() {
           Gestión de Usuarios
         </h1>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchUsers}
-            disabled={loading}
-            className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
-          >
-            <RefreshCw size={16} strokeWidth={2.5} className={loading ? "animate-spin" : ""} />
-            Refrescar
-          </button>
-
-          <UserFilters
-            roleFilter={roleFilter}
-            searchTerm={searchTerm}
-            onRoleChange={(role) => { setRoleFilter(role); setPage(1); }}
-            onSearchChange={(term) => { setSearchTerm(term); setPage(1); }}
-          />
-        </div>
+        <button
+          onClick={fetchUsers}
+          disabled={loading}
+          className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
+        >
+          <RefreshCw size={16} strokeWidth={2.5} className={loading ? "animate-spin" : ""} />
+          Refrescar
+        </button>
       </div>
 
       <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
 
       <div className="flex items-center justify-between mt-5">
         <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-          Mostrando {Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)} a {Math.min(page * PER_PAGE, filteredUsers.length)} de{" "}
-          {filteredUsers.length.toLocaleString()} usuarios
+          Mostrando {Math.min((page - 1) * PER_PAGE + 1, users.length)} a {Math.min(page * PER_PAGE, users.length)} de{" "}
+          {users.length.toLocaleString()} usuarios
         </span>
 
         <div className="flex items-center gap-1.5">
