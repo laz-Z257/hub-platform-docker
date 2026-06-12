@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, incidentComments, users } from "../../db/schema";
 
@@ -212,6 +212,61 @@ export async function addComment(
   } catch (error) {
     console.error("Add comment error:", error);
     res.status(500).json({ error: "Error al agregar comentario" });
+  }
+}
+
+export async function exportIncidents(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const start = req.query.start as string | undefined;
+    const end = req.query.end as string | undefined;
+    const conditions = [];
+
+    if (start) {
+      conditions.push(gte(incidents.created_at, new Date(start)));
+    }
+    if (end) {
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(incidents.created_at, endDate));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const allIncidents = await db
+      .select()
+      .from(incidents)
+      .where(whereClause)
+      .orderBy(desc(incidents.created_at));
+
+    const incidentIds = allIncidents.map((inc) => inc.id);
+
+    const allComments = incidentIds.length > 0
+      ? await db
+          .select()
+          .from(incidentComments)
+          .where(inArray(incidentComments.incident_id, incidentIds))
+          .orderBy(desc(incidentComments.fecha))
+      : [];
+
+    const commentsByIncident = new Map<string, typeof allComments>();
+    for (const comment of allComments) {
+      const list = commentsByIncident.get(comment.incident_id) || [];
+      list.push(comment);
+      commentsByIncident.set(comment.incident_id, list);
+    }
+
+    const result = allIncidents.map((inc) => ({
+      ...inc,
+      comments: commentsByIncident.get(inc.id) || [],
+    }));
+
+    res.json({ items: result, total: result.length });
+  } catch (error) {
+    console.error("Export incidents error:", error);
+    res.status(500).json({ error: "Error al exportar incidentes" });
   }
 }
 

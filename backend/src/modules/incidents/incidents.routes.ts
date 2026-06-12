@@ -9,6 +9,7 @@ import {
   getStats,
   getAgentes,
   deleteIncident,
+  exportIncidents,
 } from "./incidents.controller";
 import { validate } from "../../middlewares/validate";
 import {
@@ -38,6 +39,7 @@ router.use(incidentsLimiter);
 router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/agentes", adminOnly, getAgentes);
 router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
+router.get("/export", adminOnly, exportIncidents);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
 router.patch("/:id", adminOnly, validate({ body: updateIncidentSchema, params: uuidParamsSchema }), updateIncident);
