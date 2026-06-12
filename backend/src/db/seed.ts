@@ -51,7 +51,7 @@ async function seed() {
       if (process.env.SEED_ADMIN_PASSWORD) {
         await db
           .update(users)
-          .set({ contrasena: password })
+          .set({ contrasena: password, estado: "activo", intentos_fallidos: 0 })
           .where(eq(users.documento, u.documento));
         console.log(`  Password updated for: ${u.nombre}`);
       }
