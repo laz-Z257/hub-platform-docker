@@ -5,11 +5,9 @@ import { Search, Download, ChevronDown } from "lucide-react";
 interface TicketFiltersProps {
   searchTerm: string;
   estadoFilter: string;
-  prioridadFilter: string;
   dateFilter: string;
   onSearchChange: (v: string) => void;
   onEstadoChange: (v: string) => void;
-  onPrioridadChange: (v: string) => void;
   onDateChange: (v: string) => void;
 }
 
@@ -19,11 +17,9 @@ const selectClass =
 export default function TicketFilters({
   searchTerm,
   estadoFilter,
-  prioridadFilter,
   dateFilter,
   onSearchChange,
   onEstadoChange,
-  onPrioridadChange,
   onDateChange,
 }: TicketFiltersProps) {
   return (
@@ -54,24 +50,6 @@ export default function TicketFilters({
           <option value="pendiente">Pendiente</option>
           <option value="en_proceso">En Proceso</option>
           <option value="resuelto">Resuelto</option>
-        </select>
-        <ChevronDown
-          size={14}
-          color="#9CA3AF"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-        />
-      </div>
-
-      <div className="relative">
-        <select
-          value={prioridadFilter}
-          onChange={(e) => onPrioridadChange(e.target.value)}
-          className={selectClass}
-        >
-          <option value="Todas">Prioridad: Todas</option>
-          <option value="alta">Alta</option>
-          <option value="media">Media</option>
-          <option value="baja">Baja</option>
         </select>
         <ChevronDown
           size={14}
