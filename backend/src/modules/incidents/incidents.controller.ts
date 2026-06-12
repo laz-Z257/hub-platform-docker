@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { incidents, incidentComments, users } from "../../db/schema";
+import { incidents, incidentComments, users, messages } from "../../db/schema";
 
 export async function createIncident(
   req: Request,
@@ -158,6 +158,18 @@ export async function updateIncident(
     if (!updated) {
       res.status(404).json({ error: "Incidente no encontrado" });
       return;
+    }
+
+    // Send chat notification when ticket is resolved
+    if (estado === "resuelto") {
+      const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
+      const botMessage = `✅ Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\nSi necesitas más ayuda, no dudes en escribirnos. ¡Gracias por contactarnos!`;
+
+      await db.insert(messages).values({
+        user_id: updated.user_id,
+        content: botMessage,
+        is_bot: true,
+      });
     }
 
     res.json(updated);
