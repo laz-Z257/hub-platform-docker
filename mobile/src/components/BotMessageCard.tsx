@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import ExpandableMenu from "./ExpandableMenu";
 
 interface BotMessageCardProps {
@@ -7,6 +7,9 @@ interface BotMessageCardProps {
   timestamp: string;
   onSubmenuPress?: (label: string) => void;
   onMenuPress?: (label: string) => void;
+  isResolvedNotification?: boolean;
+  onRateService?: () => void;
+  onNewRequest?: () => void;
 }
 
 export default function BotMessageCard({
@@ -14,6 +17,9 @@ export default function BotMessageCard({
   timestamp,
   onSubmenuPress,
   onMenuPress,
+  isResolvedNotification,
+  onRateService,
+  onNewRequest,
 }: BotMessageCardProps) {
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
@@ -44,7 +50,46 @@ export default function BotMessageCard({
           {message}
         </Text>
 
-        <ExpandableMenu onSubmenuPress={onSubmenuPress} onMenuPress={onMenuPress} />
+        {isResolvedNotification ? (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            <TouchableOpacity
+              onPress={onRateService}
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: "#201A7A",
+                borderRadius: 8,
+                height: 44,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
+                ⭐ Puntuar servicio
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onNewRequest}
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: "#F3F0FF",
+                borderRadius: 8,
+                height: 44,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: "#DCD4FF",
+              }}
+            >
+              <Text style={{ color: "#201A7A", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
+                📝 Hacer otra petición
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ExpandableMenu onSubmenuPress={onSubmenuPress} onMenuPress={onMenuPress} />
+        )}
       </View>
 
       <Text

@@ -197,12 +197,16 @@ export default function ChatScreen() {
       }
 
       if (item.type === "bot-card") {
+        const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
         return (
           <BotMessageCard
             message={item.text || ""}
             timestamp={item.timestamp}
             onSubmenuPress={handleSubmenuPress}
             onMenuPress={handleMenuPress}
+            isResolvedNotification={isResolved}
+            onRateService={() => handleSend("Quiero puntuar el servicio")}
+            onNewRequest={() => router.push("/reportar")}
           />
         );
       }
@@ -226,7 +230,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress]
+    [handleSubmenuPress, router, handleSend]
   );
 
   const msgList = typing
