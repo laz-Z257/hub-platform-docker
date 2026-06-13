@@ -281,6 +281,7 @@ export default function HistorialScreen() {
         onTabChange={(tab) => {
           if (tab === "chatbot") router.replace("/chat");
           if (tab === "reportar") router.replace("/reportar");
+          if (tab === "ajustes") router.replace("/ajustes");
         }}
       />
     </View>

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { MessageSquare, AlertTriangle, History, LucideIcon } from "lucide-react-native";
+import { MessageSquare, AlertTriangle, History, Settings, LucideIcon } from "lucide-react-native";
 
 interface Tab {
   label: string;
@@ -46,8 +46,8 @@ function TabItem({ label, icon: Icon, active, onPress }: Tab) {
 }
 
 interface BottomTabProps {
-  activeTab: "chatbot" | "reportar" | "historial";
-  onTabChange: (tab: "chatbot" | "reportar" | "historial") => void;
+  activeTab: "chatbot" | "reportar" | "historial" | "ajustes";
+  onTabChange: (tab: "chatbot" | "reportar" | "historial" | "ajustes") => void;
   safeBottom?: number;
 }
 
@@ -80,6 +80,12 @@ export default function BottomTab({ activeTab, onTabChange, safeBottom = 20 }: B
         icon={History}
         active={activeTab === "historial"}
         onPress={() => onTabChange("historial")}
+      />
+      <TabItem
+        label="Ajustes"
+        icon={Settings}
+        active={activeTab === "ajustes"}
+        onPress={() => onTabChange("ajustes")}
       />
     </View>
   );

@@ -340,6 +340,10 @@ export default function ChatScreen() {
               router.push("/historial");
               return;
             }
+            if (tab === "ajustes") {
+              router.push("/ajustes");
+              return;
+            }
             setActiveTab(tab);
           }}
         />

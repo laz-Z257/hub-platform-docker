@@ -286,6 +286,7 @@ export default function ReportScreen() {
         onTabChange={(tab) => {
           if (tab === "chatbot") router.replace("/chat");
           if (tab === "historial") router.replace("/historial");
+          if (tab === "ajustes") router.replace("/ajustes");
         }}
       />
     </View>

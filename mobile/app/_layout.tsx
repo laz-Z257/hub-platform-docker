@@ -38,6 +38,7 @@ export default function RootLayout() {
             <Stack.Screen name="historial" />
             <Stack.Screen name="exito" />
             <Stack.Screen name="incidente/[id]" />
+            <Stack.Screen name="ajustes" />
           </Stack>
         </AuthProvider>
       </SafeAreaProvider>
