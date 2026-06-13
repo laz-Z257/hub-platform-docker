@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -13,10 +12,6 @@ import {
   Check,
   Copy,
   MessageSquare,
-  Star,
-  Clock,
-  Loader,
-  CheckCircle,
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
 import { useAuth } from "../src/contexts/AuthContext";
@@ -34,27 +29,6 @@ function shortTicketId(id: string): string {
   const clean = id.replace(/-/g, "").slice(-8).toUpperCase();
   return `#TK-${clean}`;
 }
-
-const estados = [
-  {
-    key: "pendiente",
-    label: "Pendiente de revisión",
-    color: "#3B82F6",
-    icon: Clock,
-  },
-  {
-    key: "en_proceso",
-    label: "En proceso",
-    color: "#7C3AED",
-    icon: Loader,
-  },
-  {
-    key: "resuelto",
-    label: "Resuelto",
-    color: "#22C55E",
-    icon: CheckCircle,
-  },
-];
 
 export default function SuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -318,91 +292,6 @@ export default function SuccessScreen() {
           )}
         </Animated.View>
 
-        {/* Estado del Ticket Card */}
-        <Animated.View
-          style={[
-            {
-              backgroundColor: "#FFFFFF",
-              borderWidth: 1,
-              borderColor: "#D9DCE8",
-              borderRadius: 14,
-              padding: 16,
-              width: "100%",
-              marginBottom: 16,
-            },
-            { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-            cardStyle,
-          ]}
-        >
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: "600",
-              color: "#6B7280",
-              fontFamily: "Inter_700Bold",
-              textAlign: "center",
-              letterSpacing: 1,
-              marginBottom: 14,
-            }}
-          >
-            ESTADO DEL TICKET
-          </Text>
-
-          {estados.map((estado, idx) => {
-            const IconComp = estado.icon;
-            const isActive = idx === 0;
-            return (
-              <View
-                key={estado.key}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  paddingVertical: 8,
-                  paddingHorizontal: 12,
-                  backgroundColor: isActive ? `${estado.color}12` : "transparent",
-                  borderRadius: 8,
-                  marginBottom: idx < estados.length - 1 ? 6 : 0,
-                }}
-              >
-                <IconComp size={16} color={isActive ? estado.color : "#D1D5DB"} strokeWidth={2} />
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: isActive ? "600" : "400",
-                    color: isActive ? estado.color : "#D1D5DB",
-                    fontFamily: isActive ? "Inter_600SemiBold" : "Inter_400Regular",
-                    flex: 1,
-                  }}
-                >
-                  {estado.label}
-                </Text>
-                {isActive && (
-                  <View
-                    style={{
-                      backgroundColor: estado.color,
-                      borderRadius: 6,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "600",
-                        color: "#FFFFFF",
-                        fontFamily: "Inter_600SemiBold",
-                      }}
-                    >
-                      ACTUAL
-                    </Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </Animated.View>
-
         {/* ¿Necesitas algo más? Card */}
         <Animated.View
           style={[
@@ -468,60 +357,6 @@ export default function SuccessScreen() {
               Regresar al Chat
             </Text>
           </TouchableOpacity>
-        </Animated.View>
-
-        {/* Calificar Servicio Card */}
-        <Animated.View
-          style={[
-            {
-              backgroundColor: "#FFFFFF",
-              borderWidth: 1,
-              borderColor: "#D9DCE8",
-              borderRadius: 14,
-              padding: 16,
-              width: "100%",
-              marginBottom: 16,
-              opacity: 0.5,
-            },
-            { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-            cardStyle,
-          ]}
-        >
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: "600",
-              color: "#1F2937",
-              fontFamily: "Inter_600SemiBold",
-              marginBottom: 10,
-            }}
-          >
-            Calificar Servicio
-          </Text>
-
-          {/* Stars */}
-          <View style={{ flexDirection: "row", gap: 6, marginBottom: 12 }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={28}
-                color="#D1D5DB"
-                fill="#D1D5DB"
-                strokeWidth={1.5}
-              />
-            ))}
-          </View>
-
-          <Text
-            style={{
-              fontSize: 12,
-              lineHeight: 18,
-              color: "#9CA3AF",
-              fontFamily: "Inter_400Regular",
-            }}
-          >
-            La calificación estará disponible cuando tu ticket sea resuelto.
-          </Text>
         </Animated.View>
 
         {/* Ver detalle button */}
