@@ -216,20 +216,28 @@ export default function TicketsPage() {
     if (range.end) params.set("end", range.end);
     const qs = params.toString() ? `?${params.toString()}` : "";
 
-    let items: IncidentItem[] = [];
+    let items: Array<IncidentItem & { solucion: string | null }> = [];
     try {
-      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export${qs}`);
+      const data = await api.get<{ items: Array<IncidentItem & { solucion: string | null }> }>(`/incidents/export${qs}`);
       items = data.items || [];
     } catch {
       return;
     }
+
+    const fmtDate = (d: string) =>
+      new Date(d).toLocaleDateString("es-CO", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
     const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Tickets");
 
     ws.columns = [
-      { header: "ID", key: "id", width: 36 },
       { header: "Documento", key: "doc", width: 16 },
       { header: "Nombre", key: "nombre", width: 22 },
       { header: "Teléfono", key: "tel", width: 14 },
@@ -238,8 +246,9 @@ export default function TicketsPage() {
       { header: "Estado", key: "est", width: 14 },
       { header: "Agente", key: "agente", width: 20 },
       { header: "Descripción", key: "desc", width: 50 },
-      { header: "Creado", key: "creado", width: 18 },
-      { header: "Actualizado", key: "act", width: 18 },
+      { header: "Solución", key: "sol", width: 50 },
+      { header: "Creado", key: "creado", width: 20 },
+      { header: "Actualizado", key: "act", width: 20 },
     ];
 
     const h = ws.getRow(1);
@@ -248,17 +257,17 @@ export default function TicketsPage() {
 
     items.forEach((inc, i) => {
       const row = ws.getRow(2 + i);
-      row.getCell(1).value = inc.id;
-      row.getCell(2).value = inc.documento;
-      row.getCell(3).value = inc.nombre;
-      row.getCell(4).value = inc.telefono;
-      row.getCell(5).value = inc.punto_venta;
-      row.getCell(6).value = inc.urgencia;
-      row.getCell(7).value = inc.estado;
-      row.getCell(8).value = inc.agente || "";
-      row.getCell(9).value = inc.descripcion;
-      row.getCell(10).value = inc.created_at;
-      row.getCell(11).value = inc.updated_at;
+      row.getCell(1).value = inc.documento;
+      row.getCell(2).value = inc.nombre;
+      row.getCell(3).value = inc.telefono;
+      row.getCell(4).value = inc.punto_venta;
+      row.getCell(5).value = inc.urgencia;
+      row.getCell(6).value = inc.estado;
+      row.getCell(7).value = inc.agente || "";
+      row.getCell(8).value = inc.descripcion;
+      row.getCell(9).value = inc.solucion || "";
+      row.getCell(10).value = fmtDate(inc.created_at);
+      row.getCell(11).value = fmtDate(inc.updated_at);
     });
 
     const buffer = await wb.xlsx.writeBuffer();
