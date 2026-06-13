@@ -13,7 +13,6 @@ import {
   Trash2,
   RefreshCw,
   LogOut,
-  Info,
   Database,
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
@@ -434,70 +433,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* App Info */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderWidth: 1,
-            borderColor: "#D9DCE8",
-            borderRadius: 14,
-            padding: 16,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: "#E9E6FF",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Info size={18} color="#25207E" strokeWidth={2} />
-            </View>
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: "600",
-                color: "#1F2937",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              Información de la App
-            </Text>
-          </View>
-
-          <View style={{ gap: 8 }}>
-            {[
-              { label: "Versión", value: "1.0.0" },
-              { label: "Entorno", value: "Preview" },
-              { label: "API", value: "hub-platform-api.onrender.com" },
-            ].map((item) => (
-              <View
-                key={item.label}
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  paddingVertical: 4,
-                }}
-              >
-                <Text style={{ fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular" }}>
-                  {item.label}
-                </Text>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#1F2937", fontFamily: "Inter_700Bold" }}>
-                  {item.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
       </ScrollView>
 
       <BottomTab
