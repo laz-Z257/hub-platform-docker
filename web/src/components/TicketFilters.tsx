@@ -9,6 +9,7 @@ interface TicketFiltersProps {
   onSearchChange: (v: string) => void;
   onEstadoChange: (v: string) => void;
   onDateChange: (v: string) => void;
+  onExport?: () => void;
 }
 
 const selectClass =
@@ -21,6 +22,7 @@ export default function TicketFilters({
   onSearchChange,
   onEstadoChange,
   onDateChange,
+  onExport,
 }: TicketFiltersProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-[10px] h-[60px] flex items-center px-4 gap-3 mb-5">
@@ -76,7 +78,10 @@ export default function TicketFilters({
         />
       </div>
 
-      <button className="w-9 h-9 flex items-center justify-center border border-[#E5E7EB] dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 cursor-pointer">
+      <button
+        onClick={onExport}
+        className="w-9 h-9 flex items-center justify-center border border-[#E5E7EB] dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 cursor-pointer"
+      >
         <Download size={16} color="#6B7280" strokeWidth={2} />
       </button>
     </div>

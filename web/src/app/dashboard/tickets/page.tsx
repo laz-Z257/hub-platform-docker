@@ -209,6 +209,68 @@ export default function TicketsPage() {
     []
   );
 
+  const handleExport = useCallback(async () => {
+    const range = getDateRange(dateFilter);
+    const params = new URLSearchParams();
+    if (range.start) params.set("start", range.start);
+    if (range.end) params.set("end", range.end);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+
+    let items: IncidentItem[] = [];
+    try {
+      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export${qs}`);
+      items = data.items || [];
+    } catch {
+      return;
+    }
+
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Tickets");
+
+    ws.columns = [
+      { header: "ID", key: "id", width: 36 },
+      { header: "Documento", key: "doc", width: 16 },
+      { header: "Nombre", key: "nombre", width: 22 },
+      { header: "Teléfono", key: "tel", width: 14 },
+      { header: "Punto de Venta", key: "pv", width: 22 },
+      { header: "Urgencia", key: "urg", width: 12 },
+      { header: "Estado", key: "est", width: 14 },
+      { header: "Agente", key: "agente", width: 20 },
+      { header: "Descripción", key: "desc", width: 50 },
+      { header: "Creado", key: "creado", width: 18 },
+      { header: "Actualizado", key: "act", width: 18 },
+    ];
+
+    const h = ws.getRow(1);
+    h.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    h.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF25207E" } };
+
+    items.forEach((inc, i) => {
+      const row = ws.getRow(2 + i);
+      row.getCell(1).value = inc.id;
+      row.getCell(2).value = inc.documento;
+      row.getCell(3).value = inc.nombre;
+      row.getCell(4).value = inc.telefono;
+      row.getCell(5).value = inc.punto_venta;
+      row.getCell(6).value = inc.urgencia;
+      row.getCell(7).value = inc.estado;
+      row.getCell(8).value = inc.agente || "";
+      row.getCell(9).value = inc.descripcion;
+      row.getCell(10).value = inc.created_at;
+      row.getCell(11).value = inc.updated_at;
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tickets_hub${qs ? `_${range.start}_${range.end}` : ""}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [dateFilter]);
+
   const mappedTickets = useMemo(
     () => {
       const safe = Array.isArray(incidents) ? incidents : [];
@@ -290,6 +352,7 @@ export default function TicketsPage() {
           setPage(1);
         }}
         onDateChange={setDateFilter}
+        onExport={handleExport}
       />
 
       {/* Table */}
