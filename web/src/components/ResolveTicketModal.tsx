@@ -1,37 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { CheckCircle, Upload, X } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface ResolveTicketModalProps {
   ticketId: string;
   ticketLabel: string;
   onClose: () => void;
-  onResolved: (ticketId: string, solucion: string, imagenUrl?: string) => void;
+  onResolved: (ticketId: string, solucion: string) => void;
 }
 
 export default function ResolveTicketModal({ ticketId, ticketLabel, onClose, onResolved }: ResolveTicketModalProps) {
   const [solucion, setSolucion] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-
-    if (f.size > 5 * 1024 * 1024) {
-      setError("La imagen no puede superar los 5MB");
-      return;
-    }
-
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
-    setError("");
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,30 +27,12 @@ export default function ResolveTicketModal({ ticketId, ticketLabel, onClose, onR
     setError("");
 
     try {
-      let imagenUrl: string | undefined;
-
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        if (!uploadRes.ok) {
-          const errData = await uploadRes.json().catch(() => ({}));
-          throw new Error(errData.error || "Error al subir la imagen");
-        }
-        const uploadData = await uploadRes.json();
-        imagenUrl = uploadData.url;
-      }
-
       await api.patch(`/incidents/${ticketId}`, {
         estado: "resuelto",
         solucion: solucion.trim(),
-        imagen_url: imagenUrl,
       });
 
-      onResolved(ticketId, solucion.trim(), imagenUrl);
+      onResolved(ticketId, solucion.trim());
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cerrar el ticket");
@@ -113,40 +78,6 @@ export default function ResolveTicketModal({ ticketId, ticketLabel, onClose, onR
               placeholder="Describe los pasos o la solución aplicada..."
               required
             />
-          </div>
-
-          <div className="mb-5">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">
-              Imagen (opcional)
-            </label>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/png,image/jpeg,image/gif,image/webp"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            {preview ? (
-              <div className="relative inline-block">
-                <img src={preview} alt="Preview" className="h-24 rounded-lg object-cover border border-gray-200" />
-                <button
-                  type="button"
-                  onClick={() => { setFile(null); setPreview(null); if (fileRef.current) fileRef.current.value = ""; }}
-                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center"
-                >
-                  <X size={12} strokeWidth={3} />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="flex items-center gap-2 h-10 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 cursor-pointer text-[13px] font-inter text-gray-500 dark:text-gray-400 hover:border-[#25207E]"
-              >
-                <Upload size={16} />
-                Seleccionar archivo
-              </button>
-            )}
           </div>
 
           <div className="flex justify-end gap-2.5">
