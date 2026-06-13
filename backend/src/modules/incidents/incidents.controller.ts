@@ -332,6 +332,7 @@ export async function getStats(
         created_at: incidents.created_at,
         urgencia: incidents.urgencia,
         estado: incidents.estado,
+        punto_venta: incidents.punto_venta,
       })
       .from(incidents)
       .where(whereClause);
@@ -358,40 +359,26 @@ export async function getStats(
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Distribution by urgency
-    const urgenciaTotal = { alta: 0, media: 0, baja: 0 };
+    // Distribution by punto de venta
+    const pvCount = new Map<string, number>();
     for (const inc of allIncidents) {
-      if (inc.urgencia === "alta") urgenciaTotal.alta++;
-      else if (inc.urgencia === "media") urgenciaTotal.media++;
-      else urgenciaTotal.baja++;
+      const pv = inc.punto_venta || "Sin especificar";
+      pvCount.set(pv, (pvCount.get(pv) || 0) + 1);
     }
+
+    const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
+    const sorted = Array.from(pvCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
 
     const total = allIncidents.length;
     const distribution = total === 0
-      ? [
-          { name: "Alta", value: 0, color: "#EF4444" },
-          { name: "Media", value: 0, color: "#F59E0B" },
-          { name: "Baja", value: 0, color: "#22C55E" },
-        ]
-      : [
-      {
-        name: "Alta",
-        value: Math.round((urgenciaTotal.alta / total) * 100),
-        color: "#EF4444",
-      },
-      {
-        name: "Media",
-        value: Math.round((urgenciaTotal.media / total) * 100),
-        color: "#F59E0B",
-      },
-      {
-        name: "Baja",
-        value: total > 0
-          ? 100 - Math.round((urgenciaTotal.alta / total) * 100) - Math.round((urgenciaTotal.media / total) * 100)
-          : 0,
-        color: "#22C55E",
-      },
-    ];
+      ? [{ name: "Sin datos", value: 100, color: "#E5E7EB" }]
+      : sorted.map(([name, count], i) => ({
+          name,
+          value: Math.round((count / total) * 100),
+          color: colors[i % colors.length],
+        }));
 
     // Status counts for bar chart
     const statusCounts = {
