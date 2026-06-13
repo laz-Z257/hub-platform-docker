@@ -324,7 +324,61 @@ Los usuarios reciben la update automáticamente al abrir la app.
 eas update:rollback --channel preview
 ```
 
-## Errores conocidos y soluciones
+### 2026-06-13 — Tickets, analítica, sistemas externos y móvil
+>
+**Web — Tickets:**
+> - Restaurado e implementado botón de descarga en tickets (exporta a Excel con filtro de fecha)
+> - Eliminada columna ID del Excel exportado
+> - Agregada columna Solución al Excel
+> - Formato de fechas en Excel: día/mes/año hora
+> - Eliminada columna Prioridad de la tabla de tickets (TicketTable y TicketsTable widget)
+> - Eliminado campo imagen del modal de cerrar ticket
+>
+> **Web — Analítica:**
+> - Cambiado el gráfico donut de "Distribución por Urgencia" a "Incidentes por Punto de Venta"
+> - Eliminada columna Imagen de la hoja Detalle en exportación Excel
+> - Actualizado el Excel de analítica para reflejar distribución por punto de venta
+>
+> **Web — Configuración:**
+> - Nueva pestaña "Mantenimiento" con:
+>   - Limpiar caché local (localStorage + sessionStorage, muestra cantidad de items y tamaño)
+>   - Recargar página
+>   - Restablecer configuración (con confirmación y estadísticas)
+>
+> **Web — Sistemas Externos:**
+> - Reemplazado el iframe por 6 tarjetas de módulo vacías en cuadrícula 3x2
+>
+> **Backend:**
+> - Cambiada la distribución del endpoint `/incidents/stats` de urgencia a punto de venta
+> - Agregado `punto_venta` al select de la query de estadísticas
+> - Actualizado `CORS_ORIGIN` en Render para incluir `demo-aplicacion-dashboard.vercel.app`
+> - Seteada variable `NEXT_PUBLIC_API_URL` en Vercel
+>
+> **Móvil — Pantalla de éxito (exito.tsx):**
+> - Rediseño completo responsive:
+>   - Ticket number sin altura fija, con `flexWrap` y `flexShrink` para evitar cortes
+>   - Icono de copiar alineado sin superposición
+>   - Tamaños reducidos para pantallas angostas (320px+)
+>   - Secciones: Estado del Ticket, ¿Necesitas algo más?, Calificar Servicio (luego eliminadas)
+>
+> **Móvil — Configuración/Ajustes:**
+> - Nueva pestaña "Ajustes" en la barra inferior (4 tabs)
+> - Pantalla de ajustes con:
+>   - Limpiar caché (borra tokens, sesión, recarga app con `Updates.reloadAsync()`)
+>   - Recargar app
+>   - Cerrar sesión
+> - Eliminado botón de menú (3 puntitos) y logout del ChatHeader
+>
+> **Móvil — OTA Updates:**
+> - Cambiado fallback de API URL de `localhost:3001` a `https://hub-platform-api.onrender.com/api`
+> - Publicadas múltiples OTA updates para Android (canal preview)
+> - Reconstrucción de APK en progreso (EAS Build)
+>
+> **Infraestructura:**
+> - Tokens de servicio: GitHub PAT, Vercel, Render, Expo
+> - Deploys automáticos: Vercel (auto-deploy), Render (auto-deploy + manual trigger)
+>
+> ### Errores conocidos y soluciones
 
 ### 🐛 Render Docker no arrancaba (`x-render-routing: no-server`)
 **Causa:** `process.exit(0)` en `migrate.ts` y `seed.ts` mataba el shell del contenedor Docker antes de que `index.js` arrancara.
