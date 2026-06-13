@@ -378,7 +378,18 @@ eas update:rollback --channel preview
 > - Tokens de servicio: GitHub PAT, Vercel, Render, Expo
 > - Deploys automáticos: Vercel (auto-deploy), Render (auto-deploy + manual trigger)
 >
-> ### Errores conocidos y soluciones
+> ## Pendientes
+
+### 🔴 Martes — Revisión post-despliegue
+- [ ] Verificar que el APK build con los cambios esté funcionando correctamente
+- [ ] Revisar web: tickets, analítica (donut por punto de venta), configuración (mantenimiento), sistemas externos
+- [ ] Revisar móvil: pantalla de éxito (ticket sin cortar), ajustes (limpiar caché)
+- [ ] Confirmar que la API en Render responde correctamente desde producción
+- [ ] Probar el flujo completo: reportar ticket → ver éxito → ver detalle → cerrar ticket
+
+---
+
+### Errores conocidos y soluciones
 
 ### 🐛 Render Docker no arrancaba (`x-render-routing: no-server`)
 **Causa:** `process.exit(0)` en `migrate.ts` y `seed.ts` mataba el shell del contenedor Docker antes de que `index.js` arrancara.
