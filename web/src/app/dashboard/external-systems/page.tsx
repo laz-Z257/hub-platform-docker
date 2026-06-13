@@ -1,12 +1,37 @@
 "use client";
 
-import ExternalSystemFrame from "@/components/ExternalSystemFrame";
+import { LayoutGrid } from "lucide-react";
+
+const modules = Array.from({ length: 6 }, (_, i) => ({
+  id: i + 1,
+  title: `Módulo ${i + 1}`,
+}));
 
 export default function ExternalSystemsPage() {
   return (
-    <div className="flex flex-col items-center w-full min-h-full bg-[#F7F8FC] dark:bg-gray-950 pt-8 px-4">
-      <ExternalSystemFrame />
-      <div className="w-[95%] h-px bg-[#E5E7EB] dark:bg-gray-700 mt-10" />
+    <div className="min-h-[calc(100vh-72px)] bg-[#F7F8FC] dark:bg-gray-950 p-8">
+      <div className="mb-7">
+        <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
+          Sistemas Externos
+        </h1>
+        <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter">
+          Módulos de administración de sistemas externos
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {modules.map((mod) => (
+          <div
+            key={mod.id}
+            className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+          >
+            <LayoutGrid size={40} color="#9CA3AF" />
+            <span className="text-[#9CA3AF] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
+              {mod.title}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
