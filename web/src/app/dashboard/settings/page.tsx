@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw } from "lucide-react";
 import logoImg from "@/assets/logo.png";
@@ -48,9 +48,33 @@ function SettingsTabBar({
   );
 }
 
+function getCacheStats() {
+  if (typeof localStorage === "undefined") return { items: 0, size: "0 KB", lsItems: 0, ssItems: 0 };
+  const lsItems = localStorage.length || 0;
+  const ssItems = typeof sessionStorage !== "undefined" ? sessionStorage.length || 0 : 0;
+  let totalBytes = 0;
+  if (lsItems) {
+    for (let i = 0; i < lsItems; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        totalBytes += key.length * 2;
+        totalBytes += (localStorage.getItem(key)?.length || 0) * 2;
+      }
+    }
+  }
+  const size = totalBytes < 1024
+    ? `${totalBytes} B`
+    : totalBytes < 1048576
+      ? `${(totalBytes / 1024).toFixed(1)} KB`
+      : `${(totalBytes / 1048576).toFixed(1)} MB`;
+  return { items: lsItems + ssItems, size, lsItems, ssItems };
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
+  const [cleared, setCleared] = useState(false);
   const { theme, setTheme } = useTheme();
+  const cacheStats = useMemo(() => getCacheStats(), [cleared]);
 
   return (
     <div className="min-h-full bg-[#F7F8FC] dark:bg-gray-950 px-8 py-7">
@@ -211,16 +235,26 @@ export default function SettingsPage() {
                   <h3 className="text-[16px] font-bold text-[#1F2937] dark:text-gray-100 font-inter mb-1">
                     Limpiar Caché Local
                   </h3>
-                  <p className="text-[13px] text-[#6B7280] dark:text-gray-400 font-inter mb-4">
-                    Elimina los datos almacenados en el navegador (localStorage, sessionStorage).
-                    Esto puede resolver problemas de rendimiento o visualización. No afecta datos
-                    del servidor.
-                  </p>
+                  <div className="flex gap-3 mb-4">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md">
+                      <Database size={12} color="#6B7280" />
+                      <span className="text-[12px] text-[#6B7280] dark:text-gray-400 font-inter font-medium">{cacheStats.lsItems} localStorage</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md">
+                      <Database size={12} color="#6B7280" />
+                      <span className="text-[12px] text-[#6B7280] dark:text-gray-400 font-inter font-medium">{cacheStats.ssItems} sessionStorage</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F3F0FF] rounded-md">
+                      <Trash2 size={12} color="#25207E" />
+                      <span className="text-[12px] text-[#25207E] font-inter font-semibold">{cacheStats.size}</span>
+                    </div>
+                  </div>
                   <button
                     onClick={() => {
                       localStorage.clear();
                       sessionStorage.clear();
-                      alert("Caché local limpiado correctamente. Se recargará la página.");
+                      setCleared((c) => !c);
+                      alert(`Caché local limpiado correctamente (${cacheStats.size}, ${cacheStats.items} ítems eliminados). Se recargará la página.`);
                       window.location.reload();
                     }}
                     className="h-[38px] px-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-[13px] font-semibold text-red-600 dark:text-red-400 font-inter flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
@@ -271,12 +305,16 @@ export default function SettingsPage() {
                     Restaura todas las preferencias locales a sus valores por defecto.
                     Solo afecta configuración del navegador, no datos del servidor.
                   </p>
+                  <div className="mb-4 text-[12px] text-[#6B7280] dark:text-gray-400 font-inter bg-gray-50 dark:bg-gray-800 rounded-md px-3 py-2">
+                    Se eliminarán <strong>{cacheStats.items}</strong> ítems (<strong>{cacheStats.size}</strong>) de localStorage y sessionStorage.
+                  </div>
                   <button
                     onClick={() => {
-                      if (confirm("¿Estás seguro de restablecer toda la configuración local?")) {
+                      if (confirm(`¿Estás seguro de restablecer toda la configuración local? (${cacheStats.items} ítems, ${cacheStats.size})`)) {
                         localStorage.clear();
                         sessionStorage.clear();
-                        alert("Configuración restablecida. Se recargará la página.");
+                        setCleared((c) => !c);
+                        alert(`Configuración restablecida (${cacheStats.size} eliminados). Se recargará la página.`);
                         window.location.reload();
                       }
                     }}
@@ -305,9 +343,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex justify-between text-[13px] font-inter">
                   <span className="text-[#6B7280] dark:text-gray-400">Almacenamiento</span>
-                  <span className="text-[#1F2937] dark:text-gray-100 font-medium">
-                    {typeof localStorage !== "undefined" ? `${(localStorage.length || 0)} ítems` : "No disponible"}
-                  </span>
+                  <span className="text-[#1F2937] dark:text-gray-100 font-medium">{cacheStats.size}</span>
+                </div>
+                <div className="flex justify-between text-[13px] font-inter">
+                  <span className="text-[#6B7280] dark:text-gray-400">Items en caché</span>
+                  <span className="text-[#1F2937] dark:text-gray-100 font-medium">{cacheStats.items}</span>
                 </div>
                 <div className="flex justify-between text-[13px] font-inter">
                   <span className="text-[#6B7280] dark:text-gray-400">Versión</span>
