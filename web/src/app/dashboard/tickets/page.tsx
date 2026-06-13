@@ -288,7 +288,6 @@ export default function TicketsPage() {
         asunto: formatDescription(inc.descripcion),
         categoria: inc.punto_venta,
         solicitante: inc.nombre,
-        prioridad: inc.urgencia === "alta" ? "ALTA" : inc.urgencia === "media" ? "MEDIA" : "BAJA",
         estado:
           inc.estado === "pendiente"
             ? "Abierto"

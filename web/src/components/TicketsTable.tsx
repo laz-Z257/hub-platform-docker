@@ -2,26 +2,11 @@
 
 import Link from "next/link";
 
-const PRIORITY_STYLES: Record<string, { bg: string; color: string }> = {
-  ALTA: { bg: "#DBEAFE", color: "#2563EB" },
-  MEDIA: { bg: "#F3F0FF", color: "#7C3AED" },
-  BAJA: { bg: "#F3F4F6", color: "#6B7280" },
-};
-
 const STATUS_COLORS: Record<string, string> = {
   "En Proceso": "#FBBF24",
   Pendiente: "#3B82F6",
   Resuelto: "#22C55E",
 };
-
-function mapPriority(urgencia: string): string {
-  const map: Record<string, string> = {
-    alta: "ALTA",
-    media: "MEDIA",
-    baja: "BAJA",
-  };
-  return map[urgencia] || urgencia.toUpperCase();
-}
 
 function mapStatus(estado: string): string {
   const map: Record<string, string> = {
@@ -46,8 +31,6 @@ interface TicketsTableProps {
     nombre?: string;
     descripcion?: string;
     asunto?: string;
-    urgencia?: string;
-    prioridad?: string;
     estado?: string;
     created_at?: string;
   }[];
@@ -59,7 +42,6 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
     id: inc.id,
     nombre: inc.nombre || "Anónimo",
     asunto: inc.asunto || (inc.descripcion ? (inc.descripcion.length > 45 ? inc.descripcion.slice(0, 45) + "..." : inc.descripcion) : "Sin descripción"),
-    prioridad: inc.prioridad || mapPriority(inc.urgencia || "media"),
     estado: inc.estado ? mapStatus(inc.estado) : "Pendiente",
     fecha: inc.created_at ? formatDate(inc.created_at) : "—",
   }));
@@ -86,7 +68,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              {["USUARIO", "ASUNTO", "PRIORIDAD", "FECHA", "ESTADO"].map((h) => (
+              {["USUARIO", "ASUNTO", "FECHA", "ESTADO"].map((h) => (
                 <th
                   key={h}
                   className="text-left px-3 py-2.5 text-xs font-semibold text-gray-400 font-inter uppercase tracking-[0.5px]"
@@ -104,19 +86,6 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
                 </td>
                 <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
                   {ticket.asunto}
-                </td>
-                <td className="px-3 py-3">
-                  <span
-                    className="inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter"
-                    style={{
-                      backgroundColor:
-                        PRIORITY_STYLES[ticket.prioridad]?.bg || "#F3F4F6",
-                      color:
-                        PRIORITY_STYLES[ticket.prioridad]?.color || "#6B7280",
-                    }}
-                  >
-                    {ticket.prioridad}
-                  </span>
                 </td>
                 <td className="px-3 py-3 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
                   {ticket.fecha}

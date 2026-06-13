@@ -243,10 +243,10 @@ export default function AnalyticsPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
           <div className="mb-5">
             <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 font-inter">
-              Distribución por Urgencia
+              Incidentes por Punto de Venta
             </h3>
             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-              Desglose de incidentes por nivel
+              Distribución de tickets por sucursal
             </p>
           </div>
           <DonutChart data={donutData} />

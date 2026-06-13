@@ -207,31 +207,31 @@ async function handleExport(
   ws.getColumn(sideCol).width = 3;
   const dataCol = 7;
 
-  // Urgencia
-  const rUrg = 4;
-  ws.getCell(rUrg, dataCol).value = "Distribución por Urgencia";
-  ws.getCell(rUrg, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
-  ws.mergeCells(rUrg, dataCol, rUrg, dataCol + 2);
+  // Punto de Venta
+  const rPv = 4;
+  ws.getCell(rPv, dataCol).value = "Incidentes por Punto de Venta";
+  ws.getCell(rPv, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
+  ws.mergeCells(rPv, dataCol, rPv, dataCol + 2);
 
-  ["Urgencia", "Cant.", "%"].forEach((l, i) => Object.assign(ws.getRow(rUrg + 1).getCell(dataCol + i), { value: l }, headerStyle("FF25207E")));
-  const urgenciaMap = { alta: 0, media: 0, baja: 0 };
+  ["Punto de Venta", "Cant.", "%"].forEach((l, i) => Object.assign(ws.getRow(rPv + 1).getCell(dataCol + i), { value: l }, headerStyle("FF25207E")));
+  const pvMap = new Map<string, number>();
   for (const inc of incidents) {
-    if (inc.urgencia === "alta") urgenciaMap.alta++;
-    else if (inc.urgencia === "media") urgenciaMap.media++;
-    else urgenciaMap.baja++;
+    const pv = inc.punto_venta || "Sin especificar";
+    pvMap.set(pv, (pvMap.get(pv) || 0) + 1);
   }
+  const pvSorted = Array.from(pvMap.entries()).sort((a, b) => b[1] - a[1]);
   const tot = totalIncidents || 1;
-  const urgColors: Record<string, string> = { alta: "FFEF4444", media: "FFF59E0B", baja: "FF22C55E" };
-  ["alta", "media", "baja"].forEach((key, i) => {
-    const r = ws.getRow(rUrg + 2 + i);
-    r.getCell(dataCol).value = key.charAt(0).toUpperCase() + key.slice(1); r.getCell(dataCol).font = { bold: true, size: 11, color: { argb: urgColors[key] } };
-    r.getCell(dataCol + 1).value = urgenciaMap[key as keyof typeof urgenciaMap]; r.getCell(dataCol + 1).numFmt = "#,##0";
-    r.getCell(dataCol + 2).value = `${Math.round((urgenciaMap[key as keyof typeof urgenciaMap] / tot) * 100)}%`;
+  const pvColors = ["FF25207E", "FF7C3AED", "FF3B82F6", "FFF59E0B", "FFEF4444", "FF22C55E", "FFEC4899", "FF14B8A6"];
+  pvSorted.forEach(([name, count], i) => {
+    const r = ws.getRow(rPv + 2 + i);
+    r.getCell(dataCol).value = name; r.getCell(dataCol).font = { bold: true, size: 11, color: { argb: pvColors[i % pvColors.length] } };
+    r.getCell(dataCol + 1).value = count; r.getCell(dataCol + 1).numFmt = "#,##0";
+    r.getCell(dataCol + 2).value = `${Math.round((count / tot) * 100)}%`;
     [dataCol, dataCol + 1, dataCol + 2].forEach((c) => Object.assign(r.getCell(c), cellBorder));
   });
 
   // Estado
-  const rEst = rUrg + 6;
+  const rEst = rPv + 6;
   ws.getCell(rEst, dataCol).value = "Incidentes por Estado";
   ws.getCell(rEst, dataCol).font = { bold: true, size: 13, color: { argb: "FF25207E" } };
   ws.mergeCells(rEst, dataCol, rEst, dataCol + 2);

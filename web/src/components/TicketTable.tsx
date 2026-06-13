@@ -8,18 +8,10 @@ interface TicketRow {
   asunto: string;
   categoria: string;
   solicitante: string;
-  prioridad: string;
   estado: string;
   updatedAt: string;
   agente?: string | null;
 }
-
-const PRIORITY_BADGES: Record<string, { bg: string; text: string }> = {
-  CRÍTICA: { bg: "#FEE2E2", text: "#DC2626" },
-  ALTA: { bg: "#25207E", text: "#FFFFFF" },
-  MEDIA: { bg: "#E9D5FF", text: "#7C3AED" },
-  BAJA: { bg: "#E5E7EB", text: "#6B7280" },
-};
 
 const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
   Abierto: { bg: "#DBEAFE", text: "#2563EB" },
@@ -182,8 +174,8 @@ function ActionMenu({
 export default function TicketTable({ tickets, onStatusChange, onViewDetail, onAssignAgent, onResolve }: TicketTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl overflow-visible">
-      <div className="grid grid-cols-[100px_1fr_140px_100px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
-        {["ID TICKET", "ASUNTO", "SOLICITANTE", "PRIORIDAD", "ESTADO", "ÚLTIMA ACT.", "ACCIONES"].map(
+      <div className="grid grid-cols-[100px_1fr_140px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
+        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "ÚLTIMA ACT.", "ACCIONES"].map(
           (col) => (
             <div
               key={col}
@@ -203,7 +195,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
       {(Array.isArray(tickets) ? tickets : []).map((ticket) => (
         <div
           key={ticket.id}
-          className="grid grid-cols-[100px_1fr_140px_100px_110px_120px_60px] px-5 border-t border-[#F3F4F6] dark:border-gray-700 items-center min-h-[56px]"
+          className="grid grid-cols-[100px_1fr_140px_110px_120px_60px] px-5 border-t border-[#F3F4F6] dark:border-gray-700 items-center min-h-[56px]"
         >
           <div className="py-3 px-2">
             <span className="text-[13px] font-medium text-[#25207E] font-inter">
@@ -223,18 +215,6 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
           <div className="py-3 px-2">
             <span className="text-[13px] text-[#1F2937] dark:text-gray-100 font-inter font-medium">
               {ticket.solicitante}
-            </span>
-          </div>
-
-          <div className="py-3 px-2">
-            <span
-              className="inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter"
-              style={{
-                backgroundColor: PRIORITY_BADGES[ticket.prioridad]?.bg || "#E5E7EB",
-                color: PRIORITY_BADGES[ticket.prioridad]?.text || "#6B7280",
-              }}
-            >
-              {ticket.prioridad}
             </span>
           </div>
 
