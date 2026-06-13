@@ -8,7 +8,7 @@ import {
 } from "./storage";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001/api";
+  process.env.EXPO_PUBLIC_API_URL || "https://hub-platform-api.onrender.com/api";
 
 let authToken: string | null = null;
 
