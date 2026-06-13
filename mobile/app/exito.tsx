@@ -143,7 +143,7 @@ export default function SuccessScreen() {
         contentContainerStyle={{
           alignItems: "center",
           paddingHorizontal: 20,
-          paddingTop: 48,
+          paddingTop: 24,
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
@@ -152,13 +152,13 @@ export default function SuccessScreen() {
         <Animated.View
           style={[
             {
-              width: 120,
-              height: 120,
-              borderRadius: 60,
+              width: 96,
+              height: 96,
+              borderRadius: 48,
               backgroundColor: "#E7EEF9",
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 32,
+              marginBottom: 24,
             },
             { shadowColor: "#25207E", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 4 },
             outerStyle,
@@ -167,9 +167,9 @@ export default function SuccessScreen() {
           <Animated.View
             style={[
               {
-                width: 56,
-                height: 56,
-                borderRadius: 28,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
                 backgroundColor: "#25207E",
                 alignItems: "center",
                 justifyContent: "center",
@@ -177,7 +177,7 @@ export default function SuccessScreen() {
               innerStyle,
             ]}
           >
-            <Check size={28} color="#FFFFFF" strokeWidth={3.5} />
+            <Check size={24} color="#FFFFFF" strokeWidth={3.5} />
           </Animated.View>
         </Animated.View>
 
@@ -185,12 +185,12 @@ export default function SuccessScreen() {
         <Animated.View style={fadeStyle}>
           <Text
             style={{
-              fontSize: 36,
+              fontSize: 28,
               fontWeight: "700",
               color: "#25207E",
               fontFamily: "Inter_700Bold",
               textAlign: "center",
-              marginBottom: 16,
+              marginBottom: 12,
             }}
           >
             ¡Reporte Enviado!
@@ -201,13 +201,13 @@ export default function SuccessScreen() {
         <Animated.View style={fadeStyle}>
           <Text
             style={{
-              fontSize: 16,
-              lineHeight: 26,
+              fontSize: 15,
+              lineHeight: 24,
               color: "#6B7280",
               fontFamily: "Inter_400Regular",
               textAlign: "center",
-              maxWidth: 300,
-              marginBottom: 32,
+              width: "90%",
+              marginBottom: 28,
             }}
           >
             Hemos recibido tu reporte. Un agente técnico revisará los detalles y
@@ -224,9 +224,9 @@ export default function SuccessScreen() {
               borderWidth: 1,
               borderColor: "#D9DCE8",
               borderRadius: 14,
-              padding: 20,
-              width: "92%",
-              marginBottom: 28,
+              padding: 16,
+              width: "100%",
+              marginBottom: 24,
             },
             { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
             cardStyle,
@@ -240,7 +240,7 @@ export default function SuccessScreen() {
               fontFamily: "Inter_700Bold",
               textAlign: "center",
               letterSpacing: 1,
-              marginBottom: 12,
+              marginBottom: 10,
             }}
           >
             NÚMERO DE TICKET
@@ -250,20 +250,22 @@ export default function SuccessScreen() {
             style={{
               backgroundColor: "#EEF2FF",
               borderRadius: 10,
-              height: 56,
+              height: 48,
               flexDirection: "row",
               alignItems: "center",
-              paddingHorizontal: 16,
+              paddingHorizontal: 12,
             }}
           >
             <Text
               style={{
                 flex: 1,
-                fontSize: 32,
+                fontSize: 22,
                 fontWeight: "700",
                 color: "#25207E",
                 fontFamily: "Inter_700Bold",
               }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {userId}
             </Text>
@@ -272,7 +274,7 @@ export default function SuccessScreen() {
               style={{ padding: 4 }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Copy size={20} color="#25207E" strokeWidth={2} />
+              <Copy size={18} color="#25207E" strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
@@ -292,12 +294,12 @@ export default function SuccessScreen() {
         </Animated.View>
 
         {/* Primary Button */}
-        <Animated.View style={[{ width: "92%" }, cardStyle]}>
+        <Animated.View style={[{ width: "100%" }, cardStyle]}>
           <TouchableOpacity
             onPress={() => router.replace("/chat")}
             activeOpacity={0.85}
             style={{
-              height: 52,
+              height: 50,
               borderRadius: 10,
               backgroundColor: "#25207E",
               flexDirection: "row",
@@ -312,7 +314,7 @@ export default function SuccessScreen() {
               marginBottom: 12,
             }}
           >
-            <MessageSquare size={20} color="#FFFFFF" strokeWidth={2} />
+            <MessageSquare size={18} color="#FFFFFF" strokeWidth={2} />
             <Text
               style={{
                 fontSize: 15,
@@ -327,7 +329,7 @@ export default function SuccessScreen() {
         </Animated.View>
 
         {/* Secondary Button */}
-        <Animated.View style={[{ width: "92%" }, cardStyle]}>
+        <Animated.View style={[{ width: "100%" }, cardStyle]}>
           <TouchableOpacity
             onPress={() => {
               if (ticketId) {
@@ -338,7 +340,7 @@ export default function SuccessScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              height: 52,
+              height: 50,
               borderRadius: 10,
               backgroundColor: "#DCD4FF",
               flexDirection: "row",
@@ -347,7 +349,7 @@ export default function SuccessScreen() {
               gap: 10,
             }}
           >
-            <History size={20} color="#4B5563" strokeWidth={2} />
+            <History size={18} color="#4B5563" strokeWidth={2} />
             <Text
               style={{
                 fontSize: 15,
