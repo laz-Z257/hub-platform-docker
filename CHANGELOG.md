@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-06-16 — Notificaciones, menú chat, calificaciones, FAQ, campos bloqueados, limpieza BD
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Registro de cierre de tickets** | `schema.ts`, `incidents.controller.ts`, `migration 0006` | Columnas `cerrado_por` (FK users) y `fecha_cierre` en incidents. Al resolver ticket guarda quién y cuándo. |
+| **Sistema de calificaciones** | `schema.ts`, `ratings/` (controller, routes, schema), `migration 0007` | Nueva tabla `ratings` (puntuación 1-5, comentario). Endpoints POST/GET para calificar y GET /ratings para stats admin. |
+| **Endpoint limpieza BD** | `index.ts` (temporal) | Limpieza completa de BD producción excepto admin. |
+
+### Web Dashboard
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Detalle de cierre en tickets** | `TicketDetailModal.tsx` | Modal muestra "Cerrado por", "Fecha de cierre" y "Solución" en tickets resueltos. |
+| **Scroll en modal** | `TicketDetailModal.tsx` | Modal con scroll vertical cuando el contenido excede la pantalla. |
+| **Página Calificaciones** | `ratings/page.tsx`, `Sidebar.tsx` | Nueva página en sidebar. Tarjetas con promedio, gráfico de barras por estrella, promedio por punto de venta, tabla detallada con usuario, punto de venta, ticket, puntuación y comentario. |
+| **Exportación Excel** | `tickets/page.tsx` | Columnas "Cerrado por" y "Fecha cierre" en exportación. |
+
+### Mobile App (Android)
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Eliminado "Recargar App"** | `ajustes.tsx` | Opción redundante removida de ajustes. |
+| **Selector de estrellas** | `StarRating.tsx`, `ChatScreen.tsx` | Al tocar "Puntuar servicio" en chat de ticket resuelto, se abre modal con 5 estrellas + comentario. Envía calificación al backend. |
+| **Campos solo lectura** | `TextField.tsx`, `ReportScreen.tsx` | Nombre, documento y teléfono bloqueados con candado y fondo gris. Teléfono editable solo en primer reporte, luego se bloquea automáticamente. |
+| **Menú de chat actualizado** | `ExpandableMenu.tsx`, `ChatScreen.tsx` | "Estado de solicitud" → "Estado de reporte" (redirige a historial). Eliminados "Estado de ticket" (submenú) y "Hablar con agente". |
+| **Modal FAQ** | `FaqModal.tsx`, `ChatScreen.tsx` | "Preguntas frecuentes" abre modal con acordeón de 4 preguntas/respuestas precargadas. |
+| **Actualización OTA** | Múltiples OTA updates | Publicados cambios a canales preview y production. Nuevo APK compilado en EAS. |
+
+### Despliegues
+
+| Servicio | Plataforma | Estado |
+|----------|------------|--------|
+| Backend | Render | Auto-deploy desde main |
+| Web | Vercel | Auto-deploy desde main |
+| Mobile | Expo (OTA + APK) | OTA en preview y production. Build EAS completado. |
+
+---
+
 ## 2026-06-12 — Bloqueo por intentos, reset password, mejoras dashboard, modal cierre tickets, APK
 
 ### Backend
