@@ -157,8 +157,6 @@ export default function ChatScreen() {
     (label: string) => {
       if (label === "Reportar incidente") {
         router.push("/reportar");
-      } else if (label === "Estado de ticket") {
-        router.push("/historial");
       } else {
         handleSend(label);
       }
@@ -168,9 +166,13 @@ export default function ChatScreen() {
 
   const handleMenuPress = useCallback(
     (label: string) => {
-      handleSend(label);
+      if (label === "Estado de reporte") {
+        router.push("/historial");
+      } else {
+        handleSend(label);
+      }
     },
-    [handleSend]
+    [router, handleSend]
   );
 
   const handleSubmitRating = useCallback(
