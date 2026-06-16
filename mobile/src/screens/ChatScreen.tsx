@@ -5,8 +5,8 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  Modal,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -63,7 +63,7 @@ export default function ChatScreen() {
     descripcion: string;
     estado: string;
   } | null>(null);
-  const [showRating, setShowRating] = useState(false);
+  const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (initializing) return;
@@ -175,9 +175,14 @@ export default function ChatScreen() {
 
   const handleSubmitRating = useCallback(
     async (puntuacion: number, comentario: string) => {
-      if (!latestIncident) return;
-      await api.post(`/ratings/${latestIncident.id}`, { puntuacion, comentario });
-      setShowRating(false);
+      const id = ratingIncidentId || latestIncident?.id;
+      if (!id) {
+        Alert.alert("Sin tickets", "No se encontró un ticket para calificar.");
+        setRatingIncidentId(null);
+        return;
+      }
+      await api.post(`/ratings/${id}`, { puntuacion, comentario });
+      setRatingIncidentId(null);
       const thanksMsg: Message = {
         id: `bot-card-${Date.now()}`,
         type: "bot-card",
@@ -186,7 +191,7 @@ export default function ChatScreen() {
       };
       setMessages((prev) => [...prev, thanksMsg]);
     },
-    [latestIncident]
+    [ratingIncidentId, latestIncident]
   );
 
   const renderItem = useCallback(
@@ -225,11 +230,22 @@ export default function ChatScreen() {
             onSubmenuPress={handleSubmenuPress}
             onMenuPress={handleMenuPress}
             isResolvedNotification={isResolved}
-            onRateService={() => {
-              if (latestIncident) {
-                setShowRating(true);
+            onRateService={async () => {
+              const id = latestIncident?.id;
+              if (id) {
+                setRatingIncidentId(id);
               } else {
-                handleSend("Quiero puntuar el servicio");
+                try {
+                  const data = await api.get<{ items: { id: string; estado: string }[] }>("/incidents?limit=1&estado=resuelto");
+                  const resolved = data.items?.[0];
+                  if (resolved) {
+                    setRatingIncidentId(resolved.id);
+                  } else {
+                    Alert.alert("Sin tickets resueltos", "No hay tickets resueltos para calificar.");
+                  }
+                } catch {
+                  Alert.alert("Error", "No se pudo obtener el ticket para calificar.");
+                }
               }
             }}
           />
@@ -255,7 +271,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, handleSend]
+    [handleSubmenuPress, handleSend, latestIncident]
   );
 
   const msgList = typing
@@ -353,14 +369,34 @@ export default function ChatScreen() {
           />
         )}
 
-        {showRating && (
-          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-            <StarRating
-              onSubmit={handleSubmitRating}
-              onCancel={() => setShowRating(false)}
-            />
+        <Modal
+          visible={ratingIncidentId !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setRatingIncidentId(null)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              padding: 24,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#FFFFFF",
+                borderRadius: 20,
+                padding: 24,
+              }}
+            >
+              <StarRating
+                onSubmit={handleSubmitRating}
+                onCancel={() => setRatingIncidentId(null)}
+              />
+            </View>
           </View>
-        )}
+        </Modal>
 
         <ChatInput onSend={handleSend} />
 
