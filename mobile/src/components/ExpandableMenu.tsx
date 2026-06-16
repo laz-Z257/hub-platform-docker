@@ -30,16 +30,14 @@ interface MenuOption {
 
 const MENU_OPTIONS: MenuOption[] = [
   { label: "Consultar saldo" },
-  { label: "Estado de solicitud" },
+  { label: "Estado de reporte" },
   {
     label: "Soporte t\u00E9cnico",
     subItems: [
       { label: "Reportar incidente" },
-      { label: "Estado de ticket" },
       { label: "Preguntas frecuentes" },
     ],
   },
-  { label: "Hablar con agente" },
 ];
 
 interface ExpandableMenuProps {
