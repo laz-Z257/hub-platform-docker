@@ -8,13 +8,9 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
-import { authMiddleware } from "./middlewares/auth";
-import { adminOnly } from "./middlewares/admin";
 import { env } from "./config/env";
 
 import { ne } from "drizzle-orm";
-import { db } from "./db";
-import { ratings, incidentComments, messages, incidents, users } from "./db/schema";
 import authRoutes from "./modules/auth/auth.routes";
 import incidentsRoutes from "./modules/incidents/incidents.routes";
 import chatRoutes from "./modules/chat/chat.routes";
@@ -88,21 +84,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ratings", ratingsRoutes);
-
-// TEMP: Clean all data except admin
-app.post("/api/clean", authMiddleware, adminOnly, async (_req, res) => {
-  try {
-    await db.delete(ratings);
-    await db.delete(incidentComments);
-    await db.delete(messages);
-    await db.delete(incidents);
-    await db.delete(users).where(ne(users.documento, "123456789"));
-    res.json({ message: "Base de datos limpiada. Solo admin conservado." });
-  } catch (error) {
-    console.error("Clean error:", error);
-    res.status(500).json({ error: "Error al limpiar" });
-  }
-});
 
 // 404
 app.use((_req, res) => {
