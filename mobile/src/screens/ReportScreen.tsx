@@ -33,6 +33,7 @@ interface FormErrors {
   nombre?: string;
   documento?: string;
   puntoVenta?: string;
+  telefono?: string;
   descripcion?: string;
 }
 
@@ -44,6 +45,7 @@ export default function ReportScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
+  const [hasHistory, setHasHistory] = useState(false);
 
   const [nombre, setNombre] = useState("");
   const [documento, setDocumento] = useState("");
@@ -56,9 +58,12 @@ export default function ReportScreen() {
       setNombre(user.nombre);
       setDocumento(user.documento);
     }
-    api.get<{ items: { telefono: string }[] }>("/incidents?limit=1").then((data) => {
+    api.get<{ items: { telefono: string }[]; total: number }>("/incidents?limit=1").then((data) => {
       if (data?.items?.length > 0 && data.items[0].telefono) {
         setTelefono(data.items[0].telefono);
+        setHasHistory(true);
+      } else if (data?.total && data.total > 0) {
+        setHasHistory(true);
       }
     }).catch(() => {});
   }, [user]);
@@ -86,6 +91,9 @@ export default function ReportScreen() {
       newErrors.puntoVenta = "El punto de venta es requerido";
     if (!descripcion.trim())
       newErrors.descripcion = "La descripción es requerida";
+
+    if (!hasHistory && !telefono.trim())
+      newErrors.telefono = "El teléfono es requerido";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -216,9 +224,14 @@ export default function ReportScreen() {
               label="Número de Teléfono"
               placeholder="Tu número de contacto"
               value={telefono}
-              onChangeText={setTelefono}
+              onChangeText={(t) => {
+                setTelefono(t);
+                if (errors.telefono)
+                  setErrors({ ...errors, telefono: undefined });
+              }}
               keyboardType="phone-pad"
-              editable={false}
+              editable={!hasHistory}
+              error={errors.telefono}
             />
 
             <TextAreaField
