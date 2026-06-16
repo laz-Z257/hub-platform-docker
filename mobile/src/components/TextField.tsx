@@ -8,6 +8,7 @@ interface TextFieldProps {
   onChangeText: (text: string) => void;
   error?: string;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
+  editable?: boolean;
 }
 
 export default function TextField({
@@ -17,6 +18,7 @@ export default function TextField({
   onChangeText,
   error,
   keyboardType = "default",
+  editable = true,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
 
@@ -48,7 +50,8 @@ export default function TextField({
           autoCapitalize="words"
           autoCorrect={false}
           keyboardType={keyboardType}
-          style={{ height: "100%" }}
+          editable={editable}
+          style={[{ height: "100%" }, !editable && { color: "#6B7280" }]}
         />
       </View>
       {error && (

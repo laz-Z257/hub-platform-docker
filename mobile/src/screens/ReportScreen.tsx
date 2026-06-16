@@ -80,8 +80,8 @@ export default function ReportScreen() {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!nombre.trim()) newErrors.nombre = "El nombre es requerido";
-    if (!documento.trim()) newErrors.documento = "El documento es requerido";
+    if (!nombre.trim()) newErrors.nombre = "El nombre del usuario no está disponible";
+    if (!documento.trim()) newErrors.documento = "El documento del usuario no está disponible";
     if (!puntoVenta.trim())
       newErrors.puntoVenta = "El punto de venta es requerido";
     if (!descripcion.trim())
@@ -183,6 +183,7 @@ export default function ReportScreen() {
                   setErrors({ ...errors, nombre: undefined });
               }}
               error={errors.nombre}
+              editable={false}
             />
 
             <TextField
@@ -196,6 +197,7 @@ export default function ReportScreen() {
               }}
               error={errors.documento}
               keyboardType="numeric"
+              editable={false}
             />
 
             <TextField
@@ -216,6 +218,7 @@ export default function ReportScreen() {
               value={telefono}
               onChangeText={setTelefono}
               keyboardType="phone-pad"
+              editable={false}
             />
 
             <TextAreaField
