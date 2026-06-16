@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Clock, User, Phone, MapPin, AlertCircle } from "lucide-react";
+import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface IncidentDetail {
   id: string;
@@ -12,6 +12,9 @@ interface IncidentDetail {
   urgencia: string;
   estado: string;
   agente: string | null;
+  solucion: string | null;
+  cerrado_por: string | null;
+  fecha_cierre: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +116,17 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
           <div className="col-span-2">
             <InfoBlock icon={User} label="Agente Asignado" value={incident.agente || "Sin asignar"} />
           </div>
+          {incident.estado === "resuelto" && (
+            <>
+              {incident.solucion && (
+                <div className="col-span-2">
+                  <InfoBlock icon={CheckCircle2} label="Solución" value={incident.solucion} />
+                </div>
+              )}
+              <InfoBlock icon={User} label="Cerrado por" value={incident.cerrado_por || "—"} />
+              <InfoBlock icon={Clock} label="Fecha de cierre" value={incident.fecha_cierre ? formatDate(incident.fecha_cierre) : "—"} />
+            </>
+          )}
         </div>
 
         {/* Footer */}

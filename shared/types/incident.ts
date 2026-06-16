@@ -12,6 +12,9 @@ export interface Incident {
   urgencia: IncidentUrgency;
   estado: IncidentStatus;
   agente: string | null;
+  solucion: string | null;
+  cerrado_por: string | null;
+  fecha_cierre: string | null;
   created_at: string;
   updated_at: string;
   comments?: IncidentComment[];

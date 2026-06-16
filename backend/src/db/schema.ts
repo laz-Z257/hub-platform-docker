@@ -50,6 +50,8 @@ export const incidents = pgTable(
     agente: varchar("agente", { length: 100 }),
     solucion: text("solucion"),
     imagen_url: varchar("imagen_url", { length: 500 }),
+    cerrado_por: uuid("cerrado_por").references(() => users.id, { onDelete: "set null" }),
+    fecha_cierre: timestamp("fecha_cierre"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
