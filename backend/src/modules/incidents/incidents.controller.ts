@@ -124,13 +124,23 @@ export async function getIncident(
       return;
     }
 
+    let cerrado_por_nombre: string | null = null;
+    if (incident.cerrado_por) {
+      const [user] = await db
+        .select({ nombre: users.nombre })
+        .from(users)
+        .where(eq(users.id, incident.cerrado_por))
+        .limit(1);
+      cerrado_por_nombre = user?.nombre || null;
+    }
+
     const comments = await db
       .select()
       .from(incidentComments)
       .where(eq(incidentComments.incident_id, id))
       .orderBy(desc(incidentComments.fecha));
 
-    res.json({ ...incident, comments });
+    res.json({ ...incident, cerrado_por_nombre, comments });
   } catch (error) {
     console.error("Get incident error:", error);
     res.status(500).json({ error: "Error al obtener el incidente" });

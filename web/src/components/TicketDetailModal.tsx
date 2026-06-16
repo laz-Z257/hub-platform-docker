@@ -14,6 +14,7 @@ interface IncidentDetail {
   agente: string | null;
   solucion: string | null;
   cerrado_por: string | null;
+  cerrado_por_nombre?: string | null;
   fecha_cierre: string | null;
   created_at: string;
   updated_at: string;
@@ -123,7 +124,7 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
                   <InfoBlock icon={CheckCircle2} label="Solución" value={incident.solucion} />
                 </div>
               )}
-              <InfoBlock icon={User} label="Cerrado por" value={incident.cerrado_por || "—"} />
+              <InfoBlock icon={User} label="Cerrado por" value={incident.cerrado_por_nombre || "—"} />
               <InfoBlock icon={Clock} label="Fecha de cierre" value={incident.fecha_cierre ? formatDate(incident.fecha_cierre) : "—"} />
             </>
           )}
