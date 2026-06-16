@@ -5,6 +5,8 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -14,6 +16,7 @@ import BotMessageCard from "../components/BotMessageCard";
 import ChatBubble from "../components/ChatBubble";
 import TypingIndicator from "../components/TypingIndicator";
 import ChatInput from "../components/ChatInput";
+import StarRating from "../components/StarRating";
 import BottomTab from "../components/BottomTab";
 import { api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -60,6 +63,7 @@ export default function ChatScreen() {
     descripcion: string;
     estado: string;
   } | null>(null);
+  const [showRating, setShowRating] = useState(false);
 
   useEffect(() => {
     if (initializing) return;
@@ -169,6 +173,22 @@ export default function ChatScreen() {
     [handleSend]
   );
 
+  const handleSubmitRating = useCallback(
+    async (puntuacion: number, comentario: string) => {
+      if (!latestIncident) return;
+      await api.post(`/ratings/${latestIncident.id}`, { puntuacion, comentario });
+      setShowRating(false);
+      const thanksMsg: Message = {
+        id: `bot-card-${Date.now()}`,
+        type: "bot-card",
+        text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`,
+        timestamp: getTimeString(),
+      };
+      setMessages((prev) => [...prev, thanksMsg]);
+    },
+    [latestIncident]
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Message }) => {
       if (item.type === "date") {
@@ -205,7 +225,13 @@ export default function ChatScreen() {
             onSubmenuPress={handleSubmenuPress}
             onMenuPress={handleMenuPress}
             isResolvedNotification={isResolved}
-            onRateService={() => handleSend("Quiero puntuar el servicio")}
+            onRateService={() => {
+              if (latestIncident) {
+                setShowRating(true);
+              } else {
+                handleSend("Quiero puntuar el servicio");
+              }
+            }}
           />
         );
       }
@@ -325,6 +351,15 @@ export default function ChatScreen() {
               ) : null
             }
           />
+        )}
+
+        {showRating && (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+            <StarRating
+              onSubmit={handleSubmitRating}
+              onCancel={() => setShowRating(false)}
+            />
+          </View>
         )}
 
         <ChatInput onSend={handleSend} />

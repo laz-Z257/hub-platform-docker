@@ -16,6 +16,7 @@ import chatRoutes from "./modules/chat/chat.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import usersRoutes from "./modules/users/users.routes";
 import uploadRoutes from "./modules/upload/upload.routes";
+import ratingsRoutes from "./modules/ratings/ratings.routes";
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/ratings", ratingsRoutes);
 
 // 404
 app.use((_req, res) => {
