@@ -11,6 +11,7 @@ import {
   Monitor,
   Settings,
   LogOut,
+  Star,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: BarChart3, label: "Analítica", path: "/dashboard/analytics" },
   { icon: Users, label: "Gestión de Usuarios", path: "/dashboard/users" },
   { icon: Ticket, label: "Tickets", path: "/dashboard/tickets" },
+  { icon: Star, label: "Calificaciones", path: "/dashboard/ratings" },
   { icon: Monitor, label: "Sistemas Externos", path: "/dashboard/external-systems" },
   { icon: Settings, label: "Configuración", path: "/dashboard/settings" },
 ];
