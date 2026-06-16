@@ -11,7 +11,6 @@ import { useRouter } from "expo-router";
 import * as Updates from "expo-updates";
 import {
   Trash2,
-  RefreshCw,
   LogOut,
   Database,
 } from "lucide-react-native";
@@ -246,93 +245,6 @@ export default function SettingsScreen() {
               }}
             >
               {clearing ? "Limpiando..." : "Limpiar Caché"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recargar App */}
-        <View
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderWidth: 1,
-            borderColor: "#D9DCE8",
-            borderRadius: 14,
-            padding: 16,
-            marginBottom: 16,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: "#DBEAFE",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <RefreshCw size={18} color="#2563EB" strokeWidth={2} />
-            </View>
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: "600",
-                color: "#1F2937",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              Recargar App
-            </Text>
-          </View>
-
-          <Text
-            style={{
-              fontSize: 13,
-              lineHeight: 20,
-              color: "#6B7280",
-              fontFamily: "Inter_400Regular",
-              marginBottom: 16,
-            }}
-          >
-            Vuelve a cargar la aplicación desde cero. Útil si notas lentitud o
-            comportamientos inesperados después de una actualización.
-          </Text>
-
-          <TouchableOpacity
-            onPress={async () => {
-              try {
-                await Updates.reloadAsync();
-              } catch {
-                Alert.alert("Error", "No se pudo recargar la aplicación.");
-              }
-            }}
-            activeOpacity={0.85}
-            style={{
-              height: 46,
-              borderRadius: 10,
-              backgroundColor: "#2563EB",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            <RefreshCw size={16} color="#FFFFFF" strokeWidth={2} />
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "600",
-                color: "#FFFFFF",
-                fontFamily: "Inter_700Bold",
-              }}
-            >
-              Recargar
             </Text>
           </TouchableOpacity>
         </View>
