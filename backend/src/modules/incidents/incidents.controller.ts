@@ -151,6 +151,11 @@ export async function updateIncident(
     if (solucion !== undefined) updateData.solucion = solucion;
     if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
 
+    if (estado === "resuelto") {
+      updateData.cerrado_por = req.user!.userId;
+      updateData.fecha_cierre = new Date();
+    }
+
     const [updated] = await db
       .update(incidents)
       .set(updateData)

@@ -19,6 +19,9 @@ interface IncidentItem {
   urgencia: string;
   estado: string;
   agente: string | null;
+  solucion: string | null;
+  cerrado_por: string | null;
+  fecha_cierre: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -216,9 +219,9 @@ export default function TicketsPage() {
     if (range.end) params.set("end", range.end);
     const qs = params.toString() ? `?${params.toString()}` : "";
 
-    let items: Array<IncidentItem & { solucion: string | null }> = [];
+    let items: IncidentItem[] = [];
     try {
-      const data = await api.get<{ items: Array<IncidentItem & { solucion: string | null }> }>(`/incidents/export${qs}`);
+      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export${qs}`);
       items = data.items || [];
     } catch {
       return;
@@ -247,6 +250,8 @@ export default function TicketsPage() {
       { header: "Agente", key: "agente", width: 20 },
       { header: "Descripción", key: "desc", width: 50 },
       { header: "Solución", key: "sol", width: 50 },
+      { header: "Cerrado por", key: "cerrado_por", width: 22 },
+      { header: "Fecha cierre", key: "fecha_cierre", width: 20 },
       { header: "Creado", key: "creado", width: 20 },
       { header: "Actualizado", key: "act", width: 20 },
     ];
@@ -266,8 +271,10 @@ export default function TicketsPage() {
       row.getCell(7).value = inc.agente || "";
       row.getCell(8).value = inc.descripcion;
       row.getCell(9).value = inc.solucion || "";
-      row.getCell(10).value = fmtDate(inc.created_at);
-      row.getCell(11).value = fmtDate(inc.updated_at);
+      row.getCell(10).value = inc.cerrado_por || "";
+      row.getCell(11).value = inc.fecha_cierre ? fmtDate(inc.fecha_cierre) : "";
+      row.getCell(12).value = fmtDate(inc.created_at);
+      row.getCell(13).value = fmtDate(inc.updated_at);
     });
 
     const buffer = await wb.xlsx.writeBuffer();
