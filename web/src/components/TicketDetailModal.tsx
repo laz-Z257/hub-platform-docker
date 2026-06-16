@@ -68,11 +68,11 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[100] p-6"
+      className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-start justify-center z-[100] p-6 overflow-y-auto"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-[560px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] dark:shadow-gray-900/30 overflow-hidden"
+        className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-[560px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] dark:shadow-gray-900/30 my-auto max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-5 border-b border-[#E5E7EB] dark:border-gray-700 flex items-start justify-between">
