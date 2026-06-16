@@ -17,6 +17,7 @@ import ChatBubble from "../components/ChatBubble";
 import TypingIndicator from "../components/TypingIndicator";
 import ChatInput from "../components/ChatInput";
 import StarRating from "../components/StarRating";
+import FaqModal from "../components/FaqModal";
 import BottomTab from "../components/BottomTab";
 import { api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -64,6 +65,7 @@ export default function ChatScreen() {
     estado: string;
   } | null>(null);
   const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
+  const [showFaq, setShowFaq] = useState(false);
 
   useEffect(() => {
     if (initializing) return;
@@ -157,6 +159,8 @@ export default function ChatScreen() {
     (label: string) => {
       if (label === "Reportar incidente") {
         router.push("/reportar");
+      } else if (label === "Preguntas frecuentes") {
+        setShowFaq(true);
       } else {
         handleSend(label);
       }
@@ -397,6 +401,24 @@ export default function ChatScreen() {
                 onCancel={() => setRatingIncidentId(null)}
               />
             </View>
+          </View>
+        </Modal>
+
+        <Modal
+          visible={showFaq}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowFaq(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              padding: 24,
+            }}
+          >
+            <FaqModal onClose={() => setShowFaq(false)} />
           </View>
         </Modal>
 
