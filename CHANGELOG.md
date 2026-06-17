@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-06-17 — Bloqueo usuarios, notificaciones dashboard, push móvil
+## 2026-06-17 — Bloqueo usuarios, notificaciones, push, columna bloqueado por, ayuda rápida, calificaciones
 
 ### Backend
 
@@ -12,6 +12,9 @@
 | **Tabla push_tokens** | `db/schema.ts`, `migration 0009` | Nueva tabla para tokens de notificaciones push por usuario. |
 | **Módulo push** | `modules/push/` (controller, routes, schema) | `POST /api/push/register` — guarda token del usuario autenticado. |
 | **Push al resolver ticket** | `incidents.controller.ts` | Al marcar ticket como resuelto, busca token del usuario y envía push via Expo API. |
+| **Columna bloqueado_por** | `db/schema.ts`, `migration 0010` | Nuevo campo en users que guarda el ID del admin que bloqueó. |
+| **Endpoint listUsers** | `users.controller.ts` | Incluye `bloqueado_por_documento` con join a la tabla users. |
+| **Toggle status** | `users.controller.ts` | Al bloquear guarda `bloqueado_por` con el ID del admin actual. |
 
 ### Web Dashboard
 
@@ -20,6 +23,9 @@
 | **Manejo 403 bloqueado** | `lib/api.ts` | Redirige a `/login` si el usuario está bloqueado. |
 | **Campana notificaciones** | `components/Topbar.tsx` | Polling cada 30s a `/incidents/unread-count`. Badge rojo con número. Click navega a tickets y resetea contador. |
 | **Auto-mark-seen** | `app/dashboard/tickets/page.tsx` | Al cargar página de tickets, llama a `mark-seen` para limpiar notificaciones. |
+| **Modal ayuda rápida** | `components/HelpModal.tsx` (nuevo) | Reemplaza icono ? estático. Muestra versión, WhatsApp, preguntas frecuentes con acordeón. |
+| **Columna bloqueado por** | `components/UsersTable.tsx`, `types/user.ts` | Nueva columna en tabla de usuarios que muestra qué admin bloqueó al usuario. |
+| **Comentarios calificaciones** | `app/dashboard/ratings/page.tsx` | Se quita truncate — los comentarios largos ahora se muestran completos con `break-words`. |
 
 ### Mobile App (Android)
 
@@ -34,8 +40,8 @@
 
 | Servicio | Plataforma | Cambios |
 |----------|------------|---------|
-| Backend | Render | Bloqueo usuarios, notificaciones dashboard, push tokens |
-| Web | Vercel | Campana notificaciones, manejo bloqueo |
+| Backend | Render | Bloqueo usuarios, notificaciones, push, bloqueado_por |
+| Web | Vercel | Campana, ayuda, columna bloqueado por, calificaciones |
 | Mobile | Expo (EAS) | Build APK pendiente por límite plan gratuito (reinicia 1 julio) |
 
 ---
