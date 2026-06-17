@@ -52,13 +52,15 @@ export async function listIncidents(
 
     if (search) {
       const cleanSearch = search.replace(/[#\-\s]/g, "");
+      const shortIdMatch = search.match(/[Tt][Kk][\s-]*([A-Fa-f0-9]{4,})/);
+      const shortIdSuffix = shortIdMatch ? shortIdMatch[1].toLowerCase() : null;
       conditions.push(
         or(
+          shortIdSuffix ? sql`right(replace(${incidents.id}::text, '-', ''), 8) ILIKE ${`${shortIdSuffix}%`}` : sql`1=0`,
           ilike(incidents.id, `%${search}%`),
           ilike(incidents.nombre, `%${search}%`),
           ilike(incidents.punto_venta, `%${search}%`),
-          ilike(incidents.descripcion, `%${search}%`),
-          sql`replace(${incidents.id}::text, '-', '') ILIKE ${`%${cleanSearch}%`}`
+          ilike(incidents.descripcion, `%${search}%`)
         )
       );
     }
