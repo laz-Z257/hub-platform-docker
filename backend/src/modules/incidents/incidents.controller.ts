@@ -51,11 +51,14 @@ export async function listIncidents(
     }
 
     if (search) {
+      const cleanSearch = search.replace(/[#\-\s]/g, "");
       conditions.push(
         or(
+          ilike(incidents.id, `%${search}%`),
           ilike(incidents.nombre, `%${search}%`),
           ilike(incidents.punto_venta, `%${search}%`),
-          ilike(incidents.descripcion, `%${search}%`)
+          ilike(incidents.descripcion, `%${search}%`),
+          sql`replace(${incidents.id}::text, '-', '') ILIKE ${`%${cleanSearch}%`}`
         )
       );
     }
