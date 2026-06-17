@@ -15,6 +15,7 @@ import {
   getSavedUser,
   setForceLogoutHandler,
 } from "../services/api";
+import { registerForPushNotifications } from "../services/notifications";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const fresh = await api.get<AuthUser>("/auth/me");
             setUser(fresh);
             await saveUser(fresh);
+            registerForPushNotifications();
           } catch (err) {
             await clearToken();
             setUser(null);
@@ -84,6 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await setToken(data.token);
         await saveUser(data.user);
         setUser(data.user);
+
+        registerForPushNotifications();
       } finally {
         setLoading(false);
       }
