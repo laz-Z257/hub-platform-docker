@@ -1,21 +1,24 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useState } from "react";
 
 const HELP_INFO = {
   version: "1.0.0",
-  backend: "hub-platform-api.onrender.com",
   contacto: {
-    email: "soporte@hubplatform.com",
+    whatsapp: "https://wa.me/573000000000",
     telefono: "+57 300 000 0000",
   },
-  atajos: [
-    { key: "Ctrl + N", desc: "Abrir nuevo ticket" },
-    { key: "Ctrl + F", desc: "Buscar en la tabla actual" },
+  faq: [
+    { pregunta: "¿Cómo crear un usuario?", respuesta: "Ve a Gestión de Usuarios y haz clic en 'Añadir Usuario'. Completa los campos requeridos y guarda." },
+    { pregunta: "¿Cómo resolver un ticket?", respuesta: "Desde la página de Tickets, selecciona el ticket y elige la opción 'Resuelto'. Puedes agregar una solución." },
+    { pregunta: "¿Cómo exportar datos?", respuesta: "En la página de Analítica, selecciona un rango de fechas y haz clic en 'Exportar Datos'." },
   ],
 };
 
 export default function HelpModal({ onClose }: { onClose: () => void }) {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   return (
     <div
       className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-50"
@@ -38,23 +41,59 @@ export default function HelpModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-6 space-y-6">
-          <Section title="Información del Sistema">
-            <Row label="Versión" value={HELP_INFO.version} />
-            <Row label="Backend" value={HELP_INFO.backend} />
+          <Section title="Versión">
+            <p className="text-sm text-gray-900 dark:text-gray-100 font-inter">
+              HUB Platform v{HELP_INFO.version}
+            </p>
           </Section>
 
           <Section title="Contacto">
-            <Row label="Email" value={HELP_INFO.contacto.email} />
-            <Row label="Teléfono" value={HELP_INFO.contacto.telefono} />
+            <a
+              href={HELP_INFO.contacto.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 py-2 px-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 no-underline"
+            >
+              <span className="text-xl">💬</span>
+              <div>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300 font-inter">
+                  WhatsApp
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 font-inter">
+                  {HELP_INFO.contacto.telefono}
+                </p>
+              </div>
+            </a>
           </Section>
 
-          <Section title="Atajos">
-            {HELP_INFO.atajos.map((a) => (
-              <Row key={a.key} label={a.key} value={a.desc} />
-            ))}
+          <Section title="Preguntas Frecuentes">
+            <div className="space-y-1">
+              {HELP_INFO.faq.map((item, i) => (
+                <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-none cursor-pointer text-left"
+                  >
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 font-inter flex-1 pr-2">
+                      {item.pregunta}
+                    </span>
+                    <span className={`text-gray-400 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}>
+                      ▾
+                    </span>
+                  </button>
+                  {openFaq === i && (
+                    <div className="px-4 pb-3 pt-0">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 font-inter leading-relaxed">
+                        {item.respuesta}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </Section>
 
-          <p className="text-xs text-gray-400 dark:text-gray-500 font-inter leading-relaxed">
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-inter leading-relaxed text-center">
             Si necesitas asistencia adicional, contacta al administrador del sistema.
           </p>
         </div>
@@ -74,11 +113,3 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-1.5">
-      <span className="text-sm text-gray-500 dark:text-gray-400 font-inter">{label}</span>
-      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 font-inter text-right">{value}</span>
-    </div>
-  );
-}
