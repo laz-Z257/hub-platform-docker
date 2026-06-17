@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { useRouter } from "expo-router";
 import {
   api,
   setToken,
@@ -12,6 +13,7 @@ import {
   initToken,
   saveUser,
   getSavedUser,
+  setForceLogoutHandler,
 } from "../services/api";
 import type { AuthUser } from "@hub/shared/types/auth";
 
@@ -26,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
@@ -44,9 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const fresh = await api.get<AuthUser>("/auth/me");
             setUser(fresh);
             await saveUser(fresh);
-          } catch {
+          } catch (err) {
             await clearToken();
             setUser(null);
+            if (err instanceof Error && err.message === "bloqueado") {
+              router.replace("/");
+            }
           }
         }
       } catch {
@@ -57,7 +63,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     restore();
-  }, []);
+  }, [router]);
+
+  useEffect(() => {
+    setForceLogoutHandler(() => {
+      setUser(null);
+      router.replace("/");
+    });
+  }, [router]);
 
   const login = useCallback(
     async (documento: string, contrasena: string) => {
