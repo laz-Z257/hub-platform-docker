@@ -37,6 +37,13 @@ async function runMigrations() {
     console.error("Column migration warning:", (err as Error).message);
   }
 
+  try {
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS bloqueado_por uuid");
+    console.log("Column bloqueado_por verified.");
+  } catch (err) {
+    console.error("Column migration warning:", (err as Error).message);
+  }
+
   await pool.end().catch(() => {});
   console.log("Migrate script done.");
 }

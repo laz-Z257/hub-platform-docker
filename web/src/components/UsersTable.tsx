@@ -104,8 +104,8 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
 export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassword }: UsersTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
-      <div className="grid grid-cols-[1fr_100px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
-        {["USUARIO", "ROL", "ESTADO", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
+      <div className="grid grid-cols-[1fr_100px_110px_120px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
+        {["USUARIO", "ROL", "ESTADO", "BLOQUEADO POR", "ÚLTIMA ACTIVIDAD", "ACCIONES"].map((col) => (
           <div
             key={col}
             className="py-3.5 px-2 text-[11px] font-semibold text-gray-600 dark:text-gray-400 font-inter uppercase tracking-[0.5px]"
@@ -123,7 +123,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
       {Array.isArray(users) && users.map((user) => (
         <div
           key={user.id}
-          className="grid grid-cols-[1fr_100px_110px_120px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
+          className="grid grid-cols-[1fr_100px_110px_120px_120px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center"
         >
           <div className="flex items-center gap-3 py-3 px-2">
             <div className="w-9 h-9 rounded-full bg-[#F3F0FF] flex items-center justify-center text-[#25207E] text-[13px] font-semibold font-inter shrink-0">
@@ -163,6 +163,14 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
                 {user.estado === "activo" ? "Activo" : "Bloqueado"}
               </span>
             </div>
+          </div>
+
+          <div className="py-3 px-2">
+            <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
+              {user.estado === "bloqueado" && user.bloqueado_por_documento
+                ? user.bloqueado_por_documento
+                : "—"}
+            </span>
           </div>
 
           <div className="py-3 px-2">
