@@ -4,12 +4,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, HelpCircle, UserPlus } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import HelpModal from "./HelpModal";
 
 export default function Topbar({ userName }: { userName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const isUsers = pathname === "/dashboard/users";
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
 
   const fetchUnread = useCallback(async () => {
     try {
@@ -49,9 +51,14 @@ export default function Topbar({ userName }: { userName?: string }) {
           )}
         </button>
 
-        <button className="bg-none border-none cursor-pointer p-2 rounded-lg">
+        <button
+          onClick={() => setShowHelp(true)}
+          className="bg-none border-none cursor-pointer p-2 rounded-lg"
+        >
           <HelpCircle size={20} color="#6B7280" strokeWidth={2} />
         </button>
+
+        {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
         <div className="w-px h-6 bg-gray-200" />
 
