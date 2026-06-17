@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-06-17 — Bloqueo usuarios, notificaciones dashboard, push móvil
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Middleware bloqueo usuarios** | `middlewares/auth.ts` | Al verificar token, consulta si `estado = "bloqueado"` y rechaza con 403. |
+| **Columna visto_por_admin** | `db/schema.ts`, `migration 0008` | Nuevo campo boolean en incidents para tracking de notificaciones vistas. |
+| **Endpoints notificaciones** | `incidents.controller.ts`, `incidents.routes.ts` | `GET /incidents/unread-count` (count de no vistos), `PATCH /incidents/mark-seen` (marcar como vistos). |
+| **Tabla push_tokens** | `db/schema.ts`, `migration 0009` | Nueva tabla para tokens de notificaciones push por usuario. |
+| **Módulo push** | `modules/push/` (controller, routes, schema) | `POST /api/push/register` — guarda token del usuario autenticado. |
+| **Push al resolver ticket** | `incidents.controller.ts` | Al marcar ticket como resuelto, busca token del usuario y envía push via Expo API. |
+
+### Web Dashboard
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Manejo 403 bloqueado** | `lib/api.ts` | Redirige a `/login` si el usuario está bloqueado. |
+| **Campana notificaciones** | `components/Topbar.tsx` | Polling cada 30s a `/incidents/unread-count`. Badge rojo con número. Click navega a tickets y resetea contador. |
+| **Auto-mark-seen** | `app/dashboard/tickets/page.tsx` | Al cargar página de tickets, llama a `mark-seen` para limpiar notificaciones. |
+
+### Mobile App (Android)
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Manejo 403 bloqueado** | `services/api.ts`, `contexts/AuthContext.tsx` | Detecta "bloqueado", limpia token y redirige al login. |
+| **Notificaciones push** | `services/notifications.ts` | Servicio que pide permiso, obtiene Expo Push Token y lo registra en backend. |
+| **Registro push en login** | `contexts/AuthContext.tsx` | Al iniciar sesión o restaurar sesión, registra token automáticamente. |
+| **expo-notifications** | `package.json` | Dependencia instalada para notificaciones push nativas. |
+
+### Deploys
+
+| Servicio | Plataforma | Cambios |
+|----------|------------|---------|
+| Backend | Render | Bloqueo usuarios, notificaciones dashboard, push tokens |
+| Web | Vercel | Campana notificaciones, manejo bloqueo |
+| Mobile | Expo (EAS) | Build APK pendiente por límite plan gratuito (reinicia 1 julio) |
+
+---
+
 ## 2026-06-16 — Notificaciones, menú chat, calificaciones, FAQ, campos bloqueados, limpieza BD
 
 ### Backend
