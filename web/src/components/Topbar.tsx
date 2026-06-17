@@ -27,6 +27,7 @@ export default function Topbar({ userName }: { userName?: string }) {
   }, [fetchUnread]);
 
   const handleBellClick = useCallback(() => {
+    setUnreadCount(0);
     router.push("/dashboard/tickets");
   }, [router]);
 
