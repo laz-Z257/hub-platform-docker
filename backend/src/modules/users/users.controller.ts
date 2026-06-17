@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
+
+const blockerUsers = alias(users, "blocker_users");
 
 export async function createUser(req: Request, res: Response): Promise<void> {
   try {
@@ -88,8 +91,11 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
         estado: users.estado,
         ultima_actividad: users.ultima_actividad,
         created_at: users.created_at,
+        bloqueado_por: users.bloqueado_por,
+        bloqueado_por_documento: blockerUsers.documento,
       })
       .from(users)
+      .leftJoin(blockerUsers, eq(users.bloqueado_por, blockerUsers.id))
       .where(whereClause)
       .limit(limit)
       .offset(offset);
@@ -132,15 +138,23 @@ export async function toggleUserStatus(
 
     const newEstado = user.estado === "activo" ? "bloqueado" : "activo";
 
+    const updateData: Record<string, unknown> = { estado: newEstado };
+    if (newEstado === "bloqueado") {
+      updateData.bloqueado_por = req.user!.userId;
+    } else {
+      updateData.bloqueado_por = null;
+    }
+
     const [updated] = await db
       .update(users)
-      .set({ estado: newEstado })
+      .set(updateData)
       .where(eq(users.id, id))
       .returning({
         id: users.id,
         nombre: users.nombre,
         rol: users.rol,
         estado: users.estado,
+        bloqueado_por: users.bloqueado_por,
       });
 
     res.json(updated);

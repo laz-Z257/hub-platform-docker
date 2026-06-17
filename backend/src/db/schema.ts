@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   ultima_actividad: timestamp("ultima_actividad"),
   token_version: integer("token_version").notNull().default(0),
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
+  bloqueado_por: uuid("bloqueado_por"),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 

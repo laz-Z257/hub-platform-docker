@@ -7,4 +7,6 @@ export interface ApiUser {
   estado: "activo" | "bloqueado";
   ultima_actividad: string | null;
   created_at: string;
+  bloqueado_por: string | null;
+  bloqueado_por_documento?: string | null;
 }

@@ -34,18 +34,6 @@ export default function UsersPage() {
     }
   }, [searchParams, router]);
 
-  const handleToggleStatus = useCallback(async (user: ApiUser) => {
-    setActionLoading(user.id);
-    try {
-      const updated = await api.patch<ApiUser>(`/users/${user.id}/toggle-status`);
-      setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
-    } catch (err) {
-      console.error("Toggle status:", err instanceof Error ? err.message : err);
-    } finally {
-      setActionLoading(null);
-    }
-  }, []);
-
   const fetchUsers = useCallback(() => {
     setLoading(true);
     api
@@ -61,6 +49,18 @@ export default function UsersPage() {
     fetchUsers();
     const interval = setInterval(fetchUsers, 30000);
     return () => clearInterval(interval);
+  }, [fetchUsers]);
+
+  const handleToggleStatus = useCallback(async (user: ApiUser) => {
+    setActionLoading(user.id);
+    try {
+      await api.patch(`/users/${user.id}/toggle-status`);
+      fetchUsers();
+    } catch (err) {
+      console.error("Toggle status:", err instanceof Error ? err.message : err);
+    } finally {
+      setActionLoading(null);
+    }
   }, [fetchUsers]);
 
   const totalUsers = users.length;
