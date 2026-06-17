@@ -29,7 +29,7 @@ export default function AnalyticsMetrics({ metrics }: AnalyticsMetricsProps) {
               {metric.title}
             </span>
           </div>
-          <p className="text-[28px] font-bold text-[#25207E] font-inter">
+          <p className="text-[28px] font-bold text-gray-900 dark:text-white font-inter">
             {metric.value}
           </p>
           <p className="text-xs text-gray-400 font-inter">

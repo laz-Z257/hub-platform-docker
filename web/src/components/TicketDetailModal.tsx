@@ -79,7 +79,7 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
         <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-5 border-b border-[#E5E7EB] dark:border-gray-700 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-base font-bold text-[#25207E] font-inter">
+              <span className="text-base font-bold text-gray-900 dark:text-white font-inter">
                 {formatTicketId(incident.id)}
               </span>
               <span
@@ -158,7 +158,7 @@ function InfoBlock({
   return (
     <div className="flex items-start gap-2.5">
       <div className="w-8 h-8 rounded-lg bg-[#F3F0FF] flex items-center justify-center shrink-0 mt-0.5">
-        <Icon size={14} color="#25207E" strokeWidth={2} />
+        <Icon size={14} color="var(--brand)" strokeWidth={2} />
       </div>
       <div>
         <p className="text-[11px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px]">

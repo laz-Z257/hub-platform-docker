@@ -73,7 +73,7 @@ export default function TicketSummaryCards({
             <p className="text-[13px] font-medium text-[#6B7280] dark:text-gray-400 font-inter">
               {card.title}
             </p>
-            <p className="text-[32px] font-bold text-[#25207E] font-inter leading-none mt-1">
+            <p className="text-[32px] font-bold text-gray-900 dark:text-white font-inter leading-none mt-1">
               {card.value}
             </p>
           </div>

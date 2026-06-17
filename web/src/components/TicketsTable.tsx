@@ -54,7 +54,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
         </h3>
         <Link
           href="/dashboard/tickets"
-          className="no-underline text-[13px] font-medium text-[#25207E] font-inter"
+          className="no-underline text-[13px] font-medium text-[var(--brand)] font-inter"
         >
           Ver todo &rarr;
         </Link>

@@ -49,7 +49,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
           </div>
           <div>
             <p className="text-[13px] font-medium text-gray-500 dark:text-gray-400 font-inter">{card.title}</p>
-            <p className="text-[36px] font-bold text-[#25207E] font-inter leading-tight mt-0.5">
+            <p className="text-[36px] font-bold text-gray-900 dark:text-white font-inter leading-tight mt-0.5">
               {card.value}
             </p>
           </div>

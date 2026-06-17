@@ -96,7 +96,7 @@ export default function RatingsPage() {
   return (
     <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <div className="mb-7">
-        <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
+        <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
           Calificaciones
         </h1>
         <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter">

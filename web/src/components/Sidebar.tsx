@@ -72,7 +72,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
               className="flex items-center h-12 rounded-lg px-3 gap-3 relative font-inter text-sm no-underline w-full transition-colors duration-150"
               style={{
                 backgroundColor: isActive ? "#F3F0FF" : "transparent",
-                color: isActive ? "#25207E" : "#6B7280",
+                color: isActive ? "var(--brand)" : "#6B7280",
                 fontWeight: isActive ? 600 : 400,
               }}
             >
@@ -81,7 +81,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
               )}
               <item.icon
                 size={20}
-                color={isActive ? "#25207E" : "#9CA3AF"}
+                color={isActive ? "var(--brand)" : "#9CA3AF"}
                 strokeWidth={isActive ? 2.5 : 2}
               />
               {item.label}

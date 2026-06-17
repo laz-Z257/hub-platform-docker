@@ -11,7 +11,7 @@ export default function ExternalSystemsPage() {
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#F7F8FC] dark:bg-gray-950 p-8">
       <div className="mb-7">
-        <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
+        <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
           Sistemas Externos
         </h1>
         <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter">

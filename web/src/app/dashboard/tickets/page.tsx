@@ -333,7 +333,7 @@ export default function TicketsPage() {
       {/* Page Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
-          <h1 className="text-[42px] font-bold text-[#25207E] font-inter leading-tight">
+          <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
             Gestión de Tickets
           </h1>
           <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
