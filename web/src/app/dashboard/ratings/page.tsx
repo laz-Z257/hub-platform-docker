@@ -291,9 +291,9 @@ export default function RatingsPage() {
                           {"★".repeat(r.puntuacion)}{"☆".repeat(5 - r.puntuacion)}
                         </span>
                       </td>
-                      <td className="py-3 px-3 max-w-[200px]">
+                      <td className="py-3 px-3 max-w-[300px]">
                         {r.comentario ? (
-                          <span className="text-[13px] text-[#6B7280] dark:text-gray-400 font-inter truncate block">
+                          <span className="text-[13px] text-[#6B7280] dark:text-gray-400 font-inter block break-words">
                             {r.comentario}
                           </span>
                         ) : (
