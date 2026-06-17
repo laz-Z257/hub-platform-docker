@@ -74,7 +74,7 @@ export default function ResolveTicketModal({ ticketId, ticketLabel, onClose, onR
             <textarea
               value={solucion}
               onChange={(e) => setSolucion(e.target.value)}
-              className="w-full h-24 px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[#25207E] resize-none"
+              className="w-full h-24 px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)] resize-none"
               placeholder="Describe los pasos o la solución aplicada..."
               required
             />

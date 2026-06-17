@@ -10,4 +10,16 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  :root {
+    --brand: #25207E;
+    --brand-light: #9082FF;
+    --brand-bg: #F3F0FF;
+  }
+
+  .dark {
+    --brand: #818CF8;
+    --brand-light: #A78BFA;
+    --brand-bg: rgba(129, 140, 248, 0.1);
+  }
 }

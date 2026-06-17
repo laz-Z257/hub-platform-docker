@@ -62,7 +62,7 @@ export default function Topbar({ userName }: { userName?: string }) {
 
         <div className="w-px h-6 bg-gray-200" />
 
-        <span className="text-[13px] font-semibold text-[#25207E] dark:text-[#9082FF] font-inter">
+        <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-200 font-inter">
           User - {userName || "xxxxxx"}
         </span>
 

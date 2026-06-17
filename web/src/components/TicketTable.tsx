@@ -123,7 +123,7 @@ function ActionMenu({
                   if (e.key === "Enter") handleAssign();
                 }}
                 placeholder="Nombre del técnico"
-                className="flex-1 h-[30px] px-2.5 rounded-md border border-[#E5E7EB] dark:border-gray-700 text-[12px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] bg-white dark:bg-gray-900"
+                className="flex-1 h-[30px] px-2.5 rounded-md border border-[#E5E7EB] dark:border-gray-700 text-[12px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] bg-white dark:bg-gray-900"
                 onClick={(e) => e.stopPropagation()}
               />
               <button
@@ -198,7 +198,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
           className="grid grid-cols-[100px_1fr_140px_110px_120px_60px] px-5 border-t border-[#F3F4F6] dark:border-gray-700 items-center min-h-[56px]"
         >
           <div className="py-3 px-2">
-            <span className="text-[13px] font-medium text-[#25207E] font-inter">
+            <span className="text-[13px] font-medium text-[var(--brand)] font-inter">
               {formatTicketId(ticket.id)}
             </span>
           </div>

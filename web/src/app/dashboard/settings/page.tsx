@@ -81,7 +81,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-7">
         <h1
-          className="font-inter font-bold text-[#25207E] leading-tight"
+          className="font-inter font-bold text-gray-900 dark:text-white leading-tight"
           style={{ fontSize: "42px", lineHeight: 1.1 }}
         >
           Configuración del Sistema
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     defaultValue="XXXXXXXXXXXX"
-                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors"
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
                   />
                 </div>
                 <div className="flex-1">
@@ -128,7 +128,7 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     defaultValue="XXXXXXXXXXXX"
-                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors"
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
                   />
                 </div>
               </div>
@@ -190,13 +190,13 @@ export default function SettingsPage() {
                 onClick={() => setTheme("light")}
                 className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
                   theme === "light"
-                    ? "border-[#25207E] bg-[#F3F0FF]"
+                    ? "border-[var(--brand)] bg-[var(--brand-bg)]"
                     : "border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
-                <Sun size={32} color={theme === "light" ? "#25207E" : "#6B7280"} />
+                <Sun size={32} color={theme === "light" ? "var(--brand)" : "#6B7280"} />
                 <span className={`text-[14px] font-inter ${
-                  theme === "light" ? "font-semibold text-[#25207E]" : "font-medium text-[#6B7280]"
+                  theme === "light" ? "font-semibold text-[var(--brand)]" : "font-medium text-[#6B7280] dark:text-gray-400"
                 }`}>
                   Claro
                 </span>
@@ -205,13 +205,13 @@ export default function SettingsPage() {
                 onClick={() => setTheme("dark")}
                 className={`flex-1 flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-colors ${
                   theme === "dark"
-                    ? "border-[#25207E] bg-[#F3F0FF]"
+                    ? "border-[var(--brand)] bg-[var(--brand-bg)]"
                     : "border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
-                <Moon size={32} color={theme === "dark" ? "#25207E" : "#6B7280"} />
+                <Moon size={32} color={theme === "dark" ? "var(--brand)" : "#6B7280"} />
                 <span className={`text-[14px] font-inter ${
-                  theme === "dark" ? "font-semibold text-[#25207E]" : "font-medium text-[#6B7280]"
+                  theme === "dark" ? "font-semibold text-[var(--brand)]" : "font-medium text-[#6B7280] dark:text-gray-400"
                 }`}>
                   Oscuro
                 </span>
@@ -331,7 +331,7 @@ export default function SettingsPage() {
           <div className="flex-[3]">
             <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
               <div className="w-10 h-10 rounded-lg bg-[#E9E6FF] flex items-center justify-center mb-4">
-                <Database size={20} color="#25207E" strokeWidth={2} />
+                <Database size={20} color="var(--brand)" strokeWidth={2} />
               </div>
               <h3 className="text-[15px] font-bold text-[#1F2937] dark:text-gray-100 font-inter mb-2">
                 Información del Sistema
