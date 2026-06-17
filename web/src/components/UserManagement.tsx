@@ -9,6 +9,7 @@ const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#F3F0FF", color: "#25207E" },
   asesor: { bg: "#FEF3C7", color: "#D97706" },
   user: { bg: "#DBEAFE", color: "#2563EB" },
+  tecnico: { bg: "#DBEAFE", color: "#1D4ED8" },
 };
 
 function getInitials(user: ApiUser): string {
@@ -70,216 +71,80 @@ export default function UserManagement() {
   }).slice(0, 5);
 
   return (
-    <div
-      style={{
-        backgroundColor: "#FFFFFF",
-        border: "1px solid #E5E7EB",
-        borderRadius: "14px",
-        padding: "24px",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: "24px",
-        }}
-      >
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "#1F2937",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
+          <h3 className="m-0 text-lg font-bold text-gray-900 dark:text-gray-100 font-inter">
             Gestión de Usuarios
           </h3>
-          <p
-            style={{
-              margin: 0,
-              marginTop: "4px",
-              fontSize: "13px",
-              color: "#6B7280",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
+          <p className="m-0 mt-1 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
             Usuarios registrados en la plataforma
           </p>
         </div>
         <button
           onClick={() => router.push("/dashboard/users")}
-          style={{
-            backgroundColor: "#25207E",
-            color: "#FFFFFF",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontSize: "13px",
-            fontWeight: 600,
-            fontFamily: "Inter, sans-serif",
-            cursor: "pointer",
-          }}
+          className="h-10 px-[18px] bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
         >
           Ver todos
         </button>
       </div>
 
-      {/* Loading */}
       {loading && (
-        <div style={{ textAlign: "center", padding: "32px 0" }}>
-          <p
-            style={{
-              color: "#9CA3AF",
-              fontSize: "14px",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
+        <div className="text-center py-8">
+          <p className="text-[14px] text-gray-400 dark:text-gray-500 font-inter">
             Cargando usuarios...
           </p>
         </div>
       )}
 
-      {/* Error */}
       {error && (
-        <div
-          style={{
-            backgroundColor: "#FEF2F2",
-            border: "1px solid #FECACA",
-            borderRadius: "6px",
-            padding: "12px",
-            fontSize: "13px",
-            color: "#DC2626",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3 text-[13px] text-red-600 dark:text-red-400 font-inter">
           {error}
         </div>
       )}
 
-      {/* User Cards */}
       {!loading && !error && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {!Array.isArray(sortedUsers) ? null : sortedUsers.length === 0 ? (
-            <p
-              style={{
-                textAlign: "center",
-                color: "#9CA3AF",
-                fontFamily: "Inter, sans-serif",
-                padding: "32px 0",
-              }}
-            >
+        <div className="flex flex-col gap-3">
+          {!Array.isArray(sortedUsers) || sortedUsers.length === 0 ? (
+            <p className="text-center text-gray-400 dark:text-gray-500 font-inter py-8">
               No hay usuarios registrados.
             </p>
           ) : (
             sortedUsers.map((user) => (
               <div
                 key={user.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "14px 16px",
-                  border: "1px solid #F3F4F6",
-                  borderRadius: "10px",
-                  gap: "14px",
-                }}
+                className="flex items-center p-[14px_16px] border border-gray-100 dark:border-gray-700 rounded-xl gap-[14px]"
               >
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "50%",
-                    backgroundColor: "#F3F0FF",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#25207E",
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    fontFamily: "Inter, sans-serif",
-                    flexShrink: 0,
-                  }}
-                >
+                <div className="w-[42px] h-[42px] rounded-full bg-[#F3F0FF] dark:bg-[#F3F0FF]/10 flex items-center justify-center text-[#25207E] dark:text-[#25207E] text-[15px] font-semibold font-inter shrink-0">
                   {getInitials(user)}
                 </div>
 
-                {/* Info */}
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      marginBottom: "2px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#1F2937",
-                        fontFamily: "Inter, sans-serif",
-                      }}
-                    >
+                <div className="flex-1">
+                  <div className="flex items-center gap-[10px] mb-0.5">
+                    <span className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 font-inter">
                       {displayName(user)}
                     </span>
                     <span
+                      className="inline-block px-2 py-[2px] rounded-full text-[10px] font-semibold font-inter"
                       style={{
-                        display: "inline-block",
-                        padding: "2px 8px",
-                        borderRadius: "999px",
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        fontFamily: "Inter, sans-serif",
-                        backgroundColor:
-                          ROLE_COLORS[user.rol]?.bg || "#F3F4F6",
+                        backgroundColor: ROLE_COLORS[user.rol]?.bg || "#F3F4F6",
                         color: ROLE_COLORS[user.rol]?.color || "#6B7280",
                       }}
                     >
                       {user.rol.toUpperCase()}
                     </span>
                   </div>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: "12px",
-                      color: "#6B7280",
-                      fontFamily: "Inter, sans-serif",
-                    }}
-                  >
+                  <p className="m-0 text-[12px] text-gray-500 dark:text-gray-400 font-inter">
                     {hasName(user) ? user.documento : "Sin nombre"}
                   </p>
                 </div>
 
-                {/* Activity */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
+                <div className="flex items-center gap-[6px]">
                   <div
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: user.estado === "activo" ? "#22C55E" : "#EF4444",
-                      flexShrink: 0,
-                    }}
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: user.estado === "activo" ? "#22C55E" : "#EF4444" }}
                   />
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#9CA3AF",
-                      fontFamily: "Inter, sans-serif",
-                    }}
-                  >
+                  <span className="text-[12px] text-gray-400 dark:text-gray-500 font-inter">
                     {getRelativeTime(user.ultima_actividad || user.created_at, Date.now())}
                   </span>
                 </div>

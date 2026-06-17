@@ -14,6 +14,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export interface AreaDataPoint {
   name: string;
@@ -39,6 +40,12 @@ interface TrafficChartProps {
 }
 
 export function TrafficChart({ data }: TrafficChartProps) {
+  const { theme } = useTheme();
+  const tickFill = theme === "dark" ? "#9CA3AF" : "#9CA3AF";
+  const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -52,14 +59,16 @@ export function TrafficChart({ data }: TrafficChartProps) {
             <stop offset="95%" stopColor="#A1A1AA" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} width={50} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={50} />
         <Tooltip
           contentStyle={{
             borderRadius: "8px",
             border: "1px solid #E5E7EB",
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+            backgroundColor: tooltipBg,
+            color: tooltipColor,
           }}
         />
         <Area type="monotone" dataKey="trafico" stroke="#25207E" strokeWidth={2.5} fill="url(#colorTrafico)" />
@@ -74,7 +83,12 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ data }: DonutChartProps) {
+  const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
+  const labelColor = theme === "dark" ? "#9CA3AF" : "#6B7280";
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
       <ResponsiveContainer width="100%" height={240}>
@@ -98,6 +112,8 @@ export function DonutChart({ data }: DonutChartProps) {
               borderRadius: "8px",
               border: "1px solid #E5E7EB",
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+              backgroundColor: tooltipBg,
+              color: tooltipColor,
             }}
           />
         </PieChart>
@@ -106,7 +122,7 @@ export function DonutChart({ data }: DonutChartProps) {
         {safeData.map((item) => (
           <div key={item.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: item.color }} />
-            <span style={{ fontSize: "13px", color: "#6B7280", fontFamily: "Inter, sans-serif" }}>
+            <span style={{ fontSize: "13px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
               {item.name} ({item.value}%)
             </span>
           </div>
@@ -121,11 +137,17 @@ interface StatusBarChartProps {
 }
 
 export function StatusBarChart({ data }: StatusBarChartProps) {
+  const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
+  const tickFill = theme === "dark" ? "#9CA3AF" : "#9CA3AF";
+  const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
+  const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
+  const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
   if (safeData.length === 0) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280 }}>
-        <span style={{ fontSize: "14px", color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
+      <div className="flex items-center justify-center h-[280px]">
+        <span className="text-[14px] text-gray-400 dark:text-gray-500 font-inter">
           Sin datos
         </span>
       </div>
@@ -135,14 +157,16 @@ export function StatusBarChart({ data }: StatusBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={safeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
         <Tooltip
           contentStyle={{
             borderRadius: "8px",
             border: "1px solid #E5E7EB",
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+            backgroundColor: tooltipBg,
+            color: tooltipColor,
           }}
         />
         <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
