@@ -40,13 +40,27 @@ export function authMiddleware(
   try {
     req.user = verifyToken(token);
 
-    db.update(users)
-      .set({ ultima_actividad: new Date() })
+    db.select({ estado: users.estado })
+      .from(users)
       .where(eq(users.id, req.user.userId))
-      .execute()
-      .catch(() => {});
+      .limit(1)
+      .then(([user]) => {
+        if (user?.estado === "bloqueado") {
+          res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
+          return;
+        }
 
-    next();
+        db.update(users)
+          .set({ ultima_actividad: new Date() })
+          .where(eq(users.id, req.user.userId))
+          .execute()
+          .catch(() => {});
+
+        next();
+      })
+      .catch(() => {
+        res.status(500).json({ error: "Error al verificar estado del usuario" });
+      });
   } catch {
     res.status(401).json({ error: "Token inválido o expirado" });
   }
