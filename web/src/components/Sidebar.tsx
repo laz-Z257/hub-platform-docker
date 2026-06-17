@@ -101,7 +101,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
         </div>
         <button
           onClick={onLogout}
-          className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] cursor-pointer text-[13px] font-medium font-inter text-red-600 flex items-center justify-center gap-1.5"
+          className="w-full h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e293b] cursor-pointer text-[13px] font-medium font-inter text-red-600 dark:text-red-400 flex items-center justify-center gap-1.5"
         >
           <LogOut size={16} />
           Cerrar Sesión

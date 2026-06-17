@@ -41,7 +41,7 @@ export default function Topbar({ userName }: { userName?: string }) {
           onClick={handleBellClick}
           className="bg-none border-none cursor-pointer relative p-2 rounded-lg"
         >
-          <Bell size={20} color="#6B7280" strokeWidth={2} />
+          <Bell size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
           {unreadCount > 0 && (
             <div className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center px-[4px]">
               <span className="text-[10px] font-bold text-white leading-none">
@@ -55,14 +55,14 @@ export default function Topbar({ userName }: { userName?: string }) {
           onClick={() => setShowHelp(true)}
           className="bg-none border-none cursor-pointer p-2 rounded-lg"
         >
-          <HelpCircle size={20} color="#6B7280" strokeWidth={2} />
+          <HelpCircle size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
         </button>
 
         {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
         <div className="w-px h-6 bg-gray-200" />
 
-        <span className="text-[13px] font-semibold text-[#25207E] font-inter">
+        <span className="text-[13px] font-semibold text-[#25207E] dark:text-[#9082FF] font-inter">
           User - {userName || "xxxxxx"}
         </span>
 

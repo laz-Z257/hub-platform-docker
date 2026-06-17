@@ -22,180 +22,62 @@ export default function DateRangePicker({
   const isValid = startDate && endDate && startDate <= endDate;
 
   return (
-    <div
-      style={{
-        backgroundColor: "#FFFFFF",
-        border: "1px solid #E5E7EB",
-        borderRadius: "12px",
-        padding: "16px",
-        width: "340px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "14px",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#1F2937",
-            fontFamily: "Inter, sans-serif",
-          }}
-        >
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 w-[340px] shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+      <div className="flex items-center justify-between mb-[14px]">
+        <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 font-inter">
           Seleccionar rango de fechas
         </span>
-        <button
-          onClick={onCancel}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px",
-            borderRadius: "4px",
-            color: "#9CA3AF",
-          }}
-        >
+        <button onClick={onCancel} className="bg-none border-none cursor-pointer p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
           <X size={16} strokeWidth={2} />
         </button>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {/* Start Date */}
+      <div className="flex flex-col gap-3">
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "#374151",
-              fontFamily: "Inter, sans-serif",
-              marginBottom: "4px",
-            }}
-          >
+          <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 font-inter mb-1">
             Fecha inicio
           </label>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              height: "40px",
-              border: "1px solid #D1D5DB",
-              borderRadius: "8px",
-              backgroundColor: "#F9FAFB",
-              padding: "0 12px",
-              gap: "8px",
-            }}
-          >
+          <div className="flex items-center h-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 px-3 gap-2">
             <Calendar size={16} color="#9CA3AF" strokeWidth={1.75} />
             <input
               type="date"
               value={startDate}
               onChange={(e) => onStartChange(e.target.value)}
-              style={{
-                flex: 1,
-                border: "none",
-                outline: "none",
-                backgroundColor: "transparent",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#1F2937",
-              }}
+              className="flex-1 border-none outline-none bg-transparent text-[13px] font-inter text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
 
-        {/* End Date */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "#374151",
-              fontFamily: "Inter, sans-serif",
-              marginBottom: "4px",
-            }}
-          >
+          <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 font-inter mb-1">
             Fecha fin
           </label>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              height: "40px",
-              border: "1px solid #D1D5DB",
-              borderRadius: "8px",
-              backgroundColor: "#F9FAFB",
-              padding: "0 12px",
-              gap: "8px",
-            }}
-          >
+          <div className="flex items-center h-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 px-3 gap-2">
             <Calendar size={16} color="#9CA3AF" strokeWidth={1.75} />
             <input
               type="date"
               value={endDate}
               onChange={(e) => onEndChange(e.target.value)}
               min={startDate || undefined}
-              style={{
-                flex: 1,
-                border: "none",
-                outline: "none",
-                backgroundColor: "transparent",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#1F2937",
-              }}
+              className="flex-1 border-none outline-none bg-transparent text-[13px] font-inter text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "8px",
-          marginTop: "16px",
-        }}
-      >
+      <div className="flex justify-end gap-2 mt-4">
         <button
           onClick={onCancel}
-          style={{
-            height: "36px",
-            padding: "0 14px",
-            borderRadius: "8px",
-            border: "1px solid #E5E7EB",
-            backgroundColor: "#FFFFFF",
-            cursor: "pointer",
-            fontSize: "13px",
-            fontWeight: 500,
-            fontFamily: "Inter, sans-serif",
-            color: "#6B7280",
-          }}
+          className="h-9 px-[14px] rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer text-[13px] font-medium font-inter text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Cancelar
         </button>
         <button
           onClick={onApply}
           disabled={!isValid}
+          className="h-9 px-[14px] rounded-lg border-none cursor-pointer text-[13px] font-semibold font-inter text-white disabled:cursor-not-allowed"
           style={{
-            height: "36px",
-            padding: "0 14px",
-            borderRadius: "8px",
-            border: "none",
             backgroundColor: isValid ? "#25207E" : "#D1D5DB",
-            cursor: isValid ? "pointer" : "not-allowed",
-            fontSize: "13px",
-            fontWeight: 600,
-            fontFamily: "Inter, sans-serif",
-            color: "#FFFFFF",
             opacity: isValid ? 1 : 0.6,
           }}
         >
