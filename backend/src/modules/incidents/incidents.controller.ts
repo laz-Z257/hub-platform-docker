@@ -19,6 +19,7 @@ export async function createIncident(
         descripcion: req.body.descripcion,
         urgencia: req.body.urgencia || "media",
         estado: "pendiente",
+        visto_por_admin: false,
       })
       .returning();
 
@@ -411,6 +412,40 @@ export async function getStats(
   } catch (error) {
     console.error("Get stats error:", error);
     res.status(500).json({ error: "Error al obtener estadísticas" });
+  }
+}
+
+export async function unreadCount(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(incidents)
+      .where(and(eq(incidents.visto_por_admin, false), eq(incidents.estado, "pendiente")));
+
+    res.json({ count: result.count });
+  } catch (error) {
+    console.error("Unread count error:", error);
+    res.status(500).json({ error: "Error al obtener notificaciones" });
+  }
+}
+
+export async function markSeen(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    await db
+      .update(incidents)
+      .set({ visto_por_admin: true })
+      .where(and(eq(incidents.visto_por_admin, false), eq(incidents.estado, "pendiente")));
+
+    res.json({ message: "Marcados como vistos" });
+  } catch (error) {
+    console.error("Mark seen error:", error);
+    res.status(500).json({ error: "Error al marcar como vistos" });
   }
 }
 

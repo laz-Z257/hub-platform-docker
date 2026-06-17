@@ -30,6 +30,13 @@ async function runMigrations() {
     console.error("Column migration warning:", (err as Error).message);
   }
 
+  try {
+    await pool.query("ALTER TABLE incidents ADD COLUMN IF NOT EXISTS visto_por_admin boolean DEFAULT false NOT NULL");
+    console.log("Column visto_por_admin verified.");
+  } catch (err) {
+    console.error("Column migration warning:", (err as Error).message);
+  }
+
   await pool.end().catch(() => {});
   console.log("Migrate script done.");
 }

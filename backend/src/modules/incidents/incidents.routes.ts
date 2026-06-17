@@ -10,6 +10,8 @@ import {
   getAgentes,
   deleteIncident,
   exportIncidents,
+  unreadCount,
+  markSeen,
 } from "./incidents.controller";
 import { validate } from "../../middlewares/validate";
 import {
@@ -40,6 +42,8 @@ router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/agentes", adminOnly, getAgentes);
 router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
 router.get("/export", adminOnly, exportIncidents);
+router.get("/unread-count", adminOnly, unreadCount);
+router.patch("/mark-seen", adminOnly, markSeen);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);
 router.get("/:id", validate({ params: uuidParamsSchema }), getIncident);
 router.patch("/:id", adminOnly, validate({ body: updateIncidentSchema, params: uuidParamsSchema }), updateIncident);

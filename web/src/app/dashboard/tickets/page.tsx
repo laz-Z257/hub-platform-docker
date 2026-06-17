@@ -84,6 +84,11 @@ export default function TicketsPage() {
 
   const LIMIT = 10;
 
+  // Mark unread tickets as seen when viewing the page
+  useEffect(() => {
+    api.patch("/incidents/mark-seen").catch(() => {});
+  }, []);
+
   const fetchTickets = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
