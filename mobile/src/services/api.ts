@@ -11,6 +11,11 @@ const API_URL =
   process.env.EXPO_PUBLIC_API_URL || "https://hub-platform-api.onrender.com/api";
 
 let authToken: string | null = null;
+let onForceLogout: (() => void) | null = null;
+
+export function setForceLogoutHandler(handler: () => void) {
+  onForceLogout = handler;
+}
 
 export async function initToken(): Promise<string | null> {
   try {
@@ -88,6 +93,17 @@ async function request<T>(
   if (!res.ok) {
     if (res.status === 401) {
       await clearToken();
+    }
+    if (res.status === 403) {
+      const msg =
+        typeof data === "object" && data !== null && "error" in data
+          ? (data as { error: string }).error
+          : "";
+      if (msg.includes("bloqueado")) {
+        await clearToken();
+        onForceLogout?.();
+        throw new Error("bloqueado");
+      }
     }
     const msg =
       typeof data === "object" && data !== null && "error" in data

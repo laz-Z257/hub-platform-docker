@@ -109,6 +109,19 @@ async function request<T>(
     throw new Error(`Respuesta inesperada del servidor (${res.status})`);
   }
 
+  if (res.status === 403) {
+    const msg =
+      typeof data === "object" && data !== null && "error" in data
+        ? (data as { error: string }).error
+        : "";
+    if (msg.includes("bloqueado")) {
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      throw new Error("Usuario bloqueado");
+    }
+  }
+
   if (!res.ok) {
     const msg =
       typeof data === "object" && data !== null && "error" in data
