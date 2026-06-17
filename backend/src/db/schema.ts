@@ -10,7 +10,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-export const rolEnum = pgEnum("rol", ["user", "asesor", "admin"]);
+export const rolEnum = pgEnum("rol", ["user", "asesor", "admin", "tecnico"]);
 export const userEstadoEnum = pgEnum("user_estado", ["activo", "bloqueado"]);
 export const urgenciaEnum = pgEnum("urgencia", ["baja", "media", "alta"]);
 export const estadoEnum = pgEnum("estado", [

@@ -24,7 +24,7 @@ export async function createRating(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if (req.user!.rol !== "admin" && incident.user_id !== req.user!.userId) {
+    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico" && incident.user_id !== req.user!.userId) {
       res.status(403).json({ error: "No puedes calificar incidentes de otros usuarios" });
       return;
     }

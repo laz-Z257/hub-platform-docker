@@ -46,7 +46,7 @@ export async function listIncidents(
     const conditions = [];
 
     // Non-admin users only see their own incidents
-    if (req.user!.rol !== "admin") {
+    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico") {
       conditions.push(eq(incidents.user_id, req.user!.userId));
     }
 
@@ -120,7 +120,7 @@ export async function getIncident(
     }
 
     // Non-admin users can only see their own incidents
-    if (req.user!.rol !== "admin" && incident.user_id !== req.user!.userId) {
+    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico" && incident.user_id !== req.user!.userId) {
       res.status(403).json({ error: "Acceso denegado" });
       return;
     }
@@ -242,7 +242,7 @@ export async function addComment(
       return;
     }
 
-    if (req.user!.rol !== "admin" && incident.user_id !== req.user!.userId) {
+    if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico" && incident.user_id !== req.user!.userId) {
       res.status(403).json({ error: "No puedes comentar incidentes de otros usuarios" });
       return;
     }

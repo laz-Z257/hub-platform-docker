@@ -4,7 +4,7 @@ import { env } from "../config/env";
 export interface JwtPayload {
   userId: string;
   documento: string;
-  rol: "user" | "asesor" | "admin";
+  rol: "user" | "asesor" | "admin" | "tecnico";
   tokenVersion: number;
 }
 

@@ -62,9 +62,7 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
     const conditions: ReturnType<typeof eq>[] = [];
 
     if (rol) {
-      conditions.push(eq(users.rol, rol as "admin" | "user"));
-    } else {
-      conditions.push(ne(users.rol, "admin") as ReturnType<typeof eq>);
+      conditions.push(eq(users.rol, rol as "admin" | "user" | "tecnico" | "asesor"));
     }
 
     if (search) {
@@ -204,7 +202,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     const { id } = req.params as { id: string };
     const { rol, nombre, email } = req.body;
 
-    if (rol !== undefined && rol !== "admin") {
+    if (rol !== undefined && rol !== "admin" && rol !== "tecnico") {
       const [targetUser] = await db
         .select({ rol: users.rol })
         .from(users)

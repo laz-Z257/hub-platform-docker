@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const roles = z.enum(["user", "asesor", "admin"]);
+const roles = z.enum(["user", "asesor", "admin", "tecnico"]);
 
 export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
 

@@ -6,6 +6,7 @@ import type { ApiUser } from "@/types/user";
 
 const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#25207E", color: "#FFFFFF" },
+  tecnico: { bg: "#1D4ED8", color: "#FFFFFF" },
   asesor: { bg: "#FEF3C7", color: "#D97706" },
   user: { bg: "#DCCFFF", color: "#6D4AFF" },
 };
@@ -56,6 +57,7 @@ interface UsersTableProps {
 function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { user: ApiUser; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const isAdmin = user.rol === "admin";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -64,6 +66,14 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  if (isAdmin) {
+    return (
+      <div className="flex justify-end py-3 px-2">
+        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-inter italic">Fijo</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={ref}>

@@ -3,7 +3,7 @@ export interface ApiUser {
   documento: string;
   nombre: string;
   email: string | null;
-  rol: "user" | "asesor" | "admin";
+  rol: "user" | "asesor" | "admin" | "tecnico";
   estado: "activo" | "bloqueado";
   ultima_actividad: string | null;
   created_at: string;
