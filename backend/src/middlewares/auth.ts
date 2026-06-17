@@ -38,11 +38,12 @@ export function authMiddleware(
   }
 
   try {
-    req.user = verifyToken(token);
+    const payload = verifyToken(token);
+    req.user = payload;
 
     db.select({ estado: users.estado })
       .from(users)
-      .where(eq(users.id, req.user.userId))
+      .where(eq(users.id, payload.userId))
       .limit(1)
       .then(([user]) => {
         if (user?.estado === "bloqueado") {
@@ -52,7 +53,7 @@ export function authMiddleware(
 
         db.update(users)
           .set({ ultima_actividad: new Date() })
-          .where(eq(users.id, req.user.userId))
+          .where(eq(users.id, payload.userId))
           .execute()
           .catch(() => {});
 
