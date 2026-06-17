@@ -115,3 +115,18 @@ export const ratings = pgTable(
     index("ratings_user_id_idx").on(table.user_id),
   ]
 );
+
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    user_id: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    token: varchar("token", { length: 255 }).notNull().unique(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("push_tokens_user_id_idx").on(table.user_id),
+  ]
+);

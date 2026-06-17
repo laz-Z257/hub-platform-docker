@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { incidents, incidentComments, users, messages } from "../../db/schema";
+import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
 
 export async function createIncident(
   req: Request,
@@ -188,6 +188,32 @@ export async function updateIncident(
         content: botMessage,
         is_bot: true,
       });
+
+      // Send push notification
+      try {
+        const userTokens = await db
+          .select({ token: pushTokens.token })
+          .from(pushTokens)
+          .where(eq(pushTokens.user_id, updated.user_id));
+
+        if (userTokens.length > 0) {
+          const pushMessages = userTokens.map((t) => ({
+            to: t.token,
+            sound: "default" as const,
+            title: "Ticket resuelto",
+            body: `Tu ticket #TK-${shortId} ha sido resuelto.${solucion ? ` Solución: ${solucion}` : ""}`,
+            data: { incidentId: id },
+          }));
+
+          await fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(pushMessages),
+          });
+        }
+      } catch (pushErr) {
+        console.error("Push notification error:", pushErr);
+      }
     }
 
     res.json(updated);
