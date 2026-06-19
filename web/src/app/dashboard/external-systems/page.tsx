@@ -15,6 +15,12 @@ const modules: Module[] = [
   { id: 4, title: "Reportes" },
   { id: 5, title: "Usuarios" },
   { id: 6, title: "Configuración" },
+  { id: 7, title: "Módulo 7" },
+  { id: 8, title: "Módulo 8" },
+  { id: 9, title: "Módulo 9" },
+  { id: 10, title: "Módulo 10" },
+  { id: 11, title: "Módulo 11" },
+  { id: 12, title: "Módulo 12" },
 ];
 
 export default function ExternalSystemsPage() {
