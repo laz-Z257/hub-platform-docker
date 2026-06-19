@@ -34,19 +34,22 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
 
       {/* Promedio por PV */}
       <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Promedio por punto de venta</h3>
-        {pvChartData.length > 0 ? (
-          <div className="h-44">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px]">Promedio por punto de venta</h3>
+          <span className="text-[11px] text-[#9CA3AF] font-inter">{pvChartData.filter((d) => d.total > 0).length} calificados</span>
+        </div>
+        {pvChartData.filter((d) => d.total > 0).length > 0 ? (
+          <div style={{ height: `${Math.min(320, Math.max(100, pvChartData.filter((d) => d.total > 0).length * 28 + 20))}px` }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pvChartData} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <BarChart data={pvChartData.filter((d) => d.total > 0)} layout="vertical" margin={{ left: 5, right: 5 }}>
                 <XAxis type="number" domain={[0, 5]} hide />
-                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11, fill: "#6B7280" }} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }} formatter={(v) => [typeof v === "number" ? v.toFixed(1) : "0", "Promedio"]} />
                 <Bar dataKey="promedio" radius={[0, 6, 6, 0]} fill="#25207E" />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        ) : <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter text-center py-8">Sin datos</p>}
+        ) : <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter text-center py-8">Sin calificaciones</p>}
       </div>
     </div>
   );
