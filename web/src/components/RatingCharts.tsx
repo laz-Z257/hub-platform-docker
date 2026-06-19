@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface DistItem {
   name: string;
@@ -27,46 +27,39 @@ export default function RatingCharts({ distData, pvChartData, pvSourceLength }: 
   const pieData = distData.filter((d) => d.cantidad > 0).map((d) => ({ name: `${d.valor} ★`, value: d.cantidad }));
 
   return (
-    <div className="grid grid-cols-3 gap-5 mb-6">
+    <div className="flex flex-col gap-5">
       {/* Distribución por estrella */}
       <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
         <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">
           Distribución por estrella
         </h3>
-        <div className="space-y-3">
-          {distData.map((d) => {
-            const total = distData.reduce((s, i) => s + i.cantidad, 0);
-            const pct = total > 0 ? (d.cantidad / total) * 100 : 0;
-            return (
-              <div key={d.valor} className="flex items-center gap-3">
-                <span className="w-16 text-[13px] text-[#6B7280] dark:text-gray-400 font-inter">{d.name}</span>
-                <span className="w-5 text-[13px] text-[#1F2937] dark:text-gray-100 font-inter font-semibold">{d.valor}</span>
-                <div className="flex-1 h-2.5 bg-[#F3F4F6] dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: STAR_COLORS[d.valor - 1] }} />
+        <div className="flex gap-8 items-end">
+          <div className="flex-1 space-y-3">
+            {distData.map((d) => {
+              const total = distData.reduce((s, i) => s + i.cantidad, 0);
+              const pct = total > 0 ? (d.cantidad / total) * 100 : 0;
+              return (
+                <div key={d.valor} className="flex items-center gap-3">
+                  <span className="w-20 text-[13px] text-[#6B7280] dark:text-gray-400 font-inter">{d.name}</span>
+                  <span className="w-5 text-[13px] text-[#1F2937] dark:text-gray-100 font-inter font-semibold">{d.valor}</span>
+                  <div className="flex-1 h-2.5 bg-[#F3F4F6] dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: STAR_COLORS[d.valor - 1] }} />
+                  </div>
+                  <span className="w-10 text-right text-[12px] text-[#6B7280] dark:text-gray-400 font-inter">{d.cantidad}</span>
                 </div>
-                <span className="w-10 text-right text-[12px] text-[#6B7280] dark:text-gray-400 font-inter">{d.cantidad}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          <ResponsiveContainer width={180} height={150}>
+            <BarChart data={distData}>
+              <XAxis dataKey="valor" tick={{ fontSize: 10, fill: "#6B7280" }} />
+              <YAxis hide />
+              <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+                {distData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      </div>
-
-      {/* Gráfico de barras */}
-      <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">
-          Gráfico de distribución
-        </h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={distData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} />
-            <YAxis tick={{ fontSize: 11, fill: "#6B7280" }} allowDecimals={false} />
-            <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }} formatter={(value) => [value, "Calificaciones"]} />
-            <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
-              {distData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
       </div>
 
       {/* Promedio por PV */}
