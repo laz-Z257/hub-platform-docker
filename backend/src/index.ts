@@ -18,6 +18,7 @@ import usersRoutes from "./modules/users/users.routes";
 import uploadRoutes from "./modules/upload/upload.routes";
 import ratingsRoutes from "./modules/ratings/ratings.routes";
 import pushRoutes from "./modules/push/push.routes";
+import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ratings", ratingsRoutes);
 app.use("/api/push", pushRoutes);
+app.use("/api/puntos-venta", puntosVentaRoutes);
 
 // 404
 app.use((_req, res) => {

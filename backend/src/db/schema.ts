@@ -117,6 +117,19 @@ export const ratings = pgTable(
   ]
 );
 
+export const puntosVenta = pgTable(
+  "puntos_venta",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    nombre: varchar("nombre", { length: 150 }).notNull().unique(),
+    activo: boolean("activo").notNull().default(true),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("puntos_venta_nombre_idx").on(table.nombre),
+  ]
+);
+
 export const pushTokens = pgTable(
   "push_tokens",
   {

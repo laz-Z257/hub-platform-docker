@@ -51,6 +51,18 @@ async function runMigrations() {
     console.error("Role migration warning:", (err as Error).message);
   }
 
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS puntos_venta (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nombre VARCHAR(150) NOT NULL UNIQUE,
+      activo BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    console.log("Table puntos_venta verified.");
+  } catch (err) {
+    console.error("PV table migration warning:", (err as Error).message);
+  }
+
   await pool.end().catch(() => {});
   console.log("Migrate script done.");
 }
