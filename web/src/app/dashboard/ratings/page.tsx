@@ -98,9 +98,14 @@ export default function RatingsPage() {
         distribucion={stats.distribucion}
       />
 
-      <RatingCharts distData={distData} pvChartData={pvChartData} pvSourceLength={pvSource.length} />
-
-      <RecentRatingsTable ratings={stats.ultimas} />
+      <div className="flex gap-6 items-start">
+        <div className="flex-[2] min-w-0">
+          <RatingCharts distData={distData} pvChartData={pvChartData} pvSourceLength={pvSource.length} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <RecentRatingsTable ratings={stats.ultimas} />
+        </div>
+      </div>
     </div>
   );
 }
