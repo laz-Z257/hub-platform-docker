@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
 import TicketSummaryCards from "@/components/TicketSummaryCards";
 import TicketFilters from "@/components/TicketFilters";
 import TicketTable from "@/components/TicketTable";
@@ -81,6 +81,9 @@ export default function TicketsPage() {
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
   const [resolvingTicket, setResolvingTicket] = useState<string | null>(null);
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTicket, setNewTicket] = useState({ nombre: "", documento: "", punto_venta: "", telefono: "", descripcion: "" });
+  const [creating, setCreating] = useState(false);
 
   const LIMIT = 10;
 
@@ -252,11 +255,9 @@ export default function TicketsPage() {
       { header: "Punto de Venta", key: "pv", width: 22 },
       { header: "Urgencia", key: "urg", width: 12 },
       { header: "Estado", key: "est", width: 14 },
-      { header: "Agente", key: "agente", width: 20 },
-      { header: "Descripción", key: "desc", width: 50 },
-      { header: "Solución", key: "sol", width: 50 },
-      { header: "Cerrado por", key: "cerrado_por", width: 22 },
-      { header: "Fecha cierre", key: "fecha_cierre", width: 20 },
+      { header: "Técnico", key: "tecnico", width: 20 },
+      { header: "Descripción de la falla", key: "desc", width: 50 },
+      { header: "Solución del problema", key: "sol", width: 50 },
       { header: "Creado", key: "creado", width: 20 },
       { header: "Actualizado", key: "act", width: 20 },
     ];
@@ -276,10 +277,8 @@ export default function TicketsPage() {
       row.getCell(7).value = inc.agente || "";
       row.getCell(8).value = inc.descripcion;
       row.getCell(9).value = inc.solucion || "";
-      row.getCell(10).value = inc.cerrado_por || "";
-      row.getCell(11).value = inc.fecha_cierre ? fmtDate(inc.fecha_cierre) : "";
-      row.getCell(12).value = fmtDate(inc.created_at);
-      row.getCell(13).value = fmtDate(inc.updated_at);
+      row.getCell(10).value = fmtDate(inc.created_at);
+      row.getCell(11).value = fmtDate(inc.updated_at);
     });
 
     const buffer = await wb.xlsx.writeBuffer();
@@ -343,7 +342,10 @@ export default function TicketsPage() {
           </p>
         </div>
 
-        <button className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white"
+        >
           <PlusCircle size={18} strokeWidth={2} />
           Abrir Nuevo Ticket
         </button>
@@ -453,6 +455,124 @@ export default function TicketsPage() {
           onClose={() => setResolvingTicket(null)}
           onResolved={handleResolved}
         />
+      )}
+
+      {showCreateModal && (
+        <div
+          onClick={() => setShowCreateModal(false)}
+          className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[100]"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-gray-900 rounded-2xl p-7 w-[460px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-inter">
+                Abrir Nuevo Ticket
+              </h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer"
+              >
+                <X size={14} color="#6B7280" strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Nombre</label>
+                <input
+                  type="text"
+                  value={newTicket.nombre}
+                  onChange={(e) => setNewTicket({ ...newTicket, nombre: e.target.value })}
+                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  placeholder="Nombre del solicitante"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Documento</label>
+                <input
+                  type="text"
+                  value={newTicket.documento}
+                  onChange={(e) => setNewTicket({ ...newTicket, documento: e.target.value })}
+                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  placeholder="123456789"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Punto de Venta</label>
+                <input
+                  type="text"
+                  value={newTicket.punto_venta}
+                  onChange={(e) => setNewTicket({ ...newTicket, punto_venta: e.target.value })}
+                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  placeholder="Nombre del punto de venta"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Teléfono</label>
+                <input
+                  type="text"
+                  value={newTicket.telefono}
+                  onChange={(e) => setNewTicket({ ...newTicket, telefono: e.target.value })}
+                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  placeholder="Número de contacto"
+                />
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Descripción</label>
+              <textarea
+                value={newTicket.descripcion}
+                onChange={(e) => setNewTicket({ ...newTicket, descripcion: e.target.value })}
+                className="w-full h-24 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none resize-none"
+                placeholder="Describe el problema..."
+              />
+            </div>
+
+            {creating && (
+              <p className="text-sm text-gray-500 font-inter mb-3">Creando ticket...</p>
+            )}
+
+            <div className="flex justify-end gap-2.5">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="h-10 px-[18px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer text-[13px] font-medium font-inter text-gray-700 dark:text-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newTicket.nombre || !newTicket.descripcion) return;
+                  setCreating(true);
+                  try {
+                    await api.post("/incidents", newTicket);
+                    setShowCreateModal(false);
+                    setNewTicket({ nombre: "", documento: "", punto_venta: "", telefono: "", descripcion: "" });
+                    fetchTickets();
+                    fetchStats();
+                  } catch {
+                    alert("Error al crear ticket");
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+                disabled={creating}
+                className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white"
+                style={{
+                  backgroundColor: creating ? "rgba(37,32,126,0.7)" : "#25207E",
+                  cursor: creating ? "not-allowed" : "pointer",
+                }}
+              >
+                {creating ? "Creando..." : "Crear Ticket"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
