@@ -59,9 +59,9 @@ export default function RatingsPage() {
   }).sort((a, b) => b.promedio - a.promedio || b.total - a.total);
 
   return (
-    <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-screen p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-inter mb-1">Calificaciones</h1>
-      <p className="text-sm text-[#6B7280] dark:text-gray-400 font-inter mb-4">Encuestas de satisfacción de los usuarios.</p>
+    <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
+      <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">Calificaciones</h1>
+      <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter mb-7">Encuestas de satisfacción de los usuarios.</p>
 
       <RatingSummaryCards promedio={stats.promedio} total={stats.total} pvCount={stats.promedioPv.length} distribucion={stats.distribucion} />
 

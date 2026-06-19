@@ -6,23 +6,20 @@ export default function RatingSummaryCards({ promedio, total, pvCount, distribuc
   const pctPositivas = total > 0 ? Math.round(((distribucion["4"] || 0) + (distribucion["5"] || 0)) / total * 100) : 0;
 
   return (
-    <div className="flex gap-4 mb-4">
-      <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-lg px-4 py-3">
-        <p className="text-[11px] font-semibold text-[#9CA3AF] font-inter uppercase">Promedio</p>
-        <p className="text-2xl font-bold text-[#1F2937] dark:text-gray-100 font-inter">{promedio.toFixed(1)}</p>
-      </div>
-      <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-lg px-4 py-3">
-        <p className="text-[11px] font-semibold text-[#9CA3AF] font-inter uppercase">Total</p>
-        <p className="text-2xl font-bold text-[#1F2937] dark:text-gray-100 font-inter">{total.toLocaleString()}</p>
-      </div>
-      <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-lg px-4 py-3">
-        <p className="text-[11px] font-semibold text-[#9CA3AF] font-inter uppercase">Positivas</p>
-        <p className="text-2xl font-bold text-[#22C55E] font-inter">{pctPositivas}%</p>
-      </div>
-      <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-lg px-4 py-3">
-        <p className="text-[11px] font-semibold text-[#9CA3AF] font-inter uppercase">PV calificados</p>
-        <p className="text-2xl font-bold text-[#1F2937] dark:text-gray-100 font-inter">{pvCount.toLocaleString()}</p>
-      </div>
+    <div className="grid grid-cols-4 gap-5 mb-6">
+      <Card label="Promedio" value={promedio.toFixed(1)} />
+      <Card label="Total" value={total.toLocaleString()} />
+      <Card label="Positivas" value={`${pctPositivas}%`} color="#22C55E" />
+      <Card label="PV calificados" value={pvCount.toLocaleString()} />
+    </div>
+  );
+}
+
+function Card({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
+      <p className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-1">{label}</p>
+      <p className="text-4xl font-bold font-inter" style={{ color: color || "#1F2937" }}>{value}</p>
     </div>
   );
 }
