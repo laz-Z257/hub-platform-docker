@@ -1,25 +1,13 @@
-# Shared
+# Shared Types
 
-Tipos y utilidades compartidas entre `web/`, `mobile/` y `backend/`.
+Tipos TypeScript compartidos entre backend, web y mobile.
 
-## Estructura
+## Contenido
 
-```
-shared/
-├── types/
-│   ├── auth.ts       # AuthUser, LoginInput, RegisterInput, AuthResponse
-│   ├── user.ts       # ApiUser
-│   ├── incident.ts   # Incident, IncidentComment, CreateIncidentInput, etc.
-│   └── api.ts        # PaginatedResponse<T>
-└── index.ts          # Barrel export
-```
-
-## Uso
-
-Desde cualquier subproyecto:
-
-```ts
-import type { AuthUser } from "../../shared/types/auth";
-import type { Incident } from "../../shared/types/incident";
-import type { PaginatedResponse } from "../../shared/types/api";
-```
+| Archivo | Tipos |
+|---------|-------|
+| `types/auth.ts` | AuthUser, LoginInput, RegisterInput, AuthResponse |
+| `types/user.ts` | ApiUser |
+| `types/incident.ts` | Incident, IncidentComment, CreateIncidentInput |
+| `types/rating.ts` | Rating, RatingWithDetails, RatingStats |
+| `types/api.ts` | PaginatedResponse |
