@@ -57,6 +57,13 @@
       "when": 1781700000000,
       "tag": "0007_soft_rain",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781883951835,
+      "tag": "0008_flippant_human_cannonball",
+      "breakpoints": true
     }
   ]
 }
