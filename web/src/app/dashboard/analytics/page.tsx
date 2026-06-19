@@ -58,10 +58,14 @@ export default function AnalyticsPage() {
   const [statusData, setStatusData] = useState<StatusBarDataPoint[]>([]);
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
+  const [allPvNames, setAllPvNames] = useState<string[]>([]);
 
   useEffect(() => {
     api.get<string[]>("/incidents/agentes")
       .then(setAgentes)
+      .catch(() => {});
+    api.get<{ nombre: string }[]>("/puntos-venta")
+      .then((list) => setAllPvNames(list.map((p) => p.nombre)))
       .catch(() => {});
   }, []);
 
@@ -249,7 +253,7 @@ export default function AnalyticsPage() {
               Distribución de tickets por sucursal
             </p>
           </div>
-          <DonutChart data={donutData} />
+          <DonutChart data={donutData} allPvNames={allPvNames} />
         </div>
       </div>
 
