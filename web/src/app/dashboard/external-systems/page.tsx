@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, ExternalLink } from "lucide-react";
 
 interface Module {
   id: number;
@@ -9,11 +9,12 @@ interface Module {
 }
 
 const modules: Module[] = [
-  { id: 1, title: "Inventario" },
-  { id: 2, title: "Facturación" },
-  { id: 3, title: "Reportes" },
-  { id: 4, title: "Usuarios" },
-  { id: 5, title: "Configuración" },
+  { id: 1, title: "Traslados", url: "http://192.168.60.66:8100/Seguridad-WEB/XHTML/general/login.xhtml" },
+  { id: 2, title: "Inventario" },
+  { id: 3, title: "Facturación" },
+  { id: 4, title: "Reportes" },
+  { id: 5, title: "Usuarios" },
+  { id: 6, title: "Configuración" },
 ];
 
 export default function ExternalSystemsPage() {
@@ -29,18 +30,37 @@ export default function ExternalSystemsPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        {modules.map((mod) => (
-          <div
-            key={mod.id}
-            className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[200px]"
-          >
-            <LayoutGrid size={40} color="#9CA3AF" />
-            <span className="text-[#9CA3AF] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
-              {mod.title}
-            </span>
-            <span className="text-[11px] text-[#9CA3AF] font-inter">Sin configurar</span>
-          </div>
-        ))}
+        {modules.map((mod) =>
+          mod.url ? (
+            <a
+              key={mod.id}
+              href={mod.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[200px] no-underline hover:border-[#25207E] dark:hover:border-[#25207E] transition-colors cursor-pointer"
+            >
+              <LayoutGrid size={40} color="#25207E" />
+              <span className="text-[#25207E] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
+                {mod.title}
+              </span>
+              <span className="text-[11px] text-[#25207E] font-inter flex items-center gap-1">
+                <ExternalLink size={12} strokeWidth={2.5} />
+                Abrir en nueva pestaña
+              </span>
+            </a>
+          ) : (
+            <div
+              key={mod.id}
+              className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+            >
+              <LayoutGrid size={40} color="#9CA3AF" />
+              <span className="text-[#9CA3AF] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
+                {mod.title}
+              </span>
+              <span className="text-[11px] text-[#9CA3AF] font-inter">Sin configurar</span>
+            </div>
+          )
+        )}
       </div>
     </div>
   );
