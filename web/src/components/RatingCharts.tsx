@@ -11,11 +11,13 @@ interface Props { distData: DistItem[]; pvChartData: PvChartItem[] }
 export default function RatingCharts({ distData, pvChartData }: Props) {
   const total = distData.reduce((s, i) => s + i.cantidad, 0);
 
+  const ratedPvs = pvChartData.filter((d) => d.total > 0);
+
   return (
-    <div className="flex gap-6">
-      {/* Distribución por estrella */}
-      <div className="w-80 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Distribución</h3>
+    <div>
+      {/* Fila 1: Distribución por estrella */}
+      <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
+        <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Distribución por estrella</h3>
         <div className="space-y-3">
           {distData.map((d) => {
             const pct = total > 0 ? (d.cantidad / total) * 100 : 0;
@@ -32,18 +34,18 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
         </div>
       </div>
 
-      {/* Promedio por PV */}
-      <div className="flex-1 bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
+      {/* Fila 2: Promedio por PV */}
+      <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 mt-5">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px]">Promedio por punto de venta</h3>
-          <span className="text-[11px] text-[#9CA3AF] font-inter">{pvChartData.filter((d) => d.total > 0).length} calificados</span>
+          <span className="text-[11px] text-[#9CA3AF] font-inter">{ratedPvs.length} calificados</span>
         </div>
-        {pvChartData.filter((d) => d.total > 0).length > 0 ? (
-          <div style={{ height: `${Math.min(320, Math.max(100, pvChartData.filter((d) => d.total > 0).length * 28 + 20))}px` }}>
+        {ratedPvs.length > 0 ? (
+          <div style={{ height: `${Math.min(360, Math.max(120, ratedPvs.length * 32 + 20))}px` }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pvChartData.filter((d) => d.total > 0)} layout="vertical" margin={{ left: 5, right: 5 }}>
+              <BarChart data={ratedPvs} layout="vertical" margin={{ left: 5, right: 5 }}>
                 <XAxis type="number" domain={[0, 5]} hide />
-                <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 12, fill: "#6B7280" }} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }} formatter={(v) => [typeof v === "number" ? v.toFixed(1) : "0", "Promedio"]} />
                 <Bar dataKey="promedio" radius={[0, 6, 6, 0]} fill="#25207E" />
               </BarChart>
