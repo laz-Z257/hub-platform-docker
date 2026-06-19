@@ -14,7 +14,7 @@ export default function CreateUserModal({ onClose, onCreated }: CreateUserModalP
   const [documento, setDocumento] = useState("");
   const [nombre, setNombre] = useState("");
   const [contrasena, setContrasena] = useState("");
-  const [rol, setRol] = useState<"admin" | "user">("user");
+  const [rol, setRol] = useState("tecnico");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -113,12 +113,11 @@ export default function CreateUserModal({ onClose, onCreated }: CreateUserModalP
             </label>
             <select
               value={rol}
-              onChange={(e) => setRol(e.target.value as "admin" | "user")}
+              onChange={(e) => setRol(e.target.value)}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none cursor-pointer"
             >
-              <option value="user">Usuario</option>
+              <option value="tecnico">Técnico</option>
               <option value="asesor">Asesor</option>
-              <option value="admin">Admin</option>
             </select>
           </div>
 

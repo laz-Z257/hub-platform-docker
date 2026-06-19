@@ -27,13 +27,14 @@ export const createUserSchema = z.object({
   documento: z.string().min(1, "El documento es requerido").max(20),
   nombre: z.string().min(1, "El nombre es requerido").max(100),
   contrasena: z.string().min(6, "Mínimo 6 caracteres"),
-  rol: roles.optional().default("user"),
+  rol: roles.optional().default("tecnico"),
 });
 
 export const updateUserSchema = {
   body: z.object({
     rol: roles.optional(),
     nombre: z.string().min(1).max(100).optional(),
+    documento: z.string().min(1).max(20).optional(),
     email: z.string().email().optional().or(z.literal("")),
   }),
 };

@@ -200,7 +200,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
 export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { rol, nombre, email } = req.body;
+    const { rol, nombre, email, documento } = req.body;
 
     if (rol !== undefined && rol !== "admin" && rol !== "tecnico") {
       const [targetUser] = await db
@@ -226,6 +226,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     if (rol !== undefined) updateData.rol = rol;
     if (nombre !== undefined) updateData.nombre = nombre;
     if (email !== undefined) updateData.email = email;
+    if (documento !== undefined) updateData.documento = documento;
 
     if (Object.keys(updateData).length === 0) {
       res.status(400).json({ error: "No hay campos para actualizar" });
