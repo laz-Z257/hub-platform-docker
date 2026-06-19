@@ -60,6 +60,7 @@ const starLabels: Record<number, string> = {
 export default function RatingsPage() {
   const [stats, setStats] = useState<RatingStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [allPvNames, setAllPvNames] = useState<string[]>([]);
 
   useEffect(() => {
     api
@@ -67,6 +68,11 @@ export default function RatingsPage() {
       .then(setStats)
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    api
+      .get<{ nombre: string }[]>("/puntos-venta")
+      .then((list) => setAllPvNames(list.map((p) => p.nombre)))
+      .catch(() => {});
   }, []);
 
   if (loading) {
@@ -87,11 +93,21 @@ export default function RatingsPage() {
     .filter((d) => d.cantidad > 0)
     .map((d) => ({ name: `${d.valor} ★`, value: d.cantidad }));
 
-  const pvChartData = stats?.promedioPv.map((pv) => ({
-    name: pv.punto_venta.length > 12 ? pv.punto_venta.slice(0, 12) + "…" : pv.punto_venta,
-    promedio: pv.promedio,
-    total: pv.total,
-  })) || [];
+  const pvRatingMap = new Map<string, { promedio: number; total: number }>();
+  for (const pv of stats?.promedioPv || []) {
+    pvRatingMap.set(pv.punto_venta, { promedio: pv.promedio, total: pv.total });
+  }
+
+  const pvSource = allPvNames.length > 0 ? allPvNames : [...pvRatingMap.keys()];
+
+  const pvChartData = pvSource.map((name) => {
+    const data = pvRatingMap.get(name) || { promedio: 0, total: 0 };
+    return {
+      name: name.length > 14 ? name.slice(0, 14) + "…" : name,
+      promedio: data.promedio,
+      total: data.total,
+    };
+  }).sort((a, b) => b.promedio - a.promedio || b.total - a.total);
 
   return (
     <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
@@ -233,15 +249,15 @@ export default function RatingsPage() {
               <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">
                 Promedio por punto de venta
               </h3>
-              {pvChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={pvChartData} layout="vertical">
+              {pvSource.length > 0 ? (
+                <ResponsiveContainer width="100%" height={Math.max(220, pvSource.length * 35)}>
+                  <BarChart data={pvChartData} layout="vertical" margin={{ left: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                     <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11, fill: "#6B7280" }} />
-                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: "#6B7280" }} />
+                    <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: "#6B7280" }} />
                     <Tooltip
                       contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }}
-                      formatter={(value) => [typeof value === "number" ? value.toFixed(1) : value, "Promedio"]}
+                      formatter={(value) => [typeof value === "number" ? value.toFixed(1) : "0", "Promedio"]}
                     />
                     <Bar dataKey="promedio" radius={[0, 6, 6, 0]} fill="#25207E" />
                   </BarChart>

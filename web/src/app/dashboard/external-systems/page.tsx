@@ -12,11 +12,11 @@ interface Module {
 
 const modules: Module[] = [
   { id: 1, title: "Traslados", url: "http://192.168.60.66:8100/Seguridad-WEB/XHTML/general/login.xhtml" },
-  { id: 2, title: "Módulo 2" },
-  { id: 3, title: "Módulo 3" },
-  { id: 4, title: "Módulo 4" },
-  { id: 5, title: "Módulo 5" },
-  { id: 6, title: "Módulo 6" },
+  { id: 2, title: "Inventario" },
+  { id: 3, title: "Facturación" },
+  { id: 4, title: "Reportes" },
+  { id: 5, title: "Usuarios" },
+  { id: 6, title: "Configuración" },
 ];
 
 export default function ExternalSystemsPage() {
@@ -69,8 +69,10 @@ export default function ExternalSystemsPage() {
             <span className="text-[#9CA3AF] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
               {mod.title}
             </span>
-            {mod.url && (
+            {mod.url ? (
               <span className="text-[11px] text-[#25207E] font-inter">Click para abrir</span>
+            ) : (
+              <span className="text-[11px] text-[#9CA3AF] font-inter">Sin configurar</span>
             )}
           </button>
         ))}

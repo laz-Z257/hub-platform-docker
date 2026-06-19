@@ -50,6 +50,9 @@ function getDateRange(filter: string): { start?: string; end?: string } {
   const now = new Date();
   const end = now.toISOString().split("T")[0];
   switch (filter) {
+    case "today": {
+      return { start: end, end };
+    }
     case "7d": {
       const d = new Date(now);
       d.setDate(d.getDate() - 7);
