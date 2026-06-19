@@ -80,14 +80,20 @@ export function TrafficChart({ data }: TrafficChartProps) {
 
 interface DonutChartProps {
   data: DonutDataPoint[];
+  allPvNames?: string[];
 }
 
-export function DonutChart({ data }: DonutChartProps) {
+export function DonutChart({ data, allPvNames }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const labelColor = theme === "dark" ? "#9CA3AF" : "#6B7280";
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
+
+  const pvWithData = new Set(safeData.map((d) => d.name));
+  const totalPvCount = allPvNames?.length || 0;
+  const pvWithIncidents = pvWithData.size;
+  const pvWithoutIncidents = totalPvCount - pvWithIncidents;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
@@ -118,16 +124,31 @@ export function DonutChart({ data }: DonutChartProps) {
           />
         </PieChart>
       </ResponsiveContainer>
-      <div style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap" }}>
-        {safeData.map((item) => (
-          <div key={item.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: item.color }} />
-            <span style={{ fontSize: "13px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
-              {item.name} ({item.value}%)
-            </span>
-          </div>
-        ))}
+      <div className="w-full max-h-40 overflow-y-auto">
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {safeData.map((item) => (
+            <div key={item.name} className="flex items-center gap-2">
+              <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: item.color }} />
+              <span style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
+                {item.name} ({item.value}%)
+              </span>
+            </div>
+          ))}
+          {allPvNames && pvWithoutIncidents > 0 && (
+            <div className="flex items-center gap-2">
+              <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#E5E7EB" }} />
+              <span style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
+                {pvWithoutIncidents} PV sin reportes
+              </span>
+            </div>
+          )}
+        </div>
       </div>
+      {totalPvCount > 0 && (
+        <p style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif", margin: 0 }}>
+          {pvWithIncidents} de {totalPvCount} puntos de venta con reportes
+        </p>
+      )}
     </div>
   );
 }
