@@ -66,8 +66,8 @@ export default function RatingsPage() {
       <RatingSummaryCards promedio={stats.promedio} total={stats.total} pvCount={stats.promedioPv.length} distribucion={stats.distribucion} />
 
       <div className="flex gap-4 items-start">
-        <div className="flex-[3] min-w-0 space-y-4">
-          <RatingCharts distData={distData} pvChartData={pvChartData} pvSourceLength={pvSource.length} />
+        <div className="flex-[3] min-w-0">
+          <RatingCharts distData={distData} pvChartData={pvChartData} />
         </div>
         <div className="flex-[2] min-w-0">
           <RecentRatingsTable ratings={stats.ultimas} />
