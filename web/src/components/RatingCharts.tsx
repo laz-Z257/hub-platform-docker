@@ -1,16 +1,21 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 
 const COLORS = ["#EF4444", "#F97316", "#F59E0B", "#84CC16", "#22C55E"];
 
 interface DistItem { name: string; valor: number; cantidad: number }
 interface PvChartItem { name: string; promedio: number; total: number }
-interface Props { distData: DistItem[]; pvChartData: PvChartItem[] }
+interface TimelineItem { fecha: string; promedio: number; total: number }
+interface Props { distData: DistItem[]; pvChartData: PvChartItem[]; timeline: TimelineItem[] }
 
-export default function RatingCharts({ distData, pvChartData }: Props) {
+function fmtFecha(fecha: string) {
+  const d = new Date(fecha + "T00:00:00");
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+}
+
+export default function RatingCharts({ distData, pvChartData, timeline }: Props) {
   const total = distData.reduce((s, i) => s + i.cantidad, 0);
-
   const ratedPvs = pvChartData.filter((d) => d.total > 0);
 
   return (
@@ -53,6 +58,26 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
           </div>
         ) : <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter text-center py-8">Sin calificaciones</p>}
       </div>
+
+      {/* Fila 3: Evolución en el tiempo */}
+      {timeline && timeline.length > 1 && (
+        <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 mt-5">
+          <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Evolución del promedio</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={timeline} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+              <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: "#6B7280" }} tickFormatter={fmtFecha} />
+              <YAxis domain={[0, 5]} tick={{ fontSize: 11, fill: "#6B7280" }} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }}
+                labelFormatter={(label) => fmtFecha(label)}
+                formatter={(value) => [typeof value === "number" ? value.toFixed(1) : "0", "Promedio"]}
+              />
+              <Line type="monotone" dataKey="promedio" stroke="#25207E" strokeWidth={2.5} dot={{ fill: "#25207E", r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
