@@ -12,6 +12,7 @@ interface RatingStats {
   total: number;
   distribucion: Record<string, number>;
   promedioPv: { punto_venta: string; promedio: number; total: number }[];
+  timeline: { fecha: string; promedio: number; total: number }[];
   ultimas: {
     puntuacion: number; comentario: string | null; created_at: string;
     incident_id: string; usuario_nombre: string; punto_venta: string; ticket_descripcion: string;
@@ -67,7 +68,7 @@ export default function RatingsPage() {
 
       <div className="flex gap-4 items-start">
         <div className="flex-[3] min-w-0">
-          <RatingCharts distData={distData} pvChartData={pvChartData} />
+          <RatingCharts distData={distData} pvChartData={pvChartData} timeline={stats.timeline} />
         </div>
         <div className="flex-[2] min-w-0">
           <RecentRatingsTable ratings={stats.ultimas} />

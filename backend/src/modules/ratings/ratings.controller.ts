@@ -106,8 +106,13 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
     const promedio = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
 
     const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const evolucion: Record<string, { suma: number; count: number }> = {};
     for (const r of rows) {
       distribucion[r.puntuacion] = (distribucion[r.puntuacion] || 0) + 1;
+      const day = new Date(r.created_at).toISOString().split("T")[0];
+      if (!evolucion[day]) evolucion[day] = { suma: 0, count: 0 };
+      evolucion[day].suma += r.puntuacion;
+      evolucion[day].count++;
     }
 
     const promedioPorPv: Record<string, { suma: number; count: number }> = {};
@@ -121,11 +126,16 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
       .map(([pv, d]) => ({ punto_venta: pv, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
       .sort((a, b) => b.promedio - a.promedio);
 
+    const timeline = Object.entries(evolucion)
+      .map(([fecha, d]) => ({ fecha, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
     res.json({
       promedio,
       total,
       distribucion,
       promedioPv,
+      timeline,
       ultimas: rows.slice(0, 10),
     });
   } catch (error) {
