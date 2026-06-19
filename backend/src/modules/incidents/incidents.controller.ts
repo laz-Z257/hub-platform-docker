@@ -50,6 +50,13 @@ export async function listIncidents(
       conditions.push(eq(incidents.user_id, req.user!.userId));
     }
 
+    if (q.start && q.end) {
+      const endDate = new Date(q.end as string);
+      endDate.setHours(23, 59, 59, 999);
+      conditions.push(gte(incidents.created_at, new Date(q.start as string)));
+      conditions.push(lte(incidents.created_at, endDate));
+    }
+
     if (search) {
       const hexChars = search.replace(/[^A-Fa-f0-9]/g, "").toLowerCase();
       conditions.push(

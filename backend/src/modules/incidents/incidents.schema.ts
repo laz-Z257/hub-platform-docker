@@ -39,6 +39,14 @@ export const listIncidentsQuerySchema = {
     search: z.string().optional(),
     estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
+    start: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "start debe ser una fecha válida"),
+    end: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "end debe ser una fecha válida"),
   }),
 };
 
