@@ -90,10 +90,10 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
-  const pvWithData = new Set(safeData.map((d) => d.name));
-  const totalPvCount = allPvNames?.length || 0;
-  const pvWithIncidents = pvWithData.size;
-  const pvWithoutIncidents = totalPvCount - pvWithIncidents;
+  const pvColorMap = new Map(safeData.map((d) => [d.name, d.color]));
+  const pvValueMap = new Map(safeData.map((d) => [d.name, d.value]));
+  const allPvs = allPvNames || [];
+  const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
@@ -125,30 +125,25 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
         </PieChart>
       </ResponsiveContainer>
       <div className="w-full max-h-40 overflow-y-auto">
-        <div className="flex flex-wrap gap-x-6 gap-y-1">
-          {safeData.map((item) => (
-            <div key={item.name} className="flex items-center gap-2">
-              <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: item.color }} />
-              <span style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
-                {item.name} ({item.value}%)
-              </span>
-            </div>
-          ))}
-          {allPvNames && pvWithoutIncidents > 0 && (
-            <div className="flex items-center gap-2">
-              <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#E5E7EB" }} />
-              <span style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif" }}>
-                {pvWithoutIncidents} PV sin reportes
-              </span>
-            </div>
-          )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          {allPvs.map((name, i) => {
+            const hasData = pvColorMap.has(name);
+            const color = hasData ? (pvColorMap.get(name) || colors[i % colors.length]) : "#E5E7EB";
+            const valor = hasData ? pvValueMap.get(name) : 0;
+            return (
+              <div key={name} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
+                <span style={{ fontSize: "11px", color: labelColor, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {name}
+                </span>
+                <span style={{ fontSize: "11px", fontWeight: hasData ? 600 : 400, color: hasData ? color : "#D1D5DB", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                  {hasData ? `${valor}%` : "0%"}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
-      {totalPvCount > 0 && (
-        <p style={{ fontSize: "12px", color: labelColor, fontFamily: "Inter, sans-serif", margin: 0 }}>
-          {pvWithIncidents} de {totalPvCount} puntos de venta con reportes
-        </p>
-      )}
     </div>
   );
 }
