@@ -29,7 +29,6 @@ interface MenuOption {
 }
 
 const MENU_OPTIONS: MenuOption[] = [
-  { label: "Consultar saldo" },
   { label: "Estado de reporte" },
   {
     label: "Soporte t\u00E9cnico",
