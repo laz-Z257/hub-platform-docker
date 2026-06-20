@@ -17,8 +17,8 @@ export default function Topbar({ userName }: { userName?: string }) {
     try {
       const data = await api.get<{ count: number }>("/incidents/unread-count");
       setUnreadCount(data.count);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Error fetching unread count:", err);
     }
   }, []);
 

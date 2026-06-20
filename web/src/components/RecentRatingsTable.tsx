@@ -17,7 +17,7 @@ export default function RecentRatingsTable({ ratings }: Props) {
       <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Últimas calificaciones</h3>
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {ratings.map((r, i) => (
-          <div key={i} className="flex items-center gap-3 py-2 border-b border-[#F3F4F6] dark:border-gray-800 last:border-0">
+          <div key={r.created_at + r.usuario_nombre + r.punto_venta} className="flex items-center gap-3 py-2 border-b border-[#F3F4F6] dark:border-gray-800 last:border-0">
             <div className="w-8 h-8 rounded-full bg-[#F3F0FF] flex items-center justify-center shrink-0">
               <span className="text-[12px] font-semibold text-[#25207E] font-inter">{r.usuario_nombre.charAt(0).toUpperCase()}</span>
             </div>
