@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import Providers from "./providers";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "HUB AI Assistant - Dashboard",
@@ -14,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className="min-h-screen bg-gray-bg antialiased">
+      <body className={`${inter.className} min-h-screen bg-gray-bg antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

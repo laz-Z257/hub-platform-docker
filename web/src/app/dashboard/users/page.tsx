@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import UserSummaryCards from "@/components/UserSummaryCards";
 import UserFilters from "@/components/UserFilters";
 import UsersTable from "@/components/UsersTable";
@@ -10,6 +10,7 @@ import EditUserModal from "@/components/EditUserModal";
 import CreateUserModal from "@/components/CreateUserModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { api } from "@/lib/api";
+import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@/types/user";
 
 const PER_PAGE = 10;
@@ -84,19 +85,6 @@ export default function UsersPage() {
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PER_PAGE));
   const pagedUsers = filteredUsers.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const pages: (number | "...")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (page > 3) pages.push("...");
-    const start = Math.max(2, page - 1);
-    const end = Math.min(totalPages - 1, page + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (page < totalPages - 2) pages.push("...");
-    pages.push(totalPages);
-  }
-
   return (
     <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <UserSummaryCards
@@ -132,54 +120,15 @@ export default function UsersPage() {
 
       <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
 
-      <div className="flex items-center justify-between mt-5">
-        <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-          Mostrando {Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)} a {Math.min(page * PER_PAGE, filteredUsers.length)} de{" "}
-          {filteredUsers.length.toLocaleString()} usuarios
-        </span>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-            style={{ opacity: page === 1 ? 0.5 : 1, cursor: page === 1 ? "default" : "pointer" }}
-          >
-            <ChevronLeft size={14} color="#6B7280" strokeWidth={2} />
-          </button>
-
-          {pages.map((p, i) =>
-            p === "..." ? (
-              <span key={`dot-${i}`} className="w-8 h-8 flex items-center justify-center text-[13px] text-gray-400 font-inter">
-                ...
-              </span>
-            ) : (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-inter cursor-pointer"
-                style={{
-                  border: page === p ? "none" : "1px solid #E5E7EB",
-                  backgroundColor: page === p ? "#25207E" : "#FFFFFF",
-                  color: page === p ? "#FFFFFF" : "#374151",
-                  fontWeight: page === p ? 600 : 400,
-                }}
-              >
-                {p}
-              </button>
-            )
-          )}
-
-          <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-            style={{ opacity: page === totalPages ? 0.5 : 1, cursor: page === totalPages ? "default" : "pointer" }}
-          >
-            <ChevronRight size={14} color="#6B7280" strokeWidth={2} />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={filteredUsers.length}
+        from={Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)}
+        to={Math.min(page * PER_PAGE, filteredUsers.length)}
+        itemLabel="usuarios"
+        onPageChange={setPage}
+      />
 
       {showCreateModal && (
         <CreateUserModal
