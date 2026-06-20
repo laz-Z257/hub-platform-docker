@@ -146,7 +146,7 @@ En builds de producción (APK), NativeWind en TextInput causaba que el teclado n
 | Servicio | Plataforma | URL |
 |----------|-----------|-----|
 | **API** | Render (Docker) | `https://hub-platform-api.onrender.com` |
-| **Web** | Vercel | `https://web-a-74c5ba6d.vercel.app` |
+| **Web** | Vercel | `https://demo-aplicacion-dashboard.vercel.app` |
 | **DB** | Render PostgreSQL 16 | Interna |
 | **APK** | EAS Build (Expo) | Link por email |
 
@@ -228,164 +228,47 @@ npx tsx src/db/migrate.ts  # ejecutar
 
 ---
 
-## Auditoría de seguridad
+## Auditoría de Seguridad Completa
 
-Resuelta. Principales fixes aplicados:
+Auditoría integral del repositorio (2026-06-19): **53 hallazgos** (9 críticos, 16 altos, 17 medios, 11 bajos). Documento completo en [`AUDIT-COMPLETA.md`](./AUDIT-COMPLETA.md).
 
-| Área | Fix |
-|------|-----|
-| Rate limiting | Global (100 req/min) + auth (10 req/15min) |
-| Validación | Zod en body y query params de todos los endpoints |
-| Autenticación | JWT sin fallback inseguro, bloqueo de usuarios |
-| CORS | Orígenes explícitos, sin wildcard con credenciales |
-| Passwords | bcrypt 10 rounds, seed desde env var |
-| Dependencias | drizzle-orm actualizado, Next.js 15.5.19 (fix RCE) |
-| Logs | Morgan en dev, errores sin stack traces en producción |
-| Docker | Sin hardcodeos, health check con timeouts adecuados |
+### Resumen por proyecto
+
+| Proyecto | LOC | Archivos | Hallazgos | Principales issues |
+|----------|----:|---------:|----------:|--------------------|
+| **backend/** | ~2,500 | 36 | 18 | Race condition en auth middleware, JWT fallback vacío, migraciones huérfanas, export sin validación, upload bloqueante |
+| **web/** | ~5,200 | 43 | 15 | IP interna hardcodeada, ESLint deshabilitado, API URL hardcodeada, `alert()` en vez de toasts, sin `next/font` |
+| **mobile/** | ~4,100 | 32 | 11 | API URL hardcodeada, `.env` en git, sin refresh token, catch blocks vacíos, 3 variantes de marca |
+| **shared/** | ~80 | 6 | 2 | No usado como workspace, tipos duplicados en web |
+| **docs/** | — | 10 | 7 | `web/README.md` no es README, `ota-server/` vacío, backend README desactualizado, CHANGELOG duplicado |
+
+### Hallazgos críticos (top 5)
+
+| ID | Hallazgo | Proyecto | Prioridad |
+|----|----------|----------|:---------:|
+| C1 | Race condition en `authMiddleware` — `next()` antes de verificar usuario bloqueado | backend | 🚨 Inmediato |
+| C2 | `JWT_REFRESH_SECRET` fallback a string vacío — refresh tokens forjables | backend | 🚨 Inmediato |
+| C4 | IP interna `192.168.x.x` hardcodeada en cliente web | web | 🚨 Inmediato |
+| C5 | ESLint `ignoreDuringBuilds: true` — errores pasan a producción | web | 🚨 Inmediato |
+| C9 | **0 tests** en 117 archivos fuente | todos | 🔴 Corto |
+
+### Estado de issues de auditorías previas
+
+| Auditoría | Fecha | Hallazgos | Pendientes |
+|-----------|:----:|:---------:|:----------:|
+| `audit-report.md` | 2026-06-09 | 6 críticos | 3 (comentarios, auto-creación, secrets) |
+| `AUDIT.md` | 2026-06-10 | 5H/3M/2L | 8 de 10 |
+| `AUDIT-COMPLETA.md` | 2026-06-11 | 7C/7H/8M/8L | Reemplazado por esta auditoría |
+
+### Ver documento completo
+
+→ **[`AUDIT-COMPLETA.md`](./AUDIT-COMPLETA.md)** — 53 hallazgos detallados con matriz de rutas, estado de issues previos, y recomendaciones priorizadas (inmediato/corto/mediano/largo plazo).
 
 ---
 
 ## Changelog
 
-### v2 (actual)
-- Registro de usuarios (`/auth/register`)
-- Bloqueo/desbloqueo de usuarios (`/users/:id/toggle-status`)
-- Columnas `estado` y `ultima_actividad` en users
-- Filtro por técnico en analytics (dropdown + endpoints `?agente=`)
-- Asignar técnico desde la tabla de tickets (input en menú de acciones)
-- Gráfica de barras por estado en Analytics (pendientes, en proceso, resueltos)
-- Endpoint `GET /incidents/agentes` (lista de técnicos únicos)
-- `GET /incidents/stats` ahora retorna `statusCounts` para la gráfica de barras
-- Rate limiting global
-- Validación Zod en query params
-- Auto-creación de usuario al reportar incidente
-- Fix teclado Android (NativeWind → style nativo)
-- Fix URLs producción (typo `platafomr` → `platform-api`)
-- Seed simplificado (solo admin, sin incidentes falsos)
-- Dashboard sin datos hardcodeados
-- Next.js 15.5.19 (security patch)
-
-### v2.1 (security fixes)
-- P0: Verificación de propiedad en `POST /incidents/:id/comments` (solo dueño o admin)
-- P0: SSL `rejectUnauthorized: false` documentado para Render (red interna, certificados no configurables)
-- P0: Secrets en `docker-compose.yml` usan variables de entorno (`${VAR:-default}`)
-- P1: `GET /incidents/stats` ahora requiere `adminOnly`
-- P2: Validación UUID en todos los params `:id` (400 en vez de 500 para IDs inválidos)
-- P2: Límite máximo 200 en `GET /chat/history?limit`
-- P2: No se puede degradar al último administrador (`updateUser`)
-- Tipos compartidos extraídos a `shared/types/` (evita duplicación web ↔ mobile)
-
-### 2026-06-10 (3) — JWT HttpOnly + Refresh tokens
-
-**Web:** Token JWT ahora se envía como cookie `HttpOnly; Secure; SameSite=None` en vez de `document.cookie` accesible por JS. El frontend usa `credentials: "include"` y tiene interceptor de refresh automático en 401.
-
-**Backend:**
-- `POST /auth/refresh` — renueva el access token usando el refresh token
-- `POST /auth/logout` — limpia ambas cookies
-- `authMiddleware` lee de cookie primero, luego de header `Authorization` (para mobile)
-- Access token: 1h, Refresh token: 7d
-
-**Mobile:** Sin cambios — sigue usando `Authorization: Bearer` + `expo-secure-store`. Compatible con ambos flujos.
-
-### 2026-06-10 — Auditoría y security fixes
-
-**Auditoría completa:** 90+ archivos revisados. 16 hallazgos (3 críticos, 4 altos, 5 medios, 3 bajos). Documentado en `audit-report.md`.
-
-**Fixes aplicados:**
-
-| Severidad | Fix | Archivos |
-|---|---|---|
-| P0 | Verificación de propiedad en `POST /incidents/:id/comments` | `incidents.controller.ts` |
-| P0 | Secrets en `docker-compose.yml` → variables de entorno (`${VAR:-default}`) | `docker-compose.yml` |
-| P0 | SSL `rejectUnauthorized: false` documentado para Render | `db/index.ts`, `migrate.ts`, `seed.ts` |
-| P1 | `GET /incidents/stats` ahora requiere `adminOnly` | `incidents.routes.ts` |
-| P2 | Validación UUID en todos los params `:id` (6 rutas incidents + 2 users) | `incidents.schema.ts`, `users.schema.ts`, `*.routes.ts` |
-| P2 | Límite máximo 200 en `GET /chat/history?limit` | `chat.schema.ts`, `chat.controller.ts` |
-| P2 | No se puede degradar al último administrador | `users.controller.ts` |
-| — | Tipos compartidos `shared/types/` (AuthUser, Incident, ApiUser, etc.) | `shared/` (7 archivos nuevos) |
-
-**Pendientes (riesgo medio/alto):** migrar JWT a cookie HttpOnly, eliminar auto-creación de usuarios, paginación en listUsers, validar sesión contra backend al iniciar.
-
-### 2026-06-10 (2) — EAS Update (OTA)
-
-**Setup:** `expo-updates` + config en `app.json` y `eas.json` con canales `preview` y `production`.
-
-**Uso para futuros cambios JS (pantallas, estilos, lógica, bug fixes):**
-```bash
-cd mobile
-eas update --channel preview --message "descripción del cambio"   # ~30 segundos
-```
-Los usuarios reciben la update automáticamente al abrir la app.
-
-**Solo usar `eas build` para:** nuevo paquete nativo, upgrade de Expo SDK, cambios en app.json nativo.
-
-**Revertir una update rota:**
-```bash
-eas update:rollback --channel preview
-```
-
-### 2026-06-13 — Tickets, analítica, sistemas externos y móvil
->
-**Web — Tickets:**
-> - Restaurado e implementado botón de descarga en tickets (exporta a Excel con filtro de fecha)
-> - Eliminada columna ID del Excel exportado
-> - Agregada columna Solución al Excel
-> - Formato de fechas en Excel: día/mes/año hora
-> - Eliminada columna Prioridad de la tabla de tickets (TicketTable y TicketsTable widget)
-> - Eliminado campo imagen del modal de cerrar ticket
->
-> **Web — Analítica:**
-> - Cambiado el gráfico donut de "Distribución por Urgencia" a "Incidentes por Punto de Venta"
-> - Eliminada columna Imagen de la hoja Detalle en exportación Excel
-> - Actualizado el Excel de analítica para reflejar distribución por punto de venta
->
-> **Web — Configuración:**
-> - Nueva pestaña "Mantenimiento" con:
->   - Limpiar caché local (localStorage + sessionStorage, muestra cantidad de items y tamaño)
->   - Recargar página
->   - Restablecer configuración (con confirmación y estadísticas)
->
-> **Web — Sistemas Externos:**
-> - Reemplazado el iframe por 6 tarjetas de módulo vacías en cuadrícula 3x2
->
-> **Backend:**
-> - Cambiada la distribución del endpoint `/incidents/stats` de urgencia a punto de venta
-> - Agregado `punto_venta` al select de la query de estadísticas
-> - Actualizado `CORS_ORIGIN` en Render para incluir `demo-aplicacion-dashboard.vercel.app`
-> - Seteada variable `NEXT_PUBLIC_API_URL` en Vercel
->
-> **Móvil — Pantalla de éxito (exito.tsx):**
-> - Rediseño completo responsive:
->   - Ticket number sin altura fija, con `flexWrap` y `flexShrink` para evitar cortes
->   - Icono de copiar alineado sin superposición
->   - Tamaños reducidos para pantallas angostas (320px+)
->   - Secciones: Estado del Ticket, ¿Necesitas algo más?, Calificar Servicio (luego eliminadas)
->
-> **Móvil — Configuración/Ajustes:**
-> - Nueva pestaña "Ajustes" en la barra inferior (4 tabs)
-> - Pantalla de ajustes con:
->   - Limpiar caché (borra tokens, sesión, recarga app con `Updates.reloadAsync()`)
->   - Recargar app
->   - Cerrar sesión
-> - Eliminado botón de menú (3 puntitos) y logout del ChatHeader
->
-> **Móvil — OTA Updates:**
-> - Cambiado fallback de API URL de `localhost:3001` a `https://hub-platform-api.onrender.com/api`
-> - Publicadas múltiples OTA updates para Android (canal preview)
-> - Reconstrucción de APK en progreso (EAS Build)
->
-> **Infraestructura:**
-> - Tokens de servicio: GitHub PAT, Vercel, Render, Expo
-> - Deploys automáticos: Vercel (auto-deploy), Render (auto-deploy + manual trigger)
->
-> ## Pendientes
-
-### 🔴 Martes — Revisión post-despliegue
-- [ ] Verificar que el APK build con los cambios esté funcionando correctamente
-- [ ] Revisar web: tickets, analítica (donut por punto de venta), configuración (mantenimiento), sistemas externos
-- [ ] Revisar móvil: pantalla de éxito (ticket sin cortar), ajustes (limpiar caché)
-- [ ] Confirmar que la API en Render responde correctamente desde producción
-- [ ] Probar el flujo completo: reportar ticket → ver éxito → ver detalle → cerrar ticket
+Ver [`CHANGELOG.md`](./CHANGELOG.md) para el historial completo de cambios.
 
 ---
 
