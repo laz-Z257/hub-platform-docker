@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw } from "lucide-react";
 import logoImg from "@/assets/logo.png";
@@ -74,7 +74,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
   const [cleared, setCleared] = useState(false);
   const { theme, setTheme } = useTheme();
-  const cacheStats = useMemo(() => getCacheStats(), [cleared]);
+  const cacheStats = getCacheStats();
 
   return (
     <div className="min-h-full bg-[#F7F8FC] dark:bg-gray-950 px-8 py-7">
@@ -370,13 +370,16 @@ export default function SettingsPage() {
       {/* Action Buttons */}
       {(activeTab === "empresa" || activeTab === "apariencia") && (
         <div className="flex justify-end gap-3 mt-6">
-          <button className="h-[44px] px-5 bg-white dark:bg-gray-900 border border-[#D1D5DB] dark:border-gray-600 rounded-lg text-[14px] font-medium text-[#4B5563] dark:text-gray-300 font-inter flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <button
+            disabled
+            className="h-[44px] px-5 bg-white dark:bg-gray-900 border border-[#D1D5DB] dark:border-gray-600 rounded-lg text-[14px] font-medium text-[#9CA3AF] dark:text-gray-500 font-inter flex items-center gap-2 cursor-not-allowed"
+          >
             <X size={16} />
             Descartar Cambios
           </button>
           <button
-            className="h-[44px] px-5 bg-[#25207E] rounded-lg text-[14px] font-medium text-white font-inter flex items-center gap-2 hover:bg-[#1e1a66] transition-colors"
-            style={{ boxShadow: "0 4px 12px rgba(37,32,126,0.25)" }}
+            disabled
+            className="h-[44px] px-5 bg-gray-300 rounded-lg text-[14px] font-medium text-gray-500 font-inter flex items-center gap-2 cursor-not-allowed"
           >
             <Save size={16} />
             Guardar Configuración

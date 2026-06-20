@@ -1,5 +1,3 @@
-"use client";
-
 import { Users, Zap, Mail } from "lucide-react";
 
 interface SummaryCardsProps {
