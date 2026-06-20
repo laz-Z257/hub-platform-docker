@@ -9,7 +9,7 @@ interface Module {
 }
 
 const modules: Module[] = [
-  { id: 1, title: "Traslados", url: "http://192.168.60.66:8100/Seguridad-WEB/XHTML/general/login.xhtml" },
+  { id: 1, title: "Traslados", url: `${process.env.NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL || "http://192.168.60.66:8100"}/Seguridad-WEB/XHTML/general/login.xhtml` },
   { id: 2, title: "Inventario" },
   { id: 3, title: "Facturación" },
   { id: 4, title: "Reportes" },
