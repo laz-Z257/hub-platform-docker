@@ -63,10 +63,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     api.get<string[]>("/incidents/agentes")
       .then(setAgentes)
-      .catch(() => {});
+      .catch((err) => console.error("Error fetching agentes:", err));
     api.get<{ nombre: string }[]>("/puntos-venta")
       .then((list) => setAllPvNames(list.map((p) => p.nombre)))
-      .catch(() => {});
+      .catch((err) => console.error("Error fetching puntos-venta:", err));
   }, []);
 
   function fetchData(start: string, end: string, agente?: string) {

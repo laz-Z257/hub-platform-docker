@@ -339,7 +339,15 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-[13px] font-inter">
                   <span className="text-[#6B7280] dark:text-gray-400">Navegador</span>
-                  <span className="text-[#1F2937] dark:text-gray-100 font-medium">Chrome</span>
+                  <span className="text-[#1F2937] dark:text-gray-100 font-medium">
+                    {typeof window !== "undefined"
+                      ? /Chrome/.test(navigator.userAgent) ? "Chrome" :
+                        /Firefox/.test(navigator.userAgent) ? "Firefox" :
+                        /Safari/.test(navigator.userAgent) ? "Safari" :
+                        /Edg/.test(navigator.userAgent) ? "Edge" :
+                        "Otro"
+                      : "Servidor"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[13px] font-inter">
                   <span className="text-[#6B7280] dark:text-gray-400">Almacenamiento</span>

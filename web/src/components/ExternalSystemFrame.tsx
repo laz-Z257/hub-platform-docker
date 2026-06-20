@@ -41,6 +41,7 @@ export default function ExternalSystemFrame({
         <iframe
           src={src}
           title={title}
+          sandbox="allow-scripts allow-same-origin"
           className="w-full h-full relative z-10"
         />
       ) : (
