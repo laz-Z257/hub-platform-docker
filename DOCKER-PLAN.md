@@ -70,3 +70,28 @@ Solo el VPS (~$5-10/mes). Cero dependencias externas.
 - Docker Engine + Docker Compose
 - 4 GB RAM mínimo
 - 20 GB disco
+
+---
+
+## Estado de la Dockerización — 22 Junio 2026
+
+### ✅ Completado
+| Servicio/Archivo | Detalle |
+|---|---|
+| `docker-compose.yml` | postgres, api, web, ota-server, ota-builder |
+| `backend/Dockerfile` | Multi-stage build (build + prod), healthcheck |
+| `web/Dockerfile` | Multi-stage build (deps + build + runner), standalone output |
+| `web/next.config.ts` | `output: "standalone"` + rewrites API a `api:3001` |
+| `web/src/lib/api.ts` | Fallback API_URL a `/api` (proxy vía Next rewrites) |
+| `ota-server/Dockerfile` | Nginx Alpine sirviendo bundles OTA |
+| `mobile/Dockerfile.ota` | Builder de bundles OTA (expo export) |
+
+### ❌ Pendiente de implementar
+| Servicio/Archivo | Detalle |
+|---|---|
+| `mobile/Dockerfile.builder` | Contenedor con Node + Java 17 + Android SDK + Gradle para buildear APK |
+| `mobile/scripts/build-apk.sh` | Script que ejecuta `gradle assembleRelease` y copia APK a `/output` |
+| Servicio `mobile-builder` en `docker-compose.yml` | Con `profiles: [build-only]` para ejecución bajo demanda |
+| Nginx reverse proxy + Let's Encrypt | Opcional — puertos 80/443 para producción con SSL |
+
+**Resumen:** API, web y OTA están dockerizados. Falta el builder de APK Android para eliminar dependencia de EAS Cloud.
