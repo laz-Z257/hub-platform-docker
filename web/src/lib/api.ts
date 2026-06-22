@@ -1,7 +1,7 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "production"
-    ? "https://hub-platform-api.onrender.com/api"
+  (typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "/api"
     : "http://localhost:3001/api");
 
 let isRefreshing = false;
