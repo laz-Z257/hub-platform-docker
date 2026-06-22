@@ -7,7 +7,7 @@ import "dotenv/config";
 async function runMigrations() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
-    ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+    ssl: env.DB_SSL ? { rejectUnauthorized: false } : false,
     connectionTimeoutMillis: 10000,
     query_timeout: 15000,
   });
