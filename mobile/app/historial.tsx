@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { MessageSquare, History } from "lucide-react-native";
+import { MessageSquare, History, AlertCircle } from "lucide-react-native";
 import { api } from "../src/services/api";
 import BottomTab from "../src/components/BottomTab";
 
@@ -47,12 +48,17 @@ export default function HistorialScreen() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchIncidents = useCallback(() => {
+    setError(null);
     api
       .get<{ items: Incident[] }>("/incidents?limit=50")
       .then((data) => setIncidents(data.items))
-      .catch((err) => console.error("Error al cargar historial:", err))
+      .catch((err) => {
+        console.error("Error al cargar historial:", err);
+        setError(err instanceof Error ? err.message : "Error al cargar el historial");
+      })
       .finally(() => {
         setLoading(false);
         setRefreshing(false);
@@ -259,17 +265,37 @@ export default function HistorialScreen() {
                 paddingTop: 60,
               }}
             >
-              <History size={40} color="#D1D5DB" strokeWidth={1.5} />
-              <Text
-                style={{
-                  marginTop: 12,
-                  fontSize: 15,
-                  color: "#9CA3AF",
-                  fontFamily: "Inter_400Regular",
-                }}
-              >
-                No tienes incidentes reportados
-              </Text>
+              {error ? (
+                <>
+                  <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
+                  <Text
+                    style={{
+                      marginTop: 12,
+                      fontSize: 15,
+                      color: "#EF4444",
+                      fontFamily: "Inter_400Regular",
+                      textAlign: "center",
+                      paddingHorizontal: 20,
+                    }}
+                  >
+                    {error}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <History size={40} color="#D1D5DB" strokeWidth={1.5} />
+                  <Text
+                    style={{
+                      marginTop: 12,
+                      fontSize: 15,
+                      color: "#9CA3AF",
+                      fontFamily: "Inter_400Regular",
+                    }}
+                  >
+                    No tienes incidentes reportados
+                  </Text>
+                </>
+              )}
             </View>
           }
         />
