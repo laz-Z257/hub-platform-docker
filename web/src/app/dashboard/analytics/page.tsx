@@ -12,7 +12,7 @@ import {
   type StatusBarDataPoint,
 } from "@/components/AnalyticsCharts";
 import AnalyticsMetrics from "@/components/AnalyticsMetrics";
-import AnalyticsFilters from "@/components/AnalyticsFilters";
+import AnalyticsFilters, { type FilterPreset } from "@/components/AnalyticsFilters";
 import { api } from "@/lib/api";
 
 interface KpiResponse {
@@ -32,19 +32,43 @@ function formatDateRange(start: string, end: string): string {
   return `${fmt(s)} – ${fmt(e)}`;
 }
 
-function getDefaultRange(): { start: string; end: string } {
+function getDefaultRange(preset: FilterPreset): { start: string; end: string } {
   const today = new Date();
-  const thirtyAgo = new Date(today);
-  thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-  return {
-    start: thirtyAgo.toISOString().split("T")[0],
-    end: today.toISOString().split("T")[0],
-  };
+  const end = today.toISOString().split("T")[0];
+  let start: string;
+
+  switch (preset) {
+    case "today":
+      start = end;
+      break;
+    case "week": {
+      const monday = new Date(today);
+      const day = monday.getDay();
+      const diff = day === 0 ? 6 : day - 1;
+      monday.setDate(monday.getDate() - diff);
+      start = monday.toISOString().split("T")[0];
+      break;
+    }
+    case "month": {
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
+      start = first.toISOString().split("T")[0];
+      break;
+    }
+    case "30d":
+    default: {
+      const thirtyAgo = new Date(today);
+      thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+      start = thirtyAgo.toISOString().split("T")[0];
+      break;
+    }
+  }
+
+  return { start, end };
 }
 
 
 export default function AnalyticsPage() {
-  const [filter, setFilter] = useState<"30d" | "custom">("30d");
+  const [filter, setFilter] = useState<FilterPreset>("30d");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -114,33 +138,33 @@ export default function AnalyticsPage() {
   }
 
   useEffect(() => {
-    const range = getDefaultRange();
+    const range = getDefaultRange("30d");
     fetchData(range.start, range.end);
   }, []);
 
-  const handleFilterChange = (newFilter: "30d" | "custom") => {
-    if (newFilter === "30d") {
-      setFilter("30d");
-      setShowDatePicker(false);
-      setAppliedRange(null);
-      const range = getDefaultRange();
-      setStartDate(range.start);
-      setEndDate(range.end);
-      fetchData(range.start, range.end, selectedAgente);
-    } else {
+  const handleFilterChange = (newFilter: FilterPreset) => {
+    if (newFilter === "custom") {
       setFilter("custom");
       setShowDatePicker(true);
       if (!startDate) {
-        const range = getDefaultRange();
+        const range = getDefaultRange("30d");
         setStartDate(range.start);
         setEndDate(range.end);
       }
+    } else {
+      setFilter(newFilter);
+      setShowDatePicker(false);
+      setAppliedRange(null);
+      const range = getDefaultRange(newFilter);
+      setStartDate(range.start);
+      setEndDate(range.end);
+      fetchData(range.start, range.end, selectedAgente);
     }
   };
 
   const handleAgentChange = (agente: string) => {
     setSelectedAgente(agente);
-    const range = filter === "custom" && appliedRange ? appliedRange : getDefaultRange();
+    const range = filter === "custom" && appliedRange ? appliedRange : getDefaultRange(filter);
     fetchData(range.start, range.end, agente || undefined);
   };
 
@@ -154,7 +178,7 @@ export default function AnalyticsPage() {
   }, [startDate, endDate, selectedAgente]);
 
   const handleCancelRange = useCallback(() => {
-    const range = getDefaultRange();
+    const range = getDefaultRange("30d");
     setShowDatePicker(false);
     setFilter("30d");
     setAppliedRange(null);
@@ -163,9 +187,17 @@ export default function AnalyticsPage() {
     fetchData(range.start, range.end, selectedAgente);
   }, [selectedAgente]);
 
+  const filterLabels: Record<FilterPreset, string> = {
+    today: "Hoy",
+    week: "Esta semana",
+    month: "Este mes",
+    "30d": "Últimos 30 días",
+    custom: "Rango personalizado",
+  };
+
   const subtitle = appliedRange
     ? `Rango: ${formatDateRange(appliedRange.start, appliedRange.end)}`
-    : "Resumen de soporte corporativo — últimos 30 días.";
+    : `Resumen de soporte corporativo — ${filterLabels[filter]}.`;
 
   return (
     <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">

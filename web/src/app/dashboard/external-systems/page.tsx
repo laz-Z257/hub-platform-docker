@@ -1,6 +1,7 @@
 "use client";
 
-import { LayoutGrid, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { LayoutGrid, ExternalLink, Search } from "lucide-react";
 
 interface Module {
   id: number;
@@ -24,6 +25,12 @@ const modules: Module[] = [
 ];
 
 export default function ExternalSystemsPage() {
+  const [search, setSearch] = useState("");
+
+  const filtered = modules.filter((mod) =>
+    mod.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#F7F8FC] dark:bg-gray-950 p-8">
       <div className="mb-7">
@@ -35,9 +42,28 @@ export default function ExternalSystemsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        {modules.map((mod) =>
-          mod.url ? (
+      <div className="relative mb-6 max-w-md">
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar módulo..."
+          className="w-full h-11 pl-10 pr-4 bg-white dark:bg-gray-900 border border-[#D1D5DB] dark:border-gray-600 rounded-lg text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Search size={48} color="#D1D5DB" strokeWidth={1.5} />
+          <p className="mt-4 text-[15px] text-[#9CA3AF] dark:text-gray-500 font-inter">
+            No se encontraron módulos con ese nombre
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-6">
+          {filtered.map((mod) =>
+            mod.url ? (
             <a
               key={mod.id}
               href={mod.url}
@@ -68,6 +94,7 @@ export default function ExternalSystemsPage() {
           )
         )}
       </div>
+      )}
     </div>
   );
 }
