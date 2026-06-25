@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw } from "lucide-react";
+import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw, ShieldBan } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TABS = [
   { label: "Perfil de la Empresa", key: "empresa" },
@@ -95,6 +96,8 @@ function loadSettings(): CompanySettings {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const isTecnico = user?.rol === "tecnico";
   const [activeTab, setActiveTab] = useState("empresa");
   const [cleared, setCleared] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -138,6 +141,15 @@ export default function SettingsPage() {
       <SettingsTabBar active={activeTab} onChange={setActiveTab} />
 
       {/* Tab Content - Empresa */}
+      {isTecnico && (
+        <div className="mt-7 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 flex items-center gap-4">
+          <ShieldBan size={24} color="#D97706" strokeWidth={2} />
+          <p className="text-[14px] text-amber-700 dark:text-amber-400 font-inter">
+            No tienes permisos para modificar la configuración. Contacta a un administrador.
+          </p>
+        </div>
+      )}
+
       {activeTab === "empresa" && (
         <div className="flex gap-6 mt-7">
           {/* Left column */}
@@ -160,7 +172,8 @@ export default function SettingsPage() {
                     type="text"
                     value={settings.nombre}
                     onChange={(e) => setSettings((s) => ({ ...s, nombre: e.target.value }))}
-                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
+                    disabled={isTecnico}
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="flex-1">
@@ -171,7 +184,8 @@ export default function SettingsPage() {
                     type="text"
                     value={settings.contribuyente}
                     onChange={(e) => setSettings((s) => ({ ...s, contribuyente: e.target.value }))}
-                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
+                    disabled={isTecnico}
+                    className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -184,8 +198,9 @@ export default function SettingsPage() {
                 <textarea
                   value={settings.direccion}
                   onChange={(e) => setSettings((s) => ({ ...s, direccion: e.target.value }))}
+                  disabled={isTecnico}
                   rows={3}
-                  className="w-full h-[80px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 py-2 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors resize-none"
+                  className="w-full h-[80px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 py-2 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -410,7 +425,7 @@ export default function SettingsPage() {
       )}
 
       {/* Action Buttons */}
-      {activeTab === "empresa" && (
+      {activeTab === "empresa" && !isTecnico && (
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={handleDiscard}

@@ -15,7 +15,7 @@ export interface AuthUser {
   id: string;
   documento: string;
   nombre: string;
-  rol: "user" | "asesor" | "admin";
+  rol: "user" | "asesor" | "admin" | "tecnico";
 }
 
 interface AuthContextType {

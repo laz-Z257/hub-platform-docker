@@ -57,7 +57,7 @@ interface UsersTableProps {
 function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { user: ApiUser; onEdit: (u: ApiUser) => void; onToggleStatus: (u: ApiUser) => void; onResetPassword: (u: ApiUser) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const isAdmin = user.rol === "admin";
+  const isAdmin = user.rol === "admin" || user.rol === "tecnico";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

@@ -29,8 +29,10 @@ interface IncidentExport {
   }[];
 }
 
+export type FilterPreset = "today" | "week" | "month" | "30d" | "custom";
+
 interface AnalyticsFiltersProps {
-  filter: "30d" | "custom";
+  filter: FilterPreset;
   showDatePicker: boolean;
   startDate: string;
   endDate: string;
@@ -38,7 +40,7 @@ interface AnalyticsFiltersProps {
   metrics: { title: string; value: string; desc: string }[];
   areaData: AreaDataPoint[];
   donutData: DonutDataPoint[];
-  onFilterChange: (filter: "30d" | "custom") => void;
+  onFilterChange: (filter: FilterPreset) => void;
   onStartChange: (date: string) => void;
   onEndChange: (date: string) => void;
   onApplyRange: () => void;
@@ -337,32 +339,32 @@ export default function AnalyticsFilters(props: AnalyticsFiltersProps) {
     onCancelRange,
   } = props;
 
+  const presets: { key: FilterPreset; label: string }[] = [
+    { key: "today", label: "Hoy" },
+    { key: "week", label: "Esta Semana" },
+    { key: "month", label: "Este Mes" },
+    { key: "30d", label: "Últimos 30 Días" },
+    { key: "custom", label: "Rango" },
+  ];
+
   return (
     <div className="relative">
       <div className="flex gap-3 items-center">
-        <div className="flex items-center w-[220px] h-11 bg-[#E9E6FF] rounded-xl p-[3px]">
-          <button
-            onClick={() => onFilterChange("30d")}
-            className="flex-1 h-[38px] rounded-[10px] border-none cursor-pointer font-inter text-[13px] font-semibold transition-all duration-150"
-            style={{
-              color: filter === "30d" ? "#25207E" : "#6B7280",
-              backgroundColor: filter === "30d" ? "#FFFFFF" : "transparent",
-              boxShadow: filter === "30d" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-            }}
-          >
-            Últimos 30 Días
-          </button>
-          <button
-            onClick={() => onFilterChange("custom")}
-            className="flex-1 h-[38px] rounded-[10px] border-none cursor-pointer font-inter text-[13px] font-semibold transition-all duration-150"
-            style={{
-              color: filter === "custom" ? "#25207E" : "#6B7280",
-              backgroundColor: filter === "custom" ? "#FFFFFF" : "transparent",
-              boxShadow: filter === "custom" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-            }}
-          >
-            Rango Personalizado
-          </button>
+        <div className="flex items-center h-11 bg-[#E9E6FF] rounded-xl p-[3px]">
+          {presets.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => onFilterChange(p.key)}
+              className="h-[38px] rounded-[10px] border-none cursor-pointer font-inter text-[13px] font-semibold transition-all duration-150 px-3"
+              style={{
+                color: filter === p.key ? "#25207E" : "#6B7280",
+                backgroundColor: filter === p.key ? "#FFFFFF" : "transparent",
+                boxShadow: filter === p.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
 
         <button
