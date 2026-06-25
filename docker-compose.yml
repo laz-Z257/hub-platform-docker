@@ -67,6 +67,16 @@ services:
     volumes:
       - ota-data:/output
 
+  mobile-builder:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile.builder
+    container_name: hub-mobile-builder
+    profiles:
+      - build-only
+    volumes:
+      - ./mobile/output:/output
+
 volumes:
   pgdata:
   ota-data:
