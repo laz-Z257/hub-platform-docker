@@ -176,7 +176,7 @@ export default function LoginPage() {
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
-                style={{ animation: "spin 1s linear infinite" }}
+                className="animate-spin"
               >
                 <circle
                   cx="12"

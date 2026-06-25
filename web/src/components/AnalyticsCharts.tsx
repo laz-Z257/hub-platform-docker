@@ -96,7 +96,7 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
   const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+    <div className="flex flex-col items-center gap-5">
       <ResponsiveContainer width="100%" height={240}>
         <PieChart>
           <Pie
@@ -125,18 +125,18 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
         </PieChart>
       </ResponsiveContainer>
       <div className="w-full max-h-40 overflow-y-auto">
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <div className="flex flex-col gap-0.5">
           {allPvs.map((name, i) => {
             const hasData = pvColorMap.has(name);
             const color = hasData ? (pvColorMap.get(name) || colors[i % colors.length]) : "#E5E7EB";
             const valor = hasData ? pvValueMap.get(name) : 0;
             return (
-              <div key={name} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
-                <span style={{ fontSize: "11px", color: labelColor, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div key={name} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                <span className="text-[11px] truncate font-inter" style={{ color: labelColor }}>
                   {name}
                 </span>
-                <span style={{ fontSize: "11px", fontWeight: hasData ? 600 : 400, color: hasData ? color : "#D1D5DB", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                <span className="text-[11px] shrink-0 font-inter" style={{ fontWeight: hasData ? 600 : 400, color: hasData ? color : "#D1D5DB" }}>
                   {hasData ? `${valor}%` : "0%"}
                 </span>
               </div>
