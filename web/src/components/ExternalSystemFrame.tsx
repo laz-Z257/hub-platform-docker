@@ -47,10 +47,7 @@ export default function ExternalSystemFrame({
       ) : (
         <div className="flex flex-col items-center gap-4 relative z-10">
           <LayoutGrid size={64} color="#9CA3AF" />
-          <span
-            className="text-[#9CA3AF] font-medium uppercase tracking-[2px]"
-            style={{ fontSize: "14px" }}
-          >
+          <span className="text-[#9CA3AF] font-medium uppercase tracking-[2px] text-sm">
             SISTEMAS ADMINISTRATIVOS - IFRAME
           </span>
         </div>

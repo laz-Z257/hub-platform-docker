@@ -81,8 +81,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-7">
         <h1
-          className="font-inter font-bold text-gray-900 dark:text-white leading-tight"
-          style={{ fontSize: "42px", lineHeight: 1.1 }}
+          className="font-inter font-bold text-gray-900 dark:text-white text-[42px] leading-[1.1]"
         >
           Configuración del Sistema
         </h1>
@@ -103,8 +102,7 @@ export default function SettingsPage() {
             {/* General Information Card */}
             <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
               <h2
-                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6"
-                style={{ fontSize: "30px", lineHeight: 1.2 }}
+                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 text-[30px] leading-[1.2]"
               >
                 Información General
               </h2>
@@ -152,8 +150,7 @@ export default function SettingsPage() {
             {/* Logo Card */}
             <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 flex flex-col items-center">
               <h2
-                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 self-start"
-                style={{ fontSize: "30px", lineHeight: 1.2 }}
+                className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 self-start text-[30px] leading-[1.2]"
               >
                 Logo Corporativo
               </h2>
@@ -163,7 +160,7 @@ export default function SettingsPage() {
                   alt="Company Logo"
                   width={80}
                   height={80}
-                  style={{ borderRadius: "6px", objectFit: "contain" }}
+                  className="rounded-md object-contain"
                 />
               </div>
             </div>

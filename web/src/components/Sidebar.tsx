@@ -54,7 +54,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
           alt="Logo"
           width={32}
           height={32}
-          style={{ borderRadius: "6px" }}
+          className="rounded-md"
         />
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter">
           Admin Dashboard
@@ -69,12 +69,9 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
             <Link
               key={item.label}
               href={item.path}
-              className="flex items-center h-12 rounded-lg px-3 gap-3 relative font-inter text-sm no-underline w-full transition-colors duration-150"
-              style={{
-                backgroundColor: isActive ? "#F3F0FF" : "transparent",
-                color: isActive ? "var(--brand)" : "#6B7280",
-                fontWeight: isActive ? 600 : 400,
-              }}
+              className={`flex items-center h-12 rounded-lg px-3 gap-3 relative font-inter text-sm no-underline w-full transition-colors duration-150 ${
+                isActive ? "bg-[#F3F0FF] text-[var(--brand)] font-semibold" : "bg-transparent text-gray-500 font-normal"
+              }`}
             >
               {isActive && (
                 <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#25207E] rounded-r-md" />
