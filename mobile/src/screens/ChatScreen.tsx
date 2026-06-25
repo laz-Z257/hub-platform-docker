@@ -51,7 +51,7 @@ function getTimeString(): string {
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { initializing } = useAuth();
+  const { user, initializing } = useAuth();
   const flatListRef = useRef<FlatList<Message>>(null);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [typing, setTyping] = useState(false);
@@ -65,10 +65,15 @@ export default function ChatScreen() {
     estado: string;
   } | null>(null);
   const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
+  const [alreadyRated, setAlreadyRated] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
 
   useEffect(() => {
     if (initializing) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
 
     const welcome: Message = {
       id: "bot-card-welcome",
@@ -106,12 +111,18 @@ export default function ChatScreen() {
         "/incidents?limit=1"
       )
       .then((data) => {
-        if (data.items.length > 0) setLatestIncident(data.items[0]);
+        if (data.items.length > 0) {
+          setLatestIncident(data.items[0]);
+          api
+            .get(`/ratings/${data.items[0].id}`)
+            .then(() => setAlreadyRated(true))
+            .catch(() => setAlreadyRated(false));
+        }
       })
       .catch((err) => {
         console.error("Latest incident fetch error:", err instanceof Error ? err.message : err);
       });
-  }, [initializing]);
+  }, [initializing, user, router]);
 
   const handleSend = useCallback(async (text: string) => {
     const userMsg: Message = {
@@ -187,15 +198,25 @@ export default function ChatScreen() {
         setRatingIncidentId(null);
         return;
       }
-      await api.post(`/ratings/${id}`, { puntuacion, comentario });
-      setRatingIncidentId(null);
-      const thanksMsg: Message = {
-        id: `bot-card-${Date.now()}`,
-        type: "bot-card",
-        text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`,
-        timestamp: getTimeString(),
-      };
-      setMessages((prev) => [...prev, thanksMsg]);
+      try {
+        await api.post(`/ratings/${id}`, { puntuacion, comentario });
+        setRatingIncidentId(null);
+        setAlreadyRated(true);
+        const thanksMsg: Message = {
+          id: `bot-card-${Date.now()}`,
+          type: "bot-card",
+          text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`,
+          timestamp: getTimeString(),
+        };
+        setMessages((prev) => [...prev, thanksMsg]);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("Ya has calificado")) {
+          setAlreadyRated(true);
+        }
+        setRatingIncidentId(null);
+        Alert.alert("Ya calificado", msg || "Este servicio ya fue calificado.");
+      }
     },
     [ratingIncidentId, latestIncident]
   );
@@ -236,6 +257,7 @@ export default function ChatScreen() {
             onSubmenuPress={handleSubmenuPress}
             onMenuPress={handleMenuPress}
             isResolvedNotification={isResolved}
+            alreadyRated={alreadyRated}
             onRateService={async () => {
               const id = latestIncident?.id;
               if (id) {
@@ -277,7 +299,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, handleSend, latestIncident]
+    [handleSubmenuPress, handleSend, latestIncident, alreadyRated]
   );
 
   const msgList = typing

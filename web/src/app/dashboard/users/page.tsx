@@ -21,7 +21,6 @@ export default function UsersPage() {
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [roleFilter, setRoleFilter] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(searchParams.get("create") === "true");
@@ -69,9 +68,6 @@ export default function UsersPage() {
   const userCount = users.filter((u) => u.rol === "user").length;
 
   let filteredUsers = users;
-  if (roleFilter !== "Todos") {
-    filteredUsers = filteredUsers.filter((u) => u.rol === roleFilter);
-  }
   if (searchTerm) {
     const term = searchTerm.toLowerCase();
     filteredUsers = filteredUsers.filter(
@@ -110,9 +106,7 @@ export default function UsersPage() {
           </button>
 
           <UserFilters
-            roleFilter={roleFilter}
             searchTerm={searchTerm}
-            onRoleChange={(role) => { setRoleFilter(role); setPage(1); }}
             onSearchChange={(term) => { setSearchTerm(term); setPage(1); }}
           />
         </div>

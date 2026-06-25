@@ -273,6 +273,43 @@ export async function addComment(
       })
       .returning();
 
+    // Notify ticket owner when admin/technician responds
+    if (req.user!.rol === "admin" || req.user!.rol === "tecnico") {
+      const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
+      const botMessage = `📝 Tu ticket #TK-${shortId} tiene un nuevo comentario de **${autor}**:\n\n${texto}\n\nPuedes ver el detalle en la app.`;
+
+      await db.insert(messages).values({
+        user_id: incident.user_id,
+        content: botMessage,
+        is_bot: true,
+      });
+
+      try {
+        const userTokens = await db
+          .select({ token: pushTokens.token })
+          .from(pushTokens)
+          .where(eq(pushTokens.user_id, incident.user_id));
+
+        if (userTokens.length > 0) {
+          const pushMessages = userTokens.map((t) => ({
+            to: t.token,
+            sound: "default" as const,
+            title: "Nuevo comentario en tu ticket",
+            body: `${autor} respondió en tu ticket #TK-${shortId}`,
+            data: { incidentId: id },
+          }));
+
+          await fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(pushMessages),
+          });
+        }
+      } catch (pushErr) {
+        console.error("Push notification error (comment):", pushErr);
+      }
+    }
+
     res.status(201).json(comment);
   } catch (error) {
     console.error("Add comment error:", error);

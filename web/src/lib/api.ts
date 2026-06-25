@@ -1,8 +1,7 @@
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? "/api"
-    : "http://localhost:3001/api");
+  typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? process.env.NEXT_PUBLIC_API_URL || "/api"
+    : "/api";
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;

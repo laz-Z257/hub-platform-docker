@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(fresh);
             await saveUser(fresh);
             registerForPushNotifications();
+            router.replace("/chat");
           } catch (err) {
             await clearToken();
             setUser(null);
