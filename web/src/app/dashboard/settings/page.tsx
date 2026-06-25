@@ -70,11 +70,54 @@ function getCacheStats() {
   return { items: lsItems + ssItems, size, lsItems, ssItems };
 }
 
+const SETTINGS_KEY = "hub-platform-settings";
+
+interface CompanySettings {
+  nombre: string;
+  contribuyente: string;
+  direccion: string;
+}
+
+const defaultSettings: CompanySettings = {
+  nombre: "Mi Empresa",
+  contribuyente: "",
+  direccion: "",
+};
+
+function loadSettings(): CompanySettings {
+  if (typeof localStorage === "undefined") return defaultSettings;
+  try {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    return saved ? JSON.parse(saved) : defaultSettings;
+  } catch {
+    return defaultSettings;
+  }
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("empresa");
   const [cleared, setCleared] = useState(false);
   const { theme, setTheme } = useTheme();
   const cacheStats = getCacheStats();
+  const [settings, setSettings] = useState<CompanySettings>(loadSettings);
+  const [originalSettings, setOriginalSettings] = useState<CompanySettings>(loadSettings);
+  const [saved, setSaved] = useState(false);
+
+  const hasChanges =
+    settings.nombre !== originalSettings.nombre ||
+    settings.contribuyente !== originalSettings.contribuyente ||
+    settings.direccion !== originalSettings.direccion;
+
+  function handleSave() {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    setOriginalSettings({ ...settings });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  function handleDiscard() {
+    setSettings({ ...originalSettings });
+  }
 
   return (
     <div className="min-h-full bg-[#F7F8FC] dark:bg-gray-950 px-8 py-7">
@@ -115,7 +158,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="XXXXXXXXXXXX"
+                    value={settings.nombre}
+                    onChange={(e) => setSettings((s) => ({ ...s, nombre: e.target.value }))}
                     className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
                   />
                 </div>
@@ -125,7 +169,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="XXXXXXXXXXXX"
+                    value={settings.contribuyente}
+                    onChange={(e) => setSettings((s) => ({ ...s, contribuyente: e.target.value }))}
                     className="w-full h-[42px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 text-[14px] text-gray-900 dark:text-gray-100 font-inter outline-none focus:border-[var(--brand)] transition-colors"
                   />
                 </div>
@@ -137,7 +182,8 @@ export default function SettingsPage() {
                   Dirección Fiscal
                 </label>
                 <textarea
-                  defaultValue="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                  value={settings.direccion}
+                  onChange={(e) => setSettings((s) => ({ ...s, direccion: e.target.value }))}
                   rows={3}
                   className="w-full h-[80px] bg-[#F9FAFB] dark:bg-gray-800 border border-[#D1D5DB] dark:border-gray-600 rounded-md px-3 py-2 text-[14px] text-[#1F2937] dark:text-gray-100 font-inter outline-none focus:border-[#25207E] transition-colors resize-none"
                 />
@@ -173,8 +219,7 @@ export default function SettingsPage() {
         <div className="mt-7">
           <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 max-w-lg">
             <h2
-              className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6"
-              style={{ fontSize: "30px", lineHeight: 1.2 }}
+              className="font-inter font-bold text-[#1F2937] dark:text-gray-100 mb-6 text-[30px] leading-[1.2]"
             >
               Modo de Visualización
             </h2>
@@ -365,21 +410,31 @@ export default function SettingsPage() {
       )}
 
       {/* Action Buttons */}
-      {(activeTab === "empresa" || activeTab === "apariencia") && (
+      {activeTab === "empresa" && (
         <div className="flex justify-end gap-3 mt-6">
           <button
-            disabled
-            className="h-[44px] px-5 bg-white dark:bg-gray-900 border border-[#D1D5DB] dark:border-gray-600 rounded-lg text-[14px] font-medium text-[#9CA3AF] dark:text-gray-500 font-inter flex items-center gap-2 cursor-not-allowed"
+            onClick={handleDiscard}
+            disabled={!hasChanges}
+            className={`h-[44px] px-5 border rounded-lg text-[14px] font-medium font-inter flex items-center gap-2 transition-colors ${
+              hasChanges
+                ? "bg-white dark:bg-gray-900 border-[#D1D5DB] dark:border-gray-600 text-[#374151] dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                : "bg-white dark:bg-gray-900 border-[#D1D5DB] dark:border-gray-600 text-[#9CA3AF] dark:text-gray-500 cursor-not-allowed"
+            }`}
           >
             <X size={16} />
             Descartar Cambios
           </button>
           <button
-            disabled
-            className="h-[44px] px-5 bg-gray-300 rounded-lg text-[14px] font-medium text-gray-500 font-inter flex items-center gap-2 cursor-not-allowed"
+            onClick={handleSave}
+            disabled={!hasChanges}
+            className={`h-[44px] px-5 rounded-lg text-[14px] font-medium font-inter flex items-center gap-2 transition-colors ${
+              hasChanges
+                ? "bg-[#25207E] text-white hover:bg-[#1e1b6b]"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             <Save size={16} />
-            Guardar Configuración
+            {saved ? "Guardado" : "Guardar Configuración"}
           </button>
         </div>
       )}

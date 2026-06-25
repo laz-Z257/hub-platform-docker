@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const API_URL =
   typeof window !== "undefined" && window.location.hostname !== "localhost"
     ? process.env.NEXT_PUBLIC_API_URL || "/api"
@@ -57,7 +59,8 @@ async function tryRefresh(): Promise<boolean> {
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  schema?: z.ZodType<T>
 ): Promise<T> {
   const headers = requestHeaders(options);
 
@@ -129,15 +132,28 @@ async function request<T>(
     throw new Error(msg);
   }
 
+  if (schema) {
+    try {
+      return schema.parse(data);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        console.error(`Validation error for ${endpoint}:`, err.issues);
+        throw new Error(`Respuesta inválida del servidor (${endpoint})`);
+      }
+      throw err;
+    }
+  }
+
   return data as T;
 }
 
 export const api = {
-  get: <T>(endpoint: string) => request<T>(endpoint),
-  post: <T>(endpoint: string, body?: unknown) =>
-    request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }),
-  patch: <T>(endpoint: string, body?: unknown) =>
-    request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }),
-  delete: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: "DELETE" }),
+  get: <T>(endpoint: string, schema?: z.ZodType<T>) =>
+    request<T>(endpoint, undefined, schema),
+  post: <T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) =>
+    request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }, schema),
+  patch: <T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) =>
+    request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }, schema),
+  delete: <T>(endpoint: string, schema?: z.ZodType<T>) =>
+    request<T>(endpoint, { method: "DELETE" }, schema),
 };
