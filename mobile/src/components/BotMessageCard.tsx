@@ -9,6 +9,7 @@ interface BotMessageCardProps {
   onMenuPress?: (label: string) => void;
   isResolvedNotification?: boolean;
   onRateService?: () => void;
+  alreadyRated?: boolean;
 }
 
 export default function BotMessageCard({
@@ -18,6 +19,7 @@ export default function BotMessageCard({
   onMenuPress,
   isResolvedNotification,
   onRateService,
+  alreadyRated,
 }: BotMessageCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -52,22 +54,41 @@ export default function BotMessageCard({
 
         {isResolvedNotification && !showMenu ? (
           <View style={{ marginTop: 12, gap: 8 }}>
-            <TouchableOpacity
-              onPress={onRateService}
-              activeOpacity={0.8}
-              style={{
-                backgroundColor: "#201A7A",
-                borderRadius: 8,
-                height: 44,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
-                ⭐ Puntuar servicio
-              </Text>
-            </TouchableOpacity>
+            {alreadyRated ? (
+              <View
+                style={{
+                  backgroundColor: "#F3F0FF",
+                  borderRadius: 8,
+                  height: 44,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#DCD4FF",
+                }}
+              >
+                <Text style={{ color: "#6B7280", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
+                  ✅ Ya calificado
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={onRateService}
+                activeOpacity={0.8}
+                style={{
+                  backgroundColor: "#201A7A",
+                  borderRadius: 8,
+                  height: 44,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
+                  ⭐ Puntuar servicio
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={() => setShowMenu(true)}
               activeOpacity={0.8}

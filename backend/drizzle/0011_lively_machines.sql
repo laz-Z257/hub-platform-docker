@@ -1,1 +1,0 @@
-ALTER TYPE "rol" ADD VALUE IF NOT EXISTS 'tecnico';

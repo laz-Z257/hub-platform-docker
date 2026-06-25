@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -16,8 +17,19 @@ import {
 } from "lucide-react-native";
 import BottomTab from "../src/components/BottomTab";
 import { useAuth } from "../src/contexts/AuthContext";
-import { deleteToken, deleteUser } from "../src/services/storage";
 import Logo from "../src/components/Logo";
+
+function confirmAction(title: string, message: string): Promise<boolean> {
+  if (Platform.OS === "web") {
+    return Promise.resolve(window.confirm(message));
+  }
+  return new Promise((resolve) => {
+    Alert.alert(title, message, [
+      { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+      { text: "Aceptar", style: "destructive", onPress: () => resolve(true) },
+    ]);
+  });
+}
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -53,32 +65,24 @@ export default function SettingsScreen() {
   }
 
   async function handleClearCache() {
-    Alert.alert(
+    const confirmed = await confirmAction(
       "Limpiar Caché",
-      `Se eliminarán ${cacheInfo.items} ítems (${cacheInfo.size}) almacenados localmente, incluyendo tokens y datos de sesión. La app se recargará automáticamente.`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Limpiar",
-          style: "destructive",
-          onPress: async () => {
-            setClearing(true);
-            try {
-              if (typeof localStorage !== "undefined") {
-                localStorage.clear();
-              }
-              await deleteToken();
-              await deleteUser();
-              await logout();
-              await Updates.reloadAsync();
-            } catch {
-              Alert.alert("Error", "No se pudo limpiar la caché completamente.");
-              setClearing(false);
-            }
-          },
-        },
-      ]
+      "¿Estás seguro de querer eliminar el caché de esta app? Se reiniciará si le das Aceptar."
     );
+    if (!confirmed) return;
+    setClearing(true);
+    try {
+      await logout();
+      if (typeof localStorage !== "undefined") {
+        localStorage.clear();
+      }
+      await Updates.reloadAsync();
+    } catch {
+      if (Platform.OS !== "web") {
+        Alert.alert("Error", "No se pudo limpiar la caché completamente.");
+      }
+      setClearing(false);
+    }
   }
 
   return (
@@ -305,20 +309,18 @@ export default function SettingsScreen() {
           </Text>
 
           <TouchableOpacity
-            onPress={() => {
-              Alert.alert("Cerrar Sesión", "¿Estás seguro de cerrar sesión?", [
-                { text: "Cancelar", style: "cancel" },
-                {
-                  text: "Cerrar Sesión",
-                  style: "destructive",
-                  onPress: async () => {
-                    await deleteToken();
-                    await deleteUser();
-                    await logout();
-                    router.replace("/");
-                  },
-                },
-              ]);
+            onPress={async () => {
+              const confirmed = await confirmAction(
+                "Cerrar Sesión",
+                "¿Estás seguro de cerrar sesión?"
+              );
+              if (!confirmed) return;
+              try {
+                await logout();
+              } catch (e) {
+                console.error("Logout error:", e);
+              }
+              router.replace("/");
             }}
             activeOpacity={0.85}
             style={{

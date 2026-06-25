@@ -36,12 +36,7 @@ export async function createRating(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (existing) {
-      const [updated] = await db
-        .update(ratings)
-        .set({ puntuacion, comentario: comentario || null })
-        .where(eq(ratings.incident_id, id))
-        .returning();
-      res.json(updated);
+      res.status(409).json({ error: "Ya has calificado este servicio" });
       return;
     }
 

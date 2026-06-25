@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,13 @@ import type { LoginFormData, FormErrors } from "../types";
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { login, loading } = useAuth();
+  const { user, login, loading } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/chat");
+    }
+  }, [user, router]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loginError, setLoginError] = useState("");
   const [form, setForm] = useState<LoginFormData>({
@@ -97,6 +103,7 @@ export default function LoginScreen() {
               if (loginError) setLoginError("");
             }}
             error={errors.documento}
+            keyboardType="numeric"
           />
 
           <Input

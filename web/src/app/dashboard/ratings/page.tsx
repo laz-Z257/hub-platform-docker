@@ -56,7 +56,7 @@ export default function RatingsPage() {
   const pvSource = allPvNames.length > 0 ? allPvNames : [...pvMap.keys()];
   const pvChartData = pvSource.map((name) => {
     const d = pvMap.get(name) || { promedio: 0, total: 0 };
-    return { name: name.length > 14 ? name.slice(0, 14) + "…" : name, promedio: d.promedio, total: d.total };
+    return { name, promedio: d.promedio, total: d.total };
   }).sort((a, b) => b.promedio - a.promedio || b.total - a.total);
 
   return (
@@ -68,7 +68,7 @@ export default function RatingsPage() {
 
       <div className="flex gap-4 items-start">
         <div className="flex-[3] min-w-0">
-          <RatingCharts distData={distData} pvChartData={pvChartData} timeline={stats.timeline} />
+          <RatingCharts distData={distData} pvChartData={pvChartData} />
         </div>
         <div className="flex-[2] min-w-0">
           <RecentRatingsTable ratings={stats.ultimas} />

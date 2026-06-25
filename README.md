@@ -293,3 +293,196 @@ Ver [`CHANGELOG.md`](./CHANGELOG.md) para el historial completo de cambios.
 ### 🐛 Reinicios en loop en Render (logs con solo warnings SSL)
 **Causa:** Los scripts `migrate.ts` y `seed.ts` tenían pools de PostgreSQL sin `connectionTimeoutMillis`, lo que causaba que se colgaran indefinidamente si la DB no respondía.
 **Solución:** Agregar `connectionTimeoutMillis: 10000` y `query_timeout: 15000` a todos los pools. Agregar `timeout 40` en el CMD del Dockerfile para forzar terminación de scripts colgados.
+
+---
+
+## Historial de Sesión — 2026-06-23
+
+### Problema
+Tickets creados desde la app móvil no aparecían en el dashboard web (`http://localhost:3000/dashboard/tickets`).
+
+### Diagnóstico
+1. **Causa raíz**: `web/src/lib/api.ts` usaba `http://localhost:3001/api` como URL de API (cross-origin), lo que hacía que las cookies de autenticación se perdieran al hacer requests desde `localhost:3000` hacia `localhost:3001`.
+2. **Web dashboard detenido**: El servidor de Next.js en `:3000` no estaba corriendo.
+3. **Servicios mezclados**: Backend y web se ejecutaban manualmente fuera de Docker, aunque el `docker-compose.yml` ya los tenía definidos.
+
+### Correcciones aplicadas
+
+#### Móvil (Expo)
+| Archivo | Cambio |
+|---------|--------|
+| `mobile/src/services/api.ts` | Agregado timeout de 15s vía `AbortController`; ocultada `API_URL` de errores al usuario |
+| `mobile/src/services/storage.ts` | Cambiado `expo-secure-store` de `import()` dinámico a `import * as SecureStore` estático |
+| `mobile/app/ajustes.tsx` | Eliminadas llamadas duplicadas a `deleteToken()`/`deleteUser()` antes de `logout()` |
+| `mobile/src/screens/LoginScreen.tsx` | Agregado `keyboardType="numeric"` para input de documento |
+| `mobile/src/services/notifications.ts` | Agregados campos faltantes `shouldShowBanner` y `shouldShowList` |
+
+#### Web (Next.js)
+| Archivo | Cambio |
+|---------|--------|
+| `web/src/lib/api.ts` | Cambiada `API_URL` para siempre usar `/api` (same-origin vía rewrite de Next.js) en localhost |
+| `web/.env` | Eliminado para forzar uso de rewrite local |
+
+#### Infraestructura — Dockerización
+| Archivo | Cambio |
+|---------|--------|
+| `docker-compose.yml` | Agregado `SEED_ADMIN_PASSWORD: admin123` como default para desarrollo |
+| `web/Dockerfile` | Agregado `RUN npm install sharp` (necesario para `next/image` en producción) |
+| `backend/drizzle/*.sql` | Eliminados 4 archivos de migración huérfanos (`0008_quiet_manifold`, `0009`, `0010`, `0011`) |
+
+### Estado actual
+- **PostgreSQL**: Contenedor Docker (`hub-postgres`) en `:5432`
+- **Backend API**: `:3001` — manual o Docker (`hub-api`)
+- **Web Dashboard**: `:3000` — manual o Docker (`hub-web`)
+- **Expo Mobile**: `:8081` — siempre manual (servidor interactivo fuera de Docker)
+- **Login**: `POST /api/auth/login` con `{"documento":"123456789","contrasena":"admin123"}` → OK
+- **Tickets**: 3 tickets visibles vía API (incluyendo el creado desde mobile)
+
+### Cómo levantar todo
+
+```bash
+# Opción 1 — Todo via Docker
+cd /home/linux/Escritorio/hub-platform-docker
+docker compose up -d --build
+
+# Opción 2 — Manual (hot-reload)
+# Terminal 1: PostgreSQL
+docker compose up -d postgres
+# Terminal 2: Backend
+cd backend && npx tsx src/index.ts
+# Terminal 3: Web
+cd web && npm run dev
+# Terminal 4: Mobile
+cd mobile && npx expo start --web
+```
+
+---
+
+## Historial de Sesión — 2026-06-23 (continuación)
+
+### Problema
+Al hacer clic en "Limpiar Caché" en Ajustes, la app mostraba `"Token no proporcionado"` en la consola y el chat no cargaba correctamente al navegar de vuelta.
+
+### Causa raíz
+1. **Orden incorrecto en `handleClearCache`**: `localStorage.clear()` se ejecutaba **antes** de `logout()`. Si el token en memoria se había perdido (hot reload), `logout()` intentaba leer de localStorage, encontraba vacío, y enviaba la petición sin `Authorization` → backend respondía "Token no proporcionado".
+2. **Sin redirect automático al restaurar sesión**: Al recargar la página web, el token se restauraba de `localStorage` pero el usuario se quedaba en el login o navegaba manualmente al chat sin token en memoria.
+3. **Sin protección en ChatScreen**: Si el usuario llegaba a `/chat` sin autenticación, intentaba hacer llamadas API sin token.
+
+### Correcciones aplicadas
+
+| Archivo | Cambio |
+|---------|--------|
+| `mobile/app/ajustes.tsx` | Movido `localStorage.clear()` **después** de `logout()`; reemplazado `Alert.alert` por `confirmAction()` con `window.confirm` en web; acortado mensaje de confirmación |
+| `mobile/src/contexts/AuthContext.tsx` | Agregado `router.replace("/chat")` después de restaurar token exitosamente |
+| `mobile/src/screens/LoginScreen.tsx` | Agregado `useEffect` que redirige a `/chat` si ya hay `user` en el contexto |
+| `mobile/src/screens/ChatScreen.tsx` | Agregado `if (!user) router.replace("/")` para redirigir al login si no hay sesión |
+
+### Otros cambios del día
+
+| Archivo | Cambio |
+|---------|--------|
+| `backend/src/modules/ratings/ratings.controller.ts` | Upsert de rating cambiado a `409 Conflict` con mensaje "Ya has calificado este servicio" |
+| `mobile/src/components/BotMessageCard.tsx` | Nueva prop `alreadyRated` — muestra "✅ Ya calificado" si es `true` |
+| `mobile/src/screens/ChatScreen.tsx` | Verifica `GET /api/ratings/:id` al cargar último incidente; maneja 409 en `handleSubmitRating` |
+| `README.md` | Agregada sección **Build APK** con diagnóstico, comandos locales, EAS y OTA |
+
+---
+
+## Build APK — Diagnóstico y Pasos
+
+### Diagnóstico — ¿La máquina está lista para compilar?
+
+| Requisito | Estado | Detalle |
+|---|---|---|
+| **Java 17** | ✅ | OpenJDK 17.0.17 (Temurin) |
+| **Android SDK** | ✅ | `/home/linux/android-sdk` |
+| **Build tools** | ✅ | `36.0.0` (requerido por compileSdk 36) |
+| **Platform SDK** | ✅ | `android-36` (compileSdk 36) |
+| **NDK** | ✅ | `27.1.12297006` (requerido) |
+| **`node_modules`** | ✅ | Instalados en `mobile/` |
+| **Proyecto prebuilt** | ✅ | `mobile/android/` generado con `npx expo prebuild` |
+
+### Build local (Gradle) — APK para instalar directo
+
+```bash
+cd /home/linux/Escritorio/hub-platform-docker/mobile/android
+./gradlew assembleRelease
+```
+
+**Output**: `mobile/android/app/build/outputs/apk/release/app-release.apk`
+
+Tiempo estimado: **5–15 min** la primera vez (descarga dependencias de Gradle, compila, etc.).
+
+> **Nota**: La APK firma con el **debug keystore** incluido en el proyecto (`android/app/debug.keystore`). Sirve perfecto para instalar directo en el celular. **No sirve para Play Store** (para eso necesitas un keystore propio de release).
+
+### Build con EAS (nube — si hay créditos)
+
+```bash
+cd /home/linux/Escritorio/hub-platform-docker/mobile
+npx eas build --platform android --profile preview
+```
+
+Requiere: `eas-cli` instalado y sesión iniciada con la cuenta Expo `laz65585`.
+
+### OTA Updates (actualización sin reinstalar)
+
+```bash
+docker compose --profile build-only run ota-builder
+```
+
+Sirve los bundles actualizados vía el servidor OTA en `http://localhost:3002`.
+
+---
+
+### Historial de Sesión — 2026-06-24
+
+### Cambios realizados
+
+#### Web — Calificaciones (Ratings)
+| Archivo | Cambio |
+|---------|--------|
+| `web/src/app/dashboard/ratings/page.tsx:59` | Eliminado truncamiento a 14 caracteres en nombres de PV → se pasa el nombre completo |
+| `web/src/components/RatingCharts.tsx:53` | Ancho del YAxis aumentado de 110 a 230px para nombres largos de PV |
+| `web/src/components/RatingCharts.tsx` | Limpiados imports no usados (`LineChart`, `Line`, `ScatterChart`, `Scatter`, `CartesianGrid`) y props |
+| `web/src/components/RatingCharts.tsx:13` | Agregado filtro `ratedPvs` — solo muestra PVs con al menos 1 calificación |
+
+#### Web — Gestión de Usuarios
+| Archivo | Cambio |
+|---------|--------|
+| `web/src/components/UserFilters.tsx` | Eliminado dropdown de filtro por rol (solo queda buscador) |
+| `web/src/app/dashboard/users/page.tsx` | Eliminado estado `roleFilter` y lógica de filtrado por rol |
+
+#### Backend — Notificaciones push en comentarios
+| Archivo | Cambio |
+|---------|--------|
+| `backend/src/modules/incidents/incidents.controller.ts:276-311` | Al agregar comentario a un ticket, se envía notificación push + mensaje del bot al creador del ticket (mismo patrón que resolución) |
+
+### Estado actual del proyecto
+
+- **Web**: Dashboard en `http://localhost:3000` — Docker (`hub-web`)
+- **API**: Backend en `http://localhost:3001` — Docker (`hub-api`)
+- **DB**: PostgreSQL en `localhost:5432` — Docker (`hub-postgres`)
+- **OTA**: Servidor en `http://localhost:3002` — Docker (`hub-ota-server`)
+- **Mobile**: Expo dev en `http://localhost:8081`
+- **Login**: Documento `123456789`, contraseña `admin123`
+
+### Pendiente
+
+- `mobile/Dockerfile.builder` y servicio `mobile-builder` en docker-compose
+- Nginx reverse proxy + Let's Encrypt (SSL)
+- Archivos legacy (`render.yaml`, `web/vercel.json`) pendientes de limpieza
+
+---
+
+# Verificación rápida
+```bash
+# Login
+curl -c /tmp/cookies.txt -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"documento":"123456789","contrasena":"admin123"}'
+
+# Tickets
+CSRF=$(grep 'csrf-token' /tmp/cookies.txt | awk '{print $NF}')
+curl -b /tmp/cookies.txt -H "x-csrf-token: $CSRF" \
+  http://localhost:3000/api/incidents
+```

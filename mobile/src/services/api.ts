@@ -10,6 +10,8 @@ import {
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || "https://hub-platform-api.onrender.com/api";
 
+const REQUEST_TIMEOUT = 15000;
+
 let authToken: string | null = null;
 let onForceLogout: (() => void) | null = null;
 
@@ -51,7 +53,6 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // Recover token from storage if lost from memory (live reload / fast refresh)
   if (!authToken) {
     authToken = await getSavedToken();
   }
@@ -67,19 +68,27 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
   let res: Response;
 
   try {
     res = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
+      signal: controller.signal,
     });
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
+    }
     console.error("Network error:", endpoint, err);
-    throw new Error(
-      `No se pudo conectar con el servidor (${API_URL}). Verifica que la API esté corriendo.`
-    );
+    throw new Error("No se pudo conectar con el servidor. Verifica tu conexión a internet.");
   }
+
+  clearTimeout(timeoutId);
 
   let data: unknown;
 
