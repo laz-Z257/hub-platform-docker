@@ -5,10 +5,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare } from "lucide-react-native";
+import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
 
 interface IncidentDetail {
@@ -65,13 +66,17 @@ export default function IncidentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     api
       .get<IncidentDetail>(`/incidents/${id}`)
       .then(setIncident)
-      .catch((err) => console.error("Error al cargar incidente:", err))
+      .catch((err) => {
+        console.error("Error al cargar incidente:", err);
+        setError(err instanceof Error ? err.message : "Error al cargar el incidente");
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -94,9 +99,23 @@ export default function IncidentDetailScreen() {
             <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
           </TouchableOpacity>
           <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
-            Incidente no encontrado
+            {error ? "Error" : "Incidente no encontrado"}
           </Text>
         </View>
+        {error && (
+          <View className="flex-1 items-center justify-center px-8">
+            <XCircle size={48} color="#EF4444" strokeWidth={1.5} />
+            <Text className="text-base text-[#EF4444] font-inter text-center mt-4 leading-relaxed">
+              {error}
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="mt-6 px-6 py-3 bg-[#3B348B] rounded-lg"
+            >
+              <Text className="text-white font-inter font-semibold">Volver</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   }

@@ -14,6 +14,8 @@ const REQUEST_TIMEOUT = 15000;
 
 let authToken: string | null = null;
 let onForceLogout: (() => void) | null = null;
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
 
 export function setForceLogoutHandler(handler: () => void) {
   onForceLogout = handler;
@@ -48,6 +50,30 @@ export async function clearToken() {
 }
 
 export { saveUser, getSavedUser };
+
+async function tryRefresh(): Promise<boolean> {
+  if (isRefreshing) return refreshPromise ?? false;
+  isRefreshing = true;
+  refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  }).then(async (r) => {
+    if (r.ok) {
+      const body = await r.json().catch(() => ({}));
+      if (body.token) {
+        await setToken(body.token);
+      }
+    }
+    return r.ok;
+  });
+
+  try {
+    return await refreshPromise;
+  } finally {
+    isRefreshing = false;
+    refreshPromise = null;
+  }
+}
 
 async function request<T>(
   endpoint: string,
@@ -90,6 +116,38 @@ async function request<T>(
 
   clearTimeout(timeoutId);
 
+  if (res.status === 401) {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      const newToken = authToken;
+      headers["Authorization"] = `Bearer ${newToken}`;
+      const retryController = new AbortController();
+      const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT);
+      try {
+        res = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers,
+          signal: retryController.signal,
+        });
+      } catch (err) {
+        clearTimeout(retryTimeoutId);
+        if (err instanceof DOMException && err.name === "AbortError") {
+          throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
+        }
+        console.error("Network error after refresh:", endpoint, err);
+        throw new Error("Error de conexión");
+      } finally {
+        clearTimeout(retryTimeoutId);
+      }
+    }
+
+    if (!refreshed || res.status === 401) {
+      await clearToken();
+      onForceLogout?.();
+      throw new Error("Sesión expirada");
+    }
+  }
+
   let data: unknown;
 
   try {
@@ -100,9 +158,6 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    if (res.status === 401) {
-      await clearToken();
-    }
     if (res.status === 403) {
       const msg =
         typeof data === "object" && data !== null && "error" in data
