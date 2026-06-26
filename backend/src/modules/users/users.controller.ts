@@ -30,7 +30,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         documento,
         nombre,
         contrasena: hashed,
-        email: `${documento}@hub.ai`,
+        email: `${documento}@${process.env.EMAIL_DOMAIN || "hub.ai"}`,
         rol: rol || "user",
       })
       .returning();

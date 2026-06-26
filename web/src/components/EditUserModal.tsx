@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ApiUser } from "@/types/user";
+import type { ApiUser } from "@hub/shared/types/user";
 import { api } from "@/lib/api";
 
 interface EditUserModalProps {
@@ -87,11 +87,7 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
           <button
             onClick={handleSave}
             disabled={saving}
-            className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white"
-            style={{
-              backgroundColor: saving ? "rgba(37,32,126,0.7)" : "#25207E",
-              cursor: saving ? "not-allowed" : "pointer",
-            }}
+            className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white bg-[#25207E] disabled:bg-[#25207E]/70 disabled:cursor-not-allowed cursor-pointer"
           >
             {saving ? "Guardando..." : "Guardar"}
           </button>

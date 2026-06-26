@@ -355,12 +355,11 @@ export default function AnalyticsFilters(props: AnalyticsFiltersProps) {
             <button
               key={p.key}
               onClick={() => onFilterChange(p.key)}
-              className="h-[38px] rounded-[10px] border-none cursor-pointer font-inter text-[13px] font-semibold transition-all duration-150 px-3"
-              style={{
-                color: filter === p.key ? "#25207E" : "#6B7280",
-                backgroundColor: filter === p.key ? "#FFFFFF" : "transparent",
-                boxShadow: filter === p.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-              }}
+              className={`h-[38px] rounded-[10px] border-none cursor-pointer font-inter text-[13px] font-semibold transition-all duration-150 px-3 ${
+                filter === p.key
+                  ? "bg-white text-[#25207E] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                  : "bg-transparent text-gray-500"
+              }`}
             >
               {p.label}
             </button>

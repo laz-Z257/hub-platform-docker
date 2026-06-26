@@ -75,11 +75,9 @@ export default function DateRangePicker({
         <button
           onClick={onApply}
           disabled={!isValid}
-          className="h-9 px-[14px] rounded-lg border-none cursor-pointer text-[13px] font-semibold font-inter text-white disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: isValid ? "#25207E" : "#D1D5DB",
-            opacity: isValid ? 1 : 0.6,
-          }}
+          className={`h-9 px-[14px] rounded-lg border-none cursor-pointer text-[13px] font-semibold font-inter text-white disabled:cursor-not-allowed ${
+            isValid ? "bg-[#25207E] opacity-100" : "bg-[#D1D5DB] opacity-60"
+          }`}
         >
           Aplicar
         </button>
