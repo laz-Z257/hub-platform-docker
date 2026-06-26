@@ -56,7 +56,6 @@ export default function HistorialScreen() {
       .get<{ items: Incident[] }>("/incidents?limit=50")
       .then((data) => setIncidents(data.items))
       .catch((err) => {
-        console.error("Error al cargar historial:", err);
         setError(err instanceof Error ? err.message : "Error al cargar el historial");
       })
       .finally(() => {
