@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@hub/shared": "file:../shared",
     "@expo-google-fonts/inter": "^0.4.2",
     "expo": "~56.0.12",
     "expo-clipboard": "~56.0.4",

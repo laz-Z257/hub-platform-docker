@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { env } from "../config/env";
+import { logger } from "../lib/logger";
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
@@ -12,7 +13,7 @@ const pool = new Pool({
 });
 
 pool.on("error", (err) => {
-  console.error("PostgreSQL pool error:", err.message);
+  logger.error("PostgreSQL pool error", { error: err.message });
 });
 
 export const db = drizzle({ client: pool });

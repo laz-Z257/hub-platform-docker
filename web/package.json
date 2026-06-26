@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hub/shared": "file:../shared",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.460.0",
     "next": "^15.5.19",

@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { users, puntosVenta } from "./schema";
 import { env } from "../config/env";
+import { logger } from "../lib/logger";
 import "dotenv/config";
 
 async function seed() {
@@ -16,15 +17,14 @@ async function seed() {
   });
   const db = drizzle(pool);
 
-  console.log("Seeding database...");
+  logger.info("Seeding database...");
 
   const seedPassword =
     process.env.SEED_ADMIN_PASSWORD ||
     crypto.randomBytes(16).toString("hex");
 
   if (!process.env.SEED_ADMIN_PASSWORD) {
-    console.log("  SEED ADMIN PASSWORD generada automáticamente.");
-    console.log("  Define SEED_ADMIN_PASSWORD para controlarla.");
+    logger.debug("SEED ADMIN PASSWORD generada automáticamente. Define SEED_ADMIN_PASSWORD para controlarla.");
   }
 
   const password = await bcrypt.hash(seedPassword, 10);
@@ -45,19 +45,19 @@ async function seed() {
       await db
         .insert(users)
         .values({ ...u, contrasena: password });
-      console.log(`  User created: ${u.nombre} (${u.documento})`);
+      logger.info(`User created: ${u.nombre} (${u.documento})`);
     } else {
-      console.log(`  User exists: ${u.nombre}`);
+      logger.info(`User exists: ${u.nombre}`);
       if (process.env.SEED_ADMIN_PASSWORD) {
         await db
           .update(users)
           .set({ contrasena: password, estado: "activo", intentos_fallidos: 0 })
           .where(eq(users.documento, u.documento));
-        console.log(`  Password updated for: ${u.nombre}`);
+        logger.info(`Password updated for: ${u.nombre}`);
       }
     }
     } catch (err) {
-      console.error(`  Seed warning for ${u.documento}:`, (err as Error).message);
+      logger.warn(`Seed warning for ${u.documento}: ${(err as Error).message}`);
     }
   }
 
@@ -96,17 +96,17 @@ async function seed() {
 
       if (!existing) {
         await db.insert(puntosVenta).values({ nombre });
-        console.log(`  PV created: ${nombre}`);
+        logger.info(`PV created: ${nombre}`);
       }
     } catch (err) {
-      console.error(`  PV seed warning for ${nombre}:`, (err as Error).message);
+      logger.warn(`PV seed warning for ${nombre}: ${(err as Error).message}`);
     }
   }
 
   await pool.end().catch(() => {});
-  console.log("Seed completed.");
+  logger.info("Seed completed.");
 }
 
 seed().catch((err) => {
-  console.error("Seed warning:", err instanceof Error ? err.message : err);
+  logger.warn("Seed warning", { error: err instanceof Error ? err.message : err });
 });
