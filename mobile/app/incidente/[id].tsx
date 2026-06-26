@@ -74,7 +74,6 @@ export default function IncidentDetailScreen() {
       .get<IncidentDetail>(`/incidents/${id}`)
       .then(setIncident)
       .catch((err) => {
-        console.error("Error al cargar incidente:", err);
         setError(err instanceof Error ? err.message : "Error al cargar el incidente");
       })
       .finally(() => setLoading(false));

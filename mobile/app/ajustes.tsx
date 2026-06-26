@@ -318,7 +318,6 @@ export default function SettingsScreen() {
               try {
                 await logout();
               } catch (e) {
-                console.error("Logout error:", e);
                 Alert.alert("Error", "No se pudo cerrar sesión. Intenta de nuevo.");
               }
               router.replace("/");
