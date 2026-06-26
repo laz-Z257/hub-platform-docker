@@ -2,12 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import cors from "cors";
-import express from "express";
+import express, { type Request } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
+import { requestId } from "./middlewares/requestId";
 import { env } from "./config/env";
 
 import authRoutes from "./modules/auth/auth.routes";
@@ -21,6 +22,8 @@ import pushRoutes from "./modules/push/push.routes";
 import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
 
 const app = express();
+
+app.use(requestId);
 
 app.use(
   helmet({
@@ -56,7 +59,8 @@ app.use(
   })
 );
 if (env.NODE_ENV !== "production") {
-  app.use(morgan("dev"));
+  morgan.token("request-id", (req) => (req as Request).requestId);
+  app.use(morgan(":method :url :status :response-time ms [:request-id]"));
 }
 app.use(express.json());
 app.use(cookieParser());
@@ -103,8 +107,8 @@ app.use(
     res: express.Response,
     _next: express.NextFunction
   ) => {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
+    console.error(`[${_req.requestId}] Unhandled error:`, err);
+    res.status(500).json({ error: "Error interno del servidor", requestId: _req.requestId });
   }
 );
 
