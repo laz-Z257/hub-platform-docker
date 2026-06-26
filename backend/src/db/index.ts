@@ -4,7 +4,7 @@ import { env } from "../config/env";
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  ssl: env.DB_SSL ? { rejectUnauthorized: false } : false,
+  ssl: env.DB_SSL ? { rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED } : false,
   max: 10,
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
