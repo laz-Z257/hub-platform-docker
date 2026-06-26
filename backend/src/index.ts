@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
 import { requestId } from "./middlewares/requestId";
+import { logger } from "./lib/logger";
 import { env } from "./config/env";
 
 import authRoutes from "./modules/auth/auth.routes";
@@ -107,14 +108,16 @@ app.use(
     res: express.Response,
     _next: express.NextFunction
   ) => {
-    console.error(`[${_req.requestId}] Unhandled error:`, err);
+    logger.error(`Unhandled error: ${err.message}`, {
+      requestId: _req.requestId,
+      stack: err.stack,
+    });
     res.status(500).json({ error: "Error interno del servidor", requestId: _req.requestId });
   }
 );
 
 app.listen(env.PORT, () => {
-  console.log(`API running on http://localhost:${env.PORT}`);
-  console.log(`Environment: ${env.NODE_ENV}`);
+  logger.info(`API running on port ${env.PORT}`, { environment: env.NODE_ENV });
 });
 
 export default app;
