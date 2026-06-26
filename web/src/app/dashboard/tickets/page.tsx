@@ -504,11 +504,7 @@ export default function TicketsPage() {
                   }
                 }}
                 disabled={creating}
-                className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white"
-                style={{
-                  backgroundColor: creating ? "rgba(37,32,126,0.7)" : "#25207E",
-                  cursor: creating ? "not-allowed" : "pointer",
-                }}
+                className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white bg-[#25207E] disabled:bg-[#25207E]/70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {creating ? "Creando..." : "Crear Ticket"}
               </button>

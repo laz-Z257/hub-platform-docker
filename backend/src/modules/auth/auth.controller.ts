@@ -43,7 +43,7 @@ export async function register(
         documento,
         nombre,
         contrasena: hashed,
-        email: `${documento}@hub.ai`,
+        email: `${documento}@${process.env.EMAIL_DOMAIN || "hub.ai"}`,
         rol: "user",
       })
       .returning();

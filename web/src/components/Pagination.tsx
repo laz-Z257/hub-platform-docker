@@ -42,11 +42,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900"
-          style={{
-            cursor: page === 1 ? "default" : "pointer",
-            opacity: page === 1 ? 0.5 : 1,
-          }}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900 disabled:cursor-default disabled:opacity-50 cursor-pointer"
         >
           <ChevronLeft size={14} color="#6B7280" strokeWidth={2} />
         </button>
@@ -63,13 +59,11 @@ export default function Pagination({
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-inter cursor-pointer"
-              style={{
-                border: page === p ? "none" : "1px solid #E5E7EB",
-                backgroundColor: page === p ? "#25207E" : "#FFFFFF",
-                color: page === p ? "#FFFFFF" : "#374151",
-                fontWeight: page === p ? 600 : 400,
-              }}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-inter cursor-pointer ${
+                page === p
+                  ? "bg-[#25207E] text-white font-semibold border-0"
+                  : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 font-normal border border-[#E5E7EB] dark:border-gray-700"
+              }`}
             >
               {p}
             </button>
@@ -79,11 +73,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900"
-          style={{
-            cursor: page === totalPages ? "default" : "pointer",
-            opacity: page === totalPages ? 0.5 : 1,
-          }}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white dark:border-gray-700 dark:bg-gray-900 disabled:cursor-default disabled:opacity-50 cursor-pointer"
         >
           <ChevronRight size={14} color="#6B7280" strokeWidth={2} />
         </button>

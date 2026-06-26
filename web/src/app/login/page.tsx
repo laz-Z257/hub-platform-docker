@@ -83,10 +83,9 @@ export default function LoginPage() {
               Número de Documento
             </label>
             <div
-              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden"
-              style={{
-                border: errors.documento ? "1px solid #EF4444" : "1px solid #D1D5DB",
-              }}
+              className={`flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden ${
+                errors.documento ? "border border-red-500" : "border border-[#D1D5DB]"
+              }`}
             >
               <div className="flex items-center justify-center w-11 h-full shrink-0">
                 <IdCard size={20} color="#9CA3AF" strokeWidth={1.75} />
@@ -117,10 +116,9 @@ export default function LoginPage() {
               Contraseña
             </label>
             <div
-              className="flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden"
-              style={{
-                border: errors.contrasena ? "1px solid #EF4444" : "1px solid #D1D5DB",
-              }}
+              className={`flex items-center h-12 w-full rounded-md bg-[#F8FAFC] dark:bg-gray-800 overflow-hidden ${
+                errors.contrasena ? "border border-red-500" : "border border-[#D1D5DB]"
+              }`}
             >
               <div className="flex items-center justify-center w-11 h-full shrink-0">
                 <Lock size={20} color="#9CA3AF" strokeWidth={1.75} />
@@ -163,12 +161,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center justify-center w-full h-12 border-none rounded-md text-white text-[15px] font-semibold font-inter gap-2 shadow-[0_4px_12px_rgba(55,49,142,0.25)]"
-            style={{
-              backgroundColor: loading ? "rgba(55,49,142,0.7)" : "#37318E",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-            }}
+            className="flex items-center justify-center w-full h-12 border-none rounded-md text-white text-[15px] font-semibold font-inter gap-2 shadow-[0_4px_12px_rgba(55,49,142,0.25)] bg-[#37318E] disabled:bg-[#37318E]/70 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
           >
             {loading ? (
               <svg

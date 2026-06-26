@@ -11,7 +11,7 @@ import CreateUserModal from "@/components/CreateUserModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { api } from "@/lib/api";
 import Pagination from "@/components/Pagination";
-import type { ApiUser } from "@/types/user";
+import type { ApiUser } from "@hub/shared/types/user";
 
 const PER_PAGE = 10;
 

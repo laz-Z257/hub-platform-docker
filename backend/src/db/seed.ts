@@ -30,7 +30,7 @@ async function seed() {
   const password = await bcrypt.hash(seedPassword, 10);
 
   const seedUsers = [
-    { documento: "123456789", nombre: "Admin Principal", email: "admin@hub.ai", rol: "admin" as const },
+    { documento: "123456789", nombre: "Admin Principal", email: `admin@${env.EMAIL_DOMAIN}`, rol: "admin" as const },
   ];
 
   for (const u of seedUsers) {

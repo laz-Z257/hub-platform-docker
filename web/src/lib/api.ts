@@ -144,6 +144,12 @@ async function request<T>(
     }
   }
 
+  if (data === null || data === undefined) {
+    throw new Error(
+      `Respuesta inválida: ${endpoint} retornó ${data === null ? "null" : "undefined"}`
+    );
+  }
+
   return data as T;
 }
 

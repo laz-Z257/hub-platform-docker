@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
-import type { ApiUser } from "@/types/user";
+import type { ApiUser } from "@hub/shared/types/user";
 
 const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#25207E", color: "#FFFFFF" },

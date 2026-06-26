@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import type { ApiUser } from "@/types/user";
+import type { ApiUser } from "@hub/shared/types/user";
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   admin: { bg: "#F3F0FF", color: "#25207E" },
@@ -141,8 +141,9 @@ export default function UserManagement() {
 
                 <div className="flex items-center gap-[6px]">
                   <div
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: user.estado === "activo" ? "#22C55E" : "#EF4444" }}
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      user.estado === "activo" ? "bg-green-500" : "bg-red-500"
+                    }`}
                   />
                   <span className="text-[12px] text-gray-400 dark:text-gray-500 font-inter">
                     {getRelativeTime(user.ultima_actividad || user.created_at, Date.now())}

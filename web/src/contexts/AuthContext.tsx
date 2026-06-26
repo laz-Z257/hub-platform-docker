@@ -10,13 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { api, setCsrfToken } from "@/lib/api";
-
-export interface AuthUser {
-  id: string;
-  documento: string;
-  nombre: string;
-  rol: "user" | "asesor" | "admin" | "tecnico";
-}
+import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
   user: AuthUser | null;

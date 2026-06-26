@@ -91,11 +91,7 @@ export default function ResolveTicketModal({ ticketId, ticketLabel, onClose, onR
             <button
               type="submit"
               disabled={saving}
-              className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white"
-              style={{
-                backgroundColor: saving ? "rgba(34,197,94,0.7)" : "#22C55E",
-                cursor: saving ? "not-allowed" : "pointer",
-              }}
+              className="h-10 px-[18px] rounded-lg border-none font-inter text-[13px] font-semibold text-white bg-green-500 disabled:bg-green-500/70 disabled:cursor-not-allowed cursor-pointer"
             >
               {saving ? "Cerrando..." : "Cerrar Ticket"}
             </button>
