@@ -37,7 +37,9 @@ services:
     restart: unless-stopped
 
   web:
-    build: ./web
+    build:
+      context: .
+      dockerfile: web/Dockerfile
     container_name: hub-web
     ports:
       - "3000:3000"
