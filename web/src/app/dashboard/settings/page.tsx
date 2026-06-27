@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw, ShieldBan } from "lucide-react";
+import { Save, X, Sun, Moon, Trash2, RefreshCw, Database, RotateCcw, ShieldBan, Cloud, Server } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
 
 const TABS = [
   { label: "Perfil de la Empresa", key: "empresa" },
@@ -105,17 +106,39 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<CompanySettings>(loadSettings);
   const [originalSettings, setOriginalSettings] = useState<CompanySettings>(loadSettings);
   const [saved, setSaved] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"local" | "saved" | "error">("local");
+
+  useEffect(() => {
+    api.get<CompanySettings>("/settings").then((server) => {
+      if (server.nombre || server.contribuyente || server.direccion) {
+        setSettings(server);
+        setOriginalSettings(server);
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(server));
+        setSyncStatus("saved");
+      }
+    }).catch(() => {});
+  }, []);
 
   const hasChanges =
     settings.nombre !== originalSettings.nombre ||
     settings.contribuyente !== originalSettings.contribuyente ||
     settings.direccion !== originalSettings.direccion;
 
-  function handleSave() {
+  async function handleSave() {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     setOriginalSettings({ ...settings });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    setSyncing(true);
+    try {
+      await api.put("/settings", settings);
+      setSyncStatus("saved");
+    } catch {
+      setSyncStatus("error");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   function handleDiscard() {
@@ -424,9 +447,27 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Sync indicator */}
+      {activeTab === "empresa" && (
+        <div className="flex items-center gap-2 mt-4 mb-2">
+          {syncing ? (
+            <RefreshCw size={14} className="text-[#6B7280] animate-spin" />
+          ) : syncStatus === "saved" ? (
+            <Cloud size={14} className="text-green-500" />
+          ) : syncStatus === "error" ? (
+            <Server size={14} className="text-red-500" />
+          ) : (
+            <Database size={14} className="text-[#9CA3AF]" />
+          )}
+          <span className="text-[12px] font-inter text-[#6B7280]">
+            {syncing ? "Sincronizando..." : syncStatus === "saved" ? "Guardado en servidor" : syncStatus === "error" ? "Error al sincronizar" : "Solo almacenamiento local"}
+          </span>
+        </div>
+      )}
+
       {/* Action Buttons */}
       {activeTab === "empresa" && !isTecnico && (
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3 mt-2">
           <button
             onClick={handleDiscard}
             disabled={!hasChanges}

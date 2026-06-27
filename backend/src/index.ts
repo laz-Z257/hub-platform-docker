@@ -21,8 +21,17 @@ import uploadRoutes from "./modules/upload/upload.routes";
 import ratingsRoutes from "./modules/ratings/ratings.routes";
 import pushRoutes from "./modules/push/push.routes";
 import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
+import settingsRoutes from "./modules/settings/settings.routes";
 
 const app = express();
+
+app.use((req, res, next) => {
+  if (env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
+    const host = req.headers.host || "";
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
+  }
+  next();
+});
 
 app.use(requestId);
 
@@ -97,6 +106,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/ratings", ratingsRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/puntos-venta", puntosVentaRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // 404
 app.use((_req, res) => {

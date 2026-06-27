@@ -1,15 +1,12 @@
 "use client";
 
-interface RatingRow {
-  puntuacion: number; comentario: string | null; created_at: string;
-  usuario_nombre: string; punto_venta: string; ticket_descripcion: string;
-}
+import type { RatingWithDetails } from "@hub/shared/types/rating";
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-interface Props { ratings: RatingRow[] }
+interface Props { ratings: RatingWithDetails[] }
 
 export default function RecentRatingsTable({ ratings }: Props) {
   return (

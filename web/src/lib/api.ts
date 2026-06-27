@@ -164,6 +164,8 @@ export const api = {
     request<T>(endpoint, undefined, schema),
   post: <T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) =>
     request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }, schema),
+  put: <T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) =>
+    request<T>(endpoint, { method: "PUT", body: JSON.stringify(body) }, schema),
   patch: <T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) =>
     request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }, schema),
   delete: <T>(endpoint: string, schema?: z.ZodType<T>) =>

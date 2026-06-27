@@ -2,22 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
+import type { RatingStats } from "@hub/shared/types/rating";
 import { api } from "@/lib/api";
 import RatingSummaryCards from "@/components/RatingSummaryCards";
 import RatingCharts from "@/components/RatingCharts";
 import RecentRatingsTable from "@/components/RecentRatingsTable";
-
-interface RatingStats {
-  promedio: number;
-  total: number;
-  distribucion: Record<string, number>;
-  promedioPv: { punto_venta: string; promedio: number; total: number }[];
-  timeline: { fecha: string; promedio: number; total: number }[];
-  ultimas: {
-    puntuacion: number; comentario: string | null; created_at: string;
-    incident_id: string; usuario_nombre: string; punto_venta: string; ticket_descripcion: string;
-  }[];
-}
 
 const starLabels: Record<number, string> = { 1: "Muy malo", 2: "Malo", 3: "Regular", 4: "Bueno", 5: "Excelente" };
 

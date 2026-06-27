@@ -158,6 +158,12 @@ export async function getIncident(
   }
 }
 
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pendiente: ["en_proceso", "resuelto"],
+  en_proceso: ["resuelto"],
+  resuelto: [],
+};
+
 export async function updateIncident(
   req: Request,
   res: Response
@@ -165,6 +171,24 @@ export async function updateIncident(
   try {
     const { id } = req.params as { id: string };
     const { estado, agente, solucion, imagen_url } = req.body;
+
+    if (estado) {
+      const [current] = await db
+        .select({ estado: incidents.estado })
+        .from(incidents)
+        .where(eq(incidents.id, id))
+        .limit(1);
+
+      if (current) {
+        const allowed = VALID_TRANSITIONS[current.estado];
+        if (!allowed || !allowed.includes(estado)) {
+          res.status(400).json({
+            error: `Transición inválida: de "${current.estado}" a "${estado}"`,
+          });
+          return;
+        }
+      }
+    }
 
     const updateData: Record<string, unknown> = { updated_at: new Date() };
     if (estado) updateData.estado = estado;
@@ -325,6 +349,9 @@ export async function exportIncidents(
   try {
     const start = req.query.start as string | undefined;
     const end = req.query.end as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string) || 5000, 10000);
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const offset = (page - 1) * limit;
     const conditions = [];
 
     if (start) {
@@ -342,7 +369,9 @@ export async function exportIncidents(
       .select()
       .from(incidents)
       .where(whereClause)
-      .orderBy(desc(incidents.created_at));
+      .orderBy(desc(incidents.created_at))
+      .limit(limit)
+      .offset(offset);
 
     const incidentIds = allIncidents.map((inc) => inc.id);
 

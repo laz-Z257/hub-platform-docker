@@ -31,7 +31,8 @@ export interface CreateRatingInput {
 export interface RatingStats {
   promedio: number;
   total: number;
-  distribucion: Record<number, number>;
+  distribucion: Record<string, number>;
   promedioPv: PromedioPv[];
+  timeline: { fecha: string; promedio: number; total: number }[];
   ultimas: RatingWithDetails[];
 }
