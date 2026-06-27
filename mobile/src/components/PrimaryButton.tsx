@@ -59,7 +59,7 @@ export default function PrimaryButton({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          width: "100%" as any,
+          width: "100%" as const,
           backgroundColor: isDisabled ? "rgba(59, 52, 139, 0.5)" : "#3B348B",
           shadowColor: "#3B348B",
           shadowOffset: { width: 0, height: 6 },

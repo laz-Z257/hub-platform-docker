@@ -16,6 +16,6 @@ export const kpisQuerySchema = {
         (val) => !val || !isNaN(Date.parse(val)),
         "end debe ser una fecha válida"
       ),
-    agent: z.string().optional(),
+    agente: z.string().optional(),
   }),
 };

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
