@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
 import { requestId } from "./middlewares/requestId";
+import { metricsMiddleware, getMetrics } from "./middlewares/metrics";
 import { logger } from "./lib/logger";
 import { env } from "./config/env";
 
@@ -34,6 +35,7 @@ app.use((req, res, next) => {
 });
 
 app.use(requestId);
+app.use(metricsMiddleware);
 
 app.use(
   helmet({
@@ -89,8 +91,19 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // Health check
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
+app.get("/api/health", async (_req, res) => {
+  try {
+    const { db } = await import("./db");
+    await db.execute("SELECT 1");
+    res.json({ status: "ok", db: "connected" });
+  } catch {
+    res.status(503).json({ status: "error", db: "disconnected" });
+  }
+});
+
+// Metrics
+app.get("/api/metrics", (_req, res) => {
+  res.json(getMetrics());
 });
 
 // Serve uploads
