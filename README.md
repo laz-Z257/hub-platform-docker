@@ -4,27 +4,41 @@ Repositorio de demostración para una aplicación de soporte corporativo con das
 
 ---
 
-## 🚀 Quick Start — Para continuar en casa
+## 🚀 Quick Start — Para levantar todo desde casa
+
+Solo necesitas **Docker** y **Git**.
 
 ```bash
 # 1. Clonar
 git clone https://github.com/laz-Z257/hub-platform-docker.git
 cd hub-platform-docker
 
-# 2. Compilar APK (solo necesitas Docker)
+# 2. Levantar todo el stack (API + Web + DB + OTA)
+docker compose up -d
+# Espera ~30s a que todo inicie
+
+# 3. Abrir el dashboard
+# http://localhost:3000 — Dashboard Web
+# http://localhost:3001/api/health — Health check de la API
+
+# 4. Credenciales de prueba
+# Documento: 123456789
+# Contraseña: admin123
+
+# 5. Compilar APK (opcional — cuando quieras la app)
 docker compose --profile build-only run mobile-builder
 # APK generado en: mobile/output/app-release.apk
 
-# 3. Desarrollo en vivo (opcional — probar con Expo Go)
+# 6. Desarrollo mobile en vivo (opcional)
 cd mobile
 npm install
 npx expo start
-# Escanea el QR con la app Expo Go en tu teléfono
+# Escanea el QR con Expo Go en tu teléfono
 ```
 
-> **Nota:** La app apunta a `https://hub-platform-api.onrender.com/api` por defecto. Si quieres usar tu propio backend, crea `mobile/.env` con:
+> **Nota:** La app mobile apunta a `https://hub-platform-api.onrender.com/api` por defecto. Si quieres usar tu propio backend local, crea `mobile/.env` con:
 > ```
-> EXPO_PUBLIC_API_URL=https://tu-dominio.com/api
+> EXPO_PUBLIC_API_URL=http://localhost:3001/api
 > ```
 
 ---
