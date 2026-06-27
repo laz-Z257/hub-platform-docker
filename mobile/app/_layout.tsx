@@ -2,13 +2,13 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
   Inter_400Regular,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
+import { SafeAreaProviderWrapper } from "../src/components/SafeAreaProviderWrapper";
 import { AuthProvider } from "../src/contexts/AuthContext";
 import "../global.css";
 
@@ -28,7 +28,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView className="flex-1">
-      <SafeAreaProvider>
+      <SafeAreaProviderWrapper>
         <AuthProvider>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
@@ -41,7 +41,7 @@ export default function RootLayout() {
             <Stack.Screen name="ajustes" />
           </Stack>
         </AuthProvider>
-      </SafeAreaProvider>
+      </SafeAreaProviderWrapper>
     </GestureHandlerRootView>
   );
 }

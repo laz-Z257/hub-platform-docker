@@ -5,6 +5,7 @@ import { db } from "../../db";
 import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
 import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
+import { logger } from "../../lib/logger";
 
 const MAX_LOGIN_ATTEMPTS = parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10);
 
@@ -60,7 +61,7 @@ export async function register(
 
     res.status(201).json({ user: userResponse(user), csrfToken });
   } catch (error) {
-    console.error("Register error:", error);
+    logger.error("Register error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al registrar usuario" });
   }
 }
@@ -127,7 +128,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     res.json({ token, user: userResponse(user), csrfToken });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error", { error: (error as Error).message });
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -156,7 +157,7 @@ export async function me(req: Request, res: Response): Promise<void> {
 
     res.json({ ...user, csrfToken });
   } catch (error) {
-    console.error("Me error:", error);
+    logger.error("Me error", { error: (error as Error).message });
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

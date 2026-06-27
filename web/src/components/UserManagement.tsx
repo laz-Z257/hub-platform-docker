@@ -120,17 +120,17 @@ export default function UserManagement() {
                 </div>
 
                 <div className="flex-1">
-                  <div className="flex items-center gap-[10px] mb-0.5">
-                    <span className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 font-inter">
-                      {displayName(user)}
-                    </span>
-                    <span
-                      className="inline-block px-2 py-[2px] rounded-full text-[10px] font-semibold font-inter"
-                      style={{
-                        backgroundColor: ROLE_COLORS[user.rol]?.bg || "#F3F4F6",
-                        color: ROLE_COLORS[user.rol]?.color || "#6B7280",
-                      }}
-                    >
+                    <div className="flex items-center gap-2.5 mb-0.5">
+                      <span className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 font-inter">
+                        {displayName(user)}
+                      </span>
+                      <span
+                        className="inline-block px-2 py-[2px] rounded-full text-[10px] font-semibold font-inter bg-gray-100 text-gray-500"
+                        style={{
+                          backgroundColor: ROLE_COLORS[user.rol]?.bg,
+                          color: ROLE_COLORS[user.rol]?.color,
+                        }}
+                      >
                       {user.rol.toUpperCase()}
                     </span>
                   </div>
@@ -139,7 +139,7 @@ export default function UserManagement() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-[6px]">
+                <div className="flex items-center gap-1.5">
                   <div
                     className={`w-2 h-2 rounded-full shrink-0 ${
                       user.estado === "activo" ? "bg-green-500" : "bg-red-500"

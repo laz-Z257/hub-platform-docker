@@ -4,6 +4,7 @@ import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 const blockerUsers = alias(users, "blocker_users");
 
@@ -45,7 +46,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
       created_at: user.created_at,
     });
   } catch (error) {
-    console.error("Create user error:", error);
+    logger.error("Create user error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al crear usuario" });
   }
 }
@@ -106,7 +107,7 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
       totalPages: Math.ceil(totalResult / limit),
     });
   } catch (error) {
-    console.error("List users error:", error);
+    logger.error("List users error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al listar usuarios" });
   }
 }
@@ -157,7 +158,7 @@ export async function toggleUserStatus(
 
     res.json(updated);
   } catch (error) {
-    console.error("Toggle user status error:", error);
+    logger.error("Toggle user status error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al cambiar estado del usuario" });
   }
 }
@@ -192,7 +193,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
 
     res.json({ message: "Contraseña restablecida exitosamente", user: updated });
   } catch (error) {
-    console.error("Reset password error:", error);
+    logger.error("Reset password error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al restablecer la contraseña" });
   }
 }
@@ -253,7 +254,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
 
     res.json(updated);
   } catch (error) {
-    console.error("Update user error:", error);
+    logger.error("Update user error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al actualizar usuario" });
   }
 }

@@ -150,6 +150,12 @@ async function request<T>(
     );
   }
 
+  if (typeof data !== "object" || data === null) {
+    throw new Error(
+      `Respuesta inválida: ${endpoint} retornó un tipo inesperado (${typeof data})`
+    );
+  }
+
   return data as T;
 }
 

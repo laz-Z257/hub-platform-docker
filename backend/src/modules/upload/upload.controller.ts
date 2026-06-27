@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import path from "node:path";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
+import { logger } from "../../lib/logger";
 
 const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
 
@@ -40,7 +41,7 @@ export async function uploadFile(req: Request, res: Response): Promise<void> {
 
     res.json({ url, filename });
   } catch (error) {
-    console.error("Upload error:", error);
+    logger.error("Upload error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al subir el archivo" });
   }
 }

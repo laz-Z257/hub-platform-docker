@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { ratings, incidents, users } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 export async function createRating(req: Request, res: Response): Promise<void> {
   try {
@@ -52,7 +53,7 @@ export async function createRating(req: Request, res: Response): Promise<void> {
 
     res.status(201).json(rating);
   } catch (error) {
-    console.error("Create rating error:", error);
+    logger.error("Create rating error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al guardar la calificación" });
   }
 }
@@ -74,7 +75,7 @@ export async function getRating(req: Request, res: Response): Promise<void> {
 
     res.json(rating);
   } catch (error) {
-    console.error("Get rating error:", error);
+    logger.error("Get rating error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener la calificación" });
   }
 }
@@ -134,7 +135,7 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
       ultimas: rows.slice(0, 10),
     });
   } catch (error) {
-    console.error("Get rating stats error:", error);
+    logger.error("Get rating stats error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener estadísticas de calificaciones" });
   }
 }

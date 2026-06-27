@@ -17,9 +17,9 @@ export default function RatingSummaryCards({ promedio, total, pvCount, distribuc
 
 function Card({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
-      <p className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-1">{label}</p>
-      <p className="text-4xl font-bold font-inter" style={{ color: color || "#1F2937" }}>{value}</p>
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+      <p className="text-[13px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-1">{label}</p>
+      <p className="text-4xl font-bold font-inter text-gray-800" style={{ color }}>{value}</p>
     </div>
   );
 }
