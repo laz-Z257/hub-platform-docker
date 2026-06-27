@@ -4,6 +4,39 @@ Repositorio de demostración para una aplicación de soporte corporativo con das
 
 ---
 
+## 🚀 Quick Start — Para continuar en casa
+
+```bash
+# 1. Clonar el repo
+git clone https://github.com/laz-Z257/hub-platform-docker.git
+cd hub-platform-docker
+
+# 2. Compilar APK (recomendado — con Docker)
+# Requiere: Docker instalado. Genera el APK automáticamente sin instalar Android SDK.
+docker compose --profile build-only run mobile-builder
+# El APK queda en: mobile/output/app-release.apk
+
+# 3. Alternativa: compilar APK sin Docker
+# Requiere: Java 17 + Android SDK configurado
+cd mobile
+npm install
+cd android && ./gradlew assembleRelease
+# APK en: android/app/build/outputs/apk/release/app-release.apk
+
+# 4. Desarrollo en vivo (probar en teléfono con Expo Go)
+cd mobile
+npm install
+npx expo start
+# Escanea el QR con la app Expo Go en tu teléfono
+```
+
+> **Nota:** La app apunta a `https://hub-platform-api.onrender.com/api` por defecto. Si quieres usar tu propio backend, crea `mobile/.env` con:
+> ```
+> EXPO_PUBLIC_API_URL=https://tu-dominio.com/api
+> ```
+
+---
+
 ## Estructura
 
 ```
