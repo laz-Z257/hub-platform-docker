@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { ratings, incidents, users } from "../../db/schema";
 import { logger } from "../../lib/logger";

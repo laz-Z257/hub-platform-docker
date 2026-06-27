@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const fresh = await api.get<AuthUser>("/auth/me");
             setUser(fresh);
             await saveUser(fresh);
-            registerForPushNotifications();
+            registerForPushNotifications().catch(() => {});
             router.replace("/chat");
           } catch (err) {
             await clearToken();
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await saveUser(data.user);
         setUser(data.user);
 
-        registerForPushNotifications();
+        registerForPushNotifications().catch(() => {});
       } finally {
         setLoading(false);
       }

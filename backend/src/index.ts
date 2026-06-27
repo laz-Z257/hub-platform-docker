@@ -103,7 +103,12 @@ app.get("/api/health", async (_req, res) => {
 
 // Metrics
 app.get("/api/metrics", (_req, res) => {
-  res.json(getMetrics());
+  try {
+    res.json(getMetrics());
+  } catch (error) {
+    logger.error("Metrics error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al obtener métricas" });
+  }
 });
 
 // Serve uploads
