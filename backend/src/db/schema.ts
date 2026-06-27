@@ -130,6 +130,14 @@ export const puntosVenta = pgTable(
   ]
 );
 
+export const companySettings = pgTable("company_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nombre: varchar("nombre", { length: 200 }).notNull().default(""),
+  contribuyente: varchar("contribuyente", { length: 50 }).notNull().default(""),
+  direccion: text("direccion").notNull().default(""),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const pushTokens = pgTable(
   "push_tokens",
   {

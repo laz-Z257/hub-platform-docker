@@ -15,7 +15,7 @@ import {
   getSavedUser,
   setForceLogoutHandler,
 } from "../services/api";
-import { registerForPushNotifications } from "../services/notifications";
+import { registerForPushNotifications, setupNotificationListeners } from "../services/notifications";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -66,6 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     restore();
+  }, [router]);
+
+  useEffect(() => {
+    return setupNotificationListeners((data) => {
+      if (data.incidentId) {
+        router.push(`/incidente/${data.incidentId}`);
+      }
+    });
   }, [router]);
 
   useEffect(() => {

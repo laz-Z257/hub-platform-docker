@@ -9,23 +9,9 @@ import TicketDetailModal from "@/components/TicketDetailModal";
 import ResolveTicketModal from "@/components/ResolveTicketModal";
 import Pagination from "@/components/Pagination";
 import { api } from "@/lib/api";
+import type { Incident } from "@hub/shared/types/incident";
 
-interface IncidentItem {
-  id: string;
-  nombre: string;
-  documento: string;
-  telefono: string;
-  descripcion: string;
-  punto_venta: string;
-  urgencia: string;
-  estado: string;
-  agente: string | null;
-  solucion: string | null;
-  cerrado_por: string | null;
-  fecha_cierre: string | null;
-  created_at: string;
-  updated_at: string;
-}
+type IncidentItem = Incident;
 
 function getRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -87,6 +73,7 @@ export default function TicketsPage() {
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTicket, setNewTicket] = useState({ nombre: "", documento: "", punto_venta: "", telefono: "", descripcion: "" });
+  const [ticketErrors, setTicketErrors] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
 
   const LIMIT = 10;
@@ -413,7 +400,7 @@ export default function TicketsPage() {
                 Abrir Nuevo Ticket
               </h2>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => { setShowCreateModal(false); setTicketErrors({}); }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer"
               >
                 <X size={14} color="#6B7280" strokeWidth={2} />
@@ -426,10 +413,11 @@ export default function TicketsPage() {
                 <input
                   type="text"
                   value={newTicket.nombre}
-                  onChange={(e) => setNewTicket({ ...newTicket, nombre: e.target.value })}
-                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  onChange={(e) => { setNewTicket({ ...newTicket, nombre: e.target.value }); setTicketErrors((p) => ({ ...p, nombre: "" })); }}
+                  className={`w-full h-11 px-3.5 rounded-lg border ${ticketErrors.nombre ? "border-red-500" : "border-gray-300 dark:border-gray-600"} bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none`}
                   placeholder="Nombre del solicitante"
                 />
+                {ticketErrors.nombre && <p className="text-xs text-red-500 mt-1 font-inter">{ticketErrors.nombre}</p>}
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Documento</label>
@@ -449,10 +437,11 @@ export default function TicketsPage() {
                 <input
                   type="text"
                   value={newTicket.punto_venta}
-                  onChange={(e) => setNewTicket({ ...newTicket, punto_venta: e.target.value })}
-                  className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+                  onChange={(e) => { setNewTicket({ ...newTicket, punto_venta: e.target.value }); setTicketErrors((p) => ({ ...p, punto_venta: "" })); }}
+                  className={`w-full h-11 px-3.5 rounded-lg border ${ticketErrors.punto_venta ? "border-red-500" : "border-gray-300 dark:border-gray-600"} bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none`}
                   placeholder="Nombre del punto de venta"
                 />
+                {ticketErrors.punto_venta && <p className="text-xs text-red-500 mt-1 font-inter">{ticketErrors.punto_venta}</p>}
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Teléfono</label>
@@ -467,13 +456,14 @@ export default function TicketsPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Descripción</label>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 font-inter mb-1.5">Descripción</label>
               <textarea
                 value={newTicket.descripcion}
-                onChange={(e) => setNewTicket({ ...newTicket, descripcion: e.target.value })}
-                className="w-full h-24 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none resize-none"
+                onChange={(e) => { setNewTicket({ ...newTicket, descripcion: e.target.value }); setTicketErrors((p) => ({ ...p, descripcion: "" })); }}
+                className={`w-full h-24 px-3.5 py-2 rounded-lg border ${ticketErrors.descripcion ? "border-red-500" : "border-gray-300 dark:border-gray-600"} bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none resize-none`}
                 placeholder="Describe el problema..."
               />
+              {ticketErrors.descripcion && <p className="text-xs text-red-500 mt-1 font-inter">{ticketErrors.descripcion}</p>}
             </div>
 
             {creating && (
@@ -489,7 +479,12 @@ export default function TicketsPage() {
               </button>
               <button
                 onClick={async () => {
-                  if (!newTicket.nombre || !newTicket.descripcion) return;
+                  const errs: Record<string, string> = {};
+                  if (!newTicket.nombre.trim()) errs.nombre = "Requerido";
+                  if (!newTicket.descripcion.trim()) errs.descripcion = "Requerido";
+                  if (!newTicket.punto_venta.trim()) errs.punto_venta = "Requerido";
+                  if (Object.keys(errs).length > 0) { setTicketErrors(errs); return; }
+                  setTicketErrors({});
                   setCreating(true);
                   try {
                     await api.post("/incidents", newTicket);

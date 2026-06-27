@@ -20,8 +20,7 @@ export function signToken(payload: JwtPayload): string {
 }
 
 export function signRefreshToken(payload: JwtPayload): string {
-  const secret = env.JWT_REFRESH_SECRET || env.JWT_SECRET;
-  return jwt.sign(payload, secret, { expiresIn: "7d" });
+  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): JwtPayload {
@@ -29,8 +28,7 @@ export function verifyToken(token: string): JwtPayload {
 }
 
 export function verifyRefreshToken(token: string): JwtPayload {
-  const secret = env.JWT_REFRESH_SECRET || env.JWT_SECRET;
-  return jwt.verify(token, secret) as JwtPayload;
+  return jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtPayload;
 }
 
 export function setTokenCookies(

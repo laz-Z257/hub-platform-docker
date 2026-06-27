@@ -3,31 +3,10 @@
 import { Download } from "lucide-react";
 import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
+import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
 
-interface IncidentExport {
-  id: string;
-  user_id: string;
-  nombre: string;
-  documento: string;
-  punto_venta: string;
-  telefono: string;
-  descripcion: string;
-  solucion: string | null;
-  imagen_url: string | null;
-  urgencia: string;
-  estado: string;
-  agente: string | null;
-  created_at: string;
-  updated_at: string;
-  comments?: {
-    id: string;
-    incident_id: string;
-    autor: string;
-    texto: string;
-    fecha: string;
-  }[];
-}
+type IncidentExport = Incident;
 
 export type FilterPreset = "today" | "week" | "month" | "30d" | "custom";
 

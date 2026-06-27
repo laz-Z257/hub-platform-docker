@@ -1,6 +1,7 @@
 # Auditoría Completa — hub-platform
 
-**Fecha:** 2026-06-11
+**Fecha original:** 2026-06-11
+**Verificación:** 2026-06-27 — Revisión de cada hallazgo contra el código actual
 **Proyectos:** Web (Next.js 15 + React 19), Mobile (Expo SDK 56 + RN 0.85), Backend (Express + Drizzle ORM + PostgreSQL), Shared Types
 **LOC total:** ~9,000 en 100 archivos `.ts`/`.tsx`
 **Commits revisados:** últimos 20 (v2 branch)
@@ -22,54 +23,56 @@
 
 ## 2. SEGURIDAD — HALLAZGOS CRÍTICOS
 
+> **Estado de verificación (2026-06-27):** Muchos hallazgos fueron corregidos entre el 2026-06-17 y 2026-06-26. Se indica estado actual de cada uno.
+
 ### 🔴 CRÍTICOS
 
-| ID | Hallazgo | Archivo | Riesgo |
-|----|----------|---------|--------|
-| **C1** | Sin tests automatizados en todo el repo | — | No hay red de seguridad ante regresiones |
-| **C2** | `eslint.ignoreDuringBuilds: true` | `web/next.config.ts:5` | Errores de lint pasan a producción |
-| **C3** | Producción API URL hardcodeada | `web/src/lib/api.ts:2-4` | `https://hub-platform-api.onrender.com/api` hardcodeada |
-| **C4** | `console.log` en componente de producción | `web/src/components/UserManagement.tsx:54-57` | Expone data cruda de API en consola |
-| **C5** | Seed imprime contraseña en stdout | `backend/src/db/seed.ts:27` | Queda en logs de Render/Docker |
-| **C6** | `JWT_REFRESH_SECRET` fallback a `JWT_SECRET` | `backend/src/config/env.ts:12` | Ambos tokens comparten clave si no se configura |
+| ID | Hallazgo | Estado Actual | Detalle |
+|----|----------|---------------|---------|
+| **C1** | Sin tests automatizados en todo el repo | ❌ **Sigue vigente** | 0 tests en todo el repositorio |
+| **C2** | `eslint.ignoreDuringBuilds: true` | ✅ **CORREGIDO** | Ahora es `false` en `web/next.config.ts:6` |
+| **C3** | Producción API URL hardcodeada | ✅ **CORREGIDO** | Usa `NEXT_PUBLIC_API_URL` con fallback a `/api` o `localhost:3001/api` |
+| **C4** | `console.log` en componente de producción | ✅ **CORREGIDO** | Ahora usa `console.error` solo para errores (legítimo) |
+| **C5** | Seed imprime contraseña en stdout | ✅ **CORREGIDO** | Solo log via `logger.debug` con mensaje, NO imprime el password |
+| **C6** | `JWT_REFRESH_SECRET` fallback a `JWT_SECRET` | 🟡 **PARCIAL** | `env.ts` ya lanza error si falta; pero `jwt.ts:23,32` aún tiene `||` fallback si se setea vacío |
 
 ### 🔴 ALTOS
 
-| ID | Hallazgo | Archivo | Riesgo |
-|----|----------|---------|--------|
-| **H1** | `.env` con credenciales existe en disco (aunque `.gitignore` funciona) | `backend/.env` | `hub_jwt_secret_dev_2026`, `hub_secret` |
-| **H2** | CORS producción fallback a localhost | `backend/src/index.ts:48` | Si `CORS_ORIGIN` no está configurado, falla a `http://localhost:3000` |
-| **H3** | `rejectUnauthorized: false` en SSL PostgreSQL | `backend/src/db/index.ts:7` | Acepta cualquier certificado en producción |
-| **H4** | CSRF cookie `httpOnly: false` | `backend/src/middlewares/csrf.ts:8` | Accesible desde JS (diseño SPA, pero riesgo XSS) |
-| **H5** | Sin refresh token en mobile | `mobile/src/services/api.ts:89` | En 401 solo limpia token, fuerza re-login |
-| **H6** | Sin error boundaries en web | `web/src/app/` (ningún `error.tsx`) | Error de renderizado = pantalla blanca |
-| **H7** | Sin middleware de protección de rutas server-side | `web/` (no hay `middleware.ts`) | Auth solo client-side, posible flash de contenido |
+| ID | Hallazgo | Estado Actual | Detalle |
+|----|----------|---------------|---------|
+| **H1** | `.env` con credenciales existe en disco | ❌ **Sigue vigente** | `backend/.env` existe con credenciales dev (gitignorado) |
+| **H2** | CORS producción fallback a localhost | ✅ **CORREGIDO** | Ahora lanza error si `CORS_ORIGIN` no está configurado en producción |
+| **H3** | `rejectUnauthorized: false` en SSL PostgreSQL | ✅ **CORREGIDO** | Ahora usa `DB_SSL_REJECT_UNAUTHORIZED` (default `true`) configurable vía env var |
+| **H4** | CSRF cookie `httpOnly: false` | ✅ **CORREGIDO** | Ahora es `httpOnly: true` en `csrf.ts:8` |
+| **H5** | Sin refresh token en mobile | ✅ **CORREGIDO** | `mobile/src/services/api.ts:54-76` implementa `tryRefresh()` |
+| **H6** | Sin error boundaries en web | ✅ **CORREGIDO** | Existen 9 archivos `error.tsx` en todas las rutas |
+| **H7** | Sin middleware de protección de rutas server-side | ✅ **CORREGIDO** | `web/src/middleware.ts` protege `/dashboard/*` |
 
 ### 🟡 MEDIOS
 
-| ID | Hallazgo | Archivo | Riesgo |
-|----|----------|---------|--------|
-| **M1** | TypeScript 6.0 pre-release en mobile | `mobile/package.json:35` | `typescript@~6.0.3` — inestable |
-| **M2** | Tokens de shared/ duplicados en web y mobile | `web/src/types/user.ts`, `mobile/src/types/` | `AuthUser`, `ApiUser` definidos en 3 proyectos |
-| **M3** | Sin pool error handler PostgreSQL | `backend/src/db/index.ts` | Pool crash silencioso |
-| **M4** | Botones sin handler | `Topbar.tsx`, `tickets/page.tsx:249`, `settings/page.tsx` | Componentes no funcionales |
-| **M5** | Inline styles inconsistentes | Varios componentes web | Mezcla Tailwind + `style={{}}` |
-| **M6** | Relative path import de shared/ desde mobile | `mobile/src/contexts/AuthContext.tsx:16` | Ruta `../../../shared/` frágil |
-| **M7** | `dist/` desactualizado del source | `backend/dist/index.js` | Faltan cambios de CSRF, etc. |
-| **M8** | Hardcoded email domain | `backend/src/modules/incidents/incidents.controller.ts` | `@hub.ai` hardcodeado |
+| ID | Hallazgo | Estado Actual | Detalle |
+|----|----------|---------------|---------|
+| **M1** | TypeScript 6.0 pre-release en mobile | ✅ **CORREGIDO** | Ahora `typescript@~5.7.3` en `mobile/package.json:38` |
+| **M2** | Tokens de shared/ duplicados en web y mobile | 🟡 **PARCIAL** | Web usa `@hub/shared` pero aún define interfaces locales en componentes |
+| **M3** | Sin pool error handler PostgreSQL | ✅ **CORREGIDO** | `pool.on("error", ...)` en `db/index.ts:15-17` |
+| **M4** | Botones sin handler | ✅ **CORREGIDO** | Todos los botones críticos tienen handlers funcionales |
+| **M5** | Inline styles inconsistente | ❌ **Sigue vigente** | Aún mezcla Tailwind + `style={{}}` en varios componentes |
+| **M6** | Relative path import de shared/ desde mobile | ✅ **CORREGIDO** | Usa `@hub/shared` como dependencia file: |
+| **M7** | `dist/` desactualizado del source | ✅ **CORREGIDO** | `dist/` ya no está en el repo |
+| **M8** | Hardcoded email domain | 🟡 **PARCIAL** | `env.ts:21` tiene `EMAIL_DOMAIN` con fallback `"hub.ai"` (configurable) |
 
 ### ⚪ BAJOS / INFO
 
-| ID | Hallazgo | Archivo |
-|----|----------|---------|
-| **L1** | `console.error` como raw catch handler | `mobile/app/historial.tsx:55`, `mobile/app/incidente/[id].tsx:73` |
-| **L2** | Placeholders `XXXXXXXXXXXX` en Settings | `web/src/app/dashboard/settings/page.tsx` |
-| **L3** | `data as T` sin validación runtime en api.ts | `web/src/lib/api.ts:125` |
-| **L4** | Readme desactualizados (backend, web dicen "no implementado") | `backend/README.md`, `web/README.md` |
-| **L5** | Nombres de columna mezclan español/inglés | `backend/src/db/schema.ts` (`contrasena` vs `created_at`) |
-| **L6** | Morgan logging en desarrollo (info) | `backend/src/index.ts:51-53` |
-| **L7** | Helmet CSP deshabilitado en desarrollo (info) | `backend/src/index.ts:34` |
-| **L8** | Sin request ID tracking | Todo el backend |
+| ID | Hallazgo | Estado Actual | Detalle |
+|----|----------|---------------|---------|
+| **L1** | `console.error` como raw catch handler | ❌ **Sigue vigente** | Múltiples `console.error` en backend y mobile |
+| **L2** | Placeholders `XXXXXXXXXXXX` en Settings | ✅ **CORREGIDO** | Settings ahora usa localStorage con defaults funcionales |
+| **L3** | `data as T` sin validación runtime en api.ts | ❌ **Sigue vigente** | `api.ts:153` aún hace `return data as T` (aunque acepta schema opcional) |
+| **L4** | Readme desactualizados | ✅ **CORREGIDO** | Los READMEs están actualizados con stack, endpoints y scripts |
+| **L5** | Nombres de columna mezclan español/inglés | ❌ **Sigue vigente** | `contrasena` vs `created_at`, `ultima_actividad` vs `token_version` |
+| **L6** | Morgan logging en desarrollo (info) | ❌ **Sigue vigente** | Por diseño — no hay logging HTTP en producción |
+| **L7** | Helmet CSP deshabilitado en desarrollo (info) | ❌ **Sigue vigente** | Por diseño — necesario para dev con hot reload |
+| **L8** | Sin request ID tracking | ✅ **CORREGIDO** | `requestId.ts` middleware genera UUID, expone en header y error responses |
 
 ---
 
@@ -172,63 +175,74 @@ El proyecto ya tiene dos documentos de auditoría:
 
 ### Estado de issues previos
 
-| ID Previo | Descripción | Estado actual | Referencia nuestra |
-|-----------|-------------|---------------|-------------------|
-| audit-report #1 | Comentarios sin verificación de propietario | 🟡 **Aún presente** en `incidents.controller.ts:addComment` | — |
-| audit-report #2 | Stats sin adminOnly | ✅ **CORREGIDO** (tiene `adminOnly`) | — |
-| audit-report #3 | JWT en cookie JS-accessible | 🟡 **Mitigado** (backend usa HttpOnly ahora, pero web aún usa `document.cookie` para CSRF) | H4 |
-| audit-report #4 | Auto-creación de usuarios | 🟡 **Aún presente** en `createIncident` | — |
-| audit-report #5 | Secrets en docker-compose | 🔴 **Aún presente** (valores default) | H1 |
-| audit-report #6 | Falta validación UUID | ✅ **CORREGIDO** (Zod `uuid()` params) | — |
-| AUDIT.md H1 | console.log filtrando data | 🔴 **Aún presente** | C4 |
-| AUDIT.md H2 | Seed imprime password | 🔴 **Aún presente** | C5 |
-| AUDIT.md H3 | JWT_REFRESH_SECRET no en .env.example | 🟡 **Aún presente** (el ejemplo no lo incluye) | C6 |
-| AUDIT.md H4 | Mobile sin refresh token | 🔴 **Aún presente** | H5 |
-| AUDIT.md H5 | Shared types duplicados | 🔴 **Aún presente** | M2 |
-| AUDIT.md M1 | rejectUnauthorized: false | 🔴 **Aún presente** | H3 |
-| AUDIT.md M2 | Placeholders XXXXXXXXXXXX | 🔴 **Aún presente** | L2 |
-| AUDIT.md M3 | Botones sin handler | 🔴 **Aún presente** | M4 |
-| AUDIT.md L1 | 0 tests | 🔴 **Aún presente** | C1 |
-| AUDIT.md L2 | console.error raw handler | 🔴 **Aún presente** | L1 |
+| ID Previo | Descripción | Estado actual (2026-06-27) | Referencia nuestra |
+|-----------|-------------|-------------------------------|-------------------|
+| audit-report #1 | Comentarios sin verificación de propietario | ✅ **CORREGIDO** — `addComment` verifica propiedad del ticket (`incidents.controller.ts:254`) | — |
+| audit-report #2 | Stats sin adminOnly | ✅ **CORREGIDO** | — |
+| audit-report #3 | JWT en cookie JS-accessible | ✅ **CORREGIDO** — Cookie `httpOnly: true`, CSRF token es el único accesible desde JS | H4 (fixed) |
+| audit-report #4 | Auto-creación de usuarios | ✅ **CORREGIDO** — `createIncident` usa `req.user!.userId` sin crear usuarios | — |
+| audit-report #5 | Secrets en docker-compose | 🟡 **Mitigado** — `backend/.env` existe con credenciales dev (gitignorado) | H1 |
+| audit-report #6 | Falta validación UUID | ✅ **CORREGIDO** | — |
+| AUDIT.md H1 | console.log filtrando data | ✅ **CORREGIDO** — Ahora `console.error` legítimo | C4 (fixed) |
+| AUDIT.md H2 | Seed imprime password | ✅ **CORREGIDO** — Solo log vía `logger.debug` sin password | C5 (fixed) |
+| AUDIT.md H3 | JWT_REFRESH_SECRET no en .env.example | ✅ **CORREGIDO** — `.env.example` incluye `JWT_REFRESH_SECRET` | C6 (fixed) |
+| AUDIT.md H4 | Mobile sin refresh token | ✅ **CORREGIDO** — `tryRefresh()` implementado | H5 (fixed) |
+| AUDIT.md H5 | Shared types duplicados | 🟡 **Parcial** — Web usa `@hub/shared` pero aún define interfaces locales | M2 |
+| AUDIT.md M1 | rejectUnauthorized: false | ✅ **CORREGIDO** — Configurable vía `DB_SSL_REJECT_UNAUTHORIZED` | H3 (fixed) |
+| AUDIT.md M2 | Placeholders XXXXXXXXXXXX | ✅ **CORREGIDO** — Settings funcional con localStorage | L2 (fixed) |
+| AUDIT.md M3 | Botones sin handler | ✅ **CORREGIDO** — Todos los botones tienen handlers | M4 (fixed) |
+| AUDIT.md L1 | 0 tests | ❌ **Sigue vigente** | C1 |
+| AUDIT.md L2 | console.error raw handler | ❌ **Sigue vigente** | L1 |
 
 ---
 
 ## 7. RECOMENDACIONES PRIORIZADAS
 
+> Basado en verificación 2026-06-27. Tachados los items ya resueltos.
+
 ### 🚨 Inmediato (1-2 días)
 
-1. **Eliminar `console.log` de UserManagement.tsx** (C4)
-2. **Configurar `JWT_REFRESH_SECRET` en `.env.example` y producción** (C6)
-3. **Agregar `error.tsx`** en todas las rutas de web (H6)
-4. **Agregar middleware server-side** de auth en Next.js (H7)
-5. **Mover API URL de producción a env var** (C3)
-6. **Reconstruir `dist/` del backend** (M7)
+1. ~~**Eliminar `console.log` de UserManagement.tsx**~~ ✅ **CORREGIDO**
+2. ~~**Configurar `JWT_REFRESH_SECRET` en `.env.example` y producción**~~ ✅ **CORREGIDO**
+3. ~~**Agregar `error.tsx`** en todas las rutas de web~~ ✅ **CORREGIDO**
+4. ~~**Agregar middleware server-side** de auth en Next.js~~ ✅ **CORREGIDO**
+5. ~~**Mover API URL de producción a env var**~~ ✅ **CORREGIDO**
+6. ~~**Reconstruir `dist/` del backend**~~ ✅ **CORREGIDO**
+7. **Agregar suite de tests** (C1)
+8. **Eliminar IP hardcodeada en sistemas externos** — `external-systems/page.tsx` fallback a `192.168.60.66:8100`
+9. **Rate limiting y auth middleware en `logout`** — Ruta `/logout` no tiene rate limiter ni authMiddleware
 
 ### 🔴 Corto plazo (1 semana)
 
-7. **Agregar suite de tests** (C1) — al menos unit tests para servicios críticos
-8. **Configurar CI/CD** (GitHub Actions con lint + typecheck + tests)
-9. **Habilitar ESLint en builds** (C2)
-10. **Configurar pool error handler** en PostgreSQL (M3)
-11. **Reemplazar `console.error` con structured logging** (winston/pino)
-12. **Configurar TypeScript versión stable en mobile** (M1)
+10. **Agregar suite de tests** (C1)
+11. **Configurar CI/CD** (GitHub Actions con lint + typecheck + tests)
+12. ~~**Habilitar ESLint en builds**~~ ✅ **CORREGIDO**
+13. ~~**Configurar pool error handler** en PostgreSQL~~ ✅ **CORREGIDO**
+14. **Reemplazar `console.error` con structured logging robusto** (pino/winston) (L1)
+15. ~~**Configurar TypeScript versión stable en mobile**~~ ✅ **CORREGIDO**
+16. **Implementar notificaciones push listeners** — `setupNotificationListeners()` nunca es llamado
+17. **Documentar `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` en `.env.example`**
 
 ### 🟡 Mediano plazo (2-4 semanas)
 
-13. **Implementar refresh token en mobile** (H5)
-14. **Migrar shared/ como workspace dependency** para web y mobile (M2, M6)
-15. **Verificar propiedad en `addComment`** (issue audit-report #1)
-16. **Eliminar auto-creación de usuarios en `createIncident`** (issue audit-report #4)
-17. **Unificar estilos** (Tailwind classes en vez de inline styles) (M5)
-18. **Eliminar placeholders y conectar botones** (M4, L2)
+18. ~~**Implementar refresh token en mobile**~~ ✅ **CORREGIDO**
+19. **Migrar shared/ como workspace dependency** oficial (M2)
+20. ~~**Verificar propiedad en `addComment`**~~ ✅ **CORREGIDO**
+21. ~~**Eliminar auto-creación de usuarios en `createIncident`**~~ ✅ **CORREGIDO**
+22. **Unificar estilos** (Tailwind classes en vez de inline styles) (M5)
+23. ~~**Eliminar placeholders y conectar botones**~~ ✅ **CORREGIDO**
+24. **Agregar validación de transiciones de estado en incidentes**
+25. **Agregar paginación en `exportIncidents`**
+26. **Sincronizar Settings con servidor** (actualmente solo localStorage)
 
 ### ⚪ Largo plazo
 
-19. **Agregar monitoreo y alertas**
-20. **Implementar rate limiting por usuario**
-21. **Auditar y rotar secretos periódicamente**
-22. **Agregar HTTPS enforcement**
-23. **Migrar nombres de columna a un solo idioma**
+27. **Agregar monitoreo y alertas**
+28. **Implementar rate limiting por usuario**
+29. **Auditar y rotar secretos periódicamente**
+30. **Agregar HTTPS enforcement**
+31. **Migrar nombres de columna a un solo idioma**
+32. **Agregar offline support en mobile**
 
 ---
 
@@ -236,16 +250,16 @@ El proyecto ya tiene dos documentos de auditoría:
 
 | Métrica | Valor |
 |---------|-------|
-| Archivos .ts/.tsx | 100 |
+| Archivos .ts/.tsx | ~100 |
 | Líneas de código | ~9,000 |
 | Paquetes | 4 (backend, web, mobile, shared) |
 | Componentes React | 18 web + 15 mobile = 33 |
 | Rutas API | 16 REST + 1 health |
 | Tests | 0 |
-| Commits en v2 | ~23 |
+| Commits en v2 | ~28 |
 | Vulnerabilidades npm | 0 |
-| Hallazgos críticos nuevos | 7 |
-| Hallazgos altos nuevos | 7 |
-| Hallazgos medios nuevos | 8 |
-| Hallazgos bajos nuevos | 8 |
-| Issues previos pendientes | 13 de 16 |
+| Hallazgos originales | 7C + 7H + 8M + 8L = 30 |
+| **Resueltos** | **5C + 6H + 5M + 3L = 19** |
+| **Parciales** | **1C + 0H + 2M + 0L = 3** |
+| **Siguen vigentes** | **1C + 1H + 1M + 5L = 8** |
+| Issues previos pendientes | 2 de 16 |

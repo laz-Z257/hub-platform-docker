@@ -1,24 +1,9 @@
 "use client";
 
 import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
+import type { Incident } from "@hub/shared/types/incident";
 
-interface IncidentDetail {
-  id: string;
-  nombre: string;
-  documento: string;
-  telefono: string;
-  punto_venta: string;
-  descripcion: string;
-  urgencia: string;
-  estado: string;
-  agente: string | null;
-  solucion: string | null;
-  cerrado_por: string | null;
-  cerrado_por_nombre?: string | null;
-  fecha_cierre: string | null;
-  created_at: string;
-  updated_at: string;
-}
+interface IncidentDetail extends Incident {}
 
 interface TicketDetailModalProps {
   incident: IncidentDetail | null;
