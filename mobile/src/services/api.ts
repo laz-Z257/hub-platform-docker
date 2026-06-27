@@ -5,6 +5,8 @@ import {
   saveUser,
   getSavedUser,
   deleteUser,
+  saveCache,
+  getCache,
 } from "./storage";
 
 const API_URL =
@@ -77,13 +79,15 @@ async function tryRefresh(): Promise<boolean> {
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs?: number
 ): Promise<T> {
   if (!authToken) {
     authToken = await getSavedToken();
   }
 
   const token = authToken;
+  const isGet = !options.method || options.method === "GET";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -95,7 +99,7 @@ async function request<T>(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? REQUEST_TIMEOUT);
 
   let res: Response;
 
@@ -111,6 +115,10 @@ async function request<T>(
       throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
     }
     console.error("Network error:", endpoint, err);
+    if (isGet) {
+      const cached = await getCache<T>(endpoint);
+      if (cached) return cached;
+    }
     throw new Error("No se pudo conectar con el servidor. Verifica tu conexión a internet.");
   }
 
@@ -135,6 +143,10 @@ async function request<T>(
           throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
         }
         console.error("Network error after refresh:", endpoint, err);
+        if (isGet) {
+          const cached = await getCache<T>(endpoint);
+          if (cached) return cached;
+        }
         throw new Error("Error de conexión");
       } finally {
         clearTimeout(retryTimeoutId);
@@ -176,11 +188,15 @@ async function request<T>(
     throw new Error(msg);
   }
 
+  if (isGet) {
+    saveCache(endpoint, data);
+  }
+
   return data as T;
 }
 
 export const api = {
-  get: <T>(endpoint: string) => request<T>(endpoint),
+  get: <T>(endpoint: string, timeoutMs?: number) => request<T>(endpoint, undefined, timeoutMs),
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }),
   patch: <T>(endpoint: string, body?: unknown) =>

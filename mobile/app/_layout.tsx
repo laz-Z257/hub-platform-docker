@@ -10,6 +10,8 @@ import {
 } from "@expo-google-fonts/inter";
 import { SafeAreaProviderWrapper } from "../src/components/SafeAreaProviderWrapper";
 import { AuthProvider } from "../src/contexts/AuthContext";
+import { ConnectivityProvider } from "../src/contexts/ConnectivityContext";
+import { OfflineBanner } from "../src/components/OfflineBanner";
 import "../global.css";
 
 try { SplashScreen.preventAutoHideAsync(); } catch {}
@@ -29,8 +31,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProviderWrapper>
+        <ConnectivityProvider>
         <AuthProvider>
           <StatusBar style="dark" />
+          <OfflineBanner />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="chat" />
@@ -41,6 +45,7 @@ export default function RootLayout() {
             <Stack.Screen name="ajustes" />
           </Stack>
         </AuthProvider>
+        </ConnectivityProvider>
       </SafeAreaProviderWrapper>
     </GestureHandlerRootView>
   );

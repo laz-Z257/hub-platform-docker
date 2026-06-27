@@ -52,9 +52,9 @@
 | 27 | ~~Actualizar READMEs secundarios~~ | ~~`backend/README.md`, `web/README.md`, `mobile/README.md`~~ | ~~Dicen "no implementado"~~ | ✅ **CORREGIDO** |
 | 28 | Unificar nombres de columna (español/inglés) | `backend/src/db/schema.ts` | Mezcla `contrasena` con `created_at` | ❌ **Cancelado** (rompe API) |
 | 29 | HTTPS enforcement | `backend/src/index.ts` | ~~Middleware de redirección agreagado~~ | ✅ **CORREGIDO** |
-| 30 | Agregar monitoreo y alertas | Todo el proyecto | Sin sistema de monitoreo | ❌ Pendiente |
+| 30 | Agregar monitoreo y alertas | Todo el proyecto | ~~Health endpoint + métricas detalladas~~ | ✅ **CORREGIDO** |
 | 31 | ~~Agregar request ID tracking visible~~ | ~~`backend/src/`~~ | ~~IDs generados pero no expuestos~~ | ✅ **CORREGIDO** |
-| 32 | Agregar offline support en mobile | `mobile/` | App no funcional sin red | ❌ Pendiente |
+| 32 | Agregar offline support en mobile | `mobile/` | ~~Banner offline + cache de respuestas GET~~ | ✅ **CORREGIDO** |
 | 33 | `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` a `.env.example` | Root | ~~Variable documentada~~ | ✅ **CORREGIDO** |
 | 34 | Notificaciones push listeners en mobile | `mobile/src/services/notifications.ts` | ~~`setupNotificationListeners()` conectado en AuthContext~~ | ✅ **CORREGIDO** |
 | 35 | Web-safe SafeAreaProvider + reanimated plugin | `mobile/` | ~~removeChild patch + babel plugin~~ | ✅ **CORREGIDO** |
@@ -68,3 +68,4 @@
 | C2–C6, H2–H7, M1–M7, L2–L8 | Varios fixes previos | `3f4dbdf`, `819d660`, `6b1ffb1`, `937c62e` |
 | H1, L1, L3, L6, L7, M5 | Logo centrado/transparencia, Tailwind, logger, Morgan, Helmet, gitignore | `074d0ad` |
 | #5, #8, #9, #13, #16, #18, #22–#26, #29, #33, #34, #35 | Batch fixes sesión 2026-06-27 | `074d0ad` |
+| #30, #32 | Monitoreo + Offline support mobile | `074d0ad` |

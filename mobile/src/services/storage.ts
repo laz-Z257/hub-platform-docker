@@ -84,3 +84,43 @@ export async function deleteUser(): Promise<void> {
     await nativeDelete(USER_KEY);
   }
 }
+
+const CACHE_PREFIX = "api_cache_";
+
+export async function saveCache(key: string, data: unknown): Promise<void> {
+  const value = JSON.stringify({ data, ts: Date.now() });
+  if (Platform.OS === "web") {
+    webSet(CACHE_PREFIX + key, value);
+  } else {
+    await nativeSet(CACHE_PREFIX + key, value);
+  }
+}
+
+export async function getCache<T>(key: string, maxAgeMs = 60000): Promise<T | null> {
+  let raw: string | null;
+  if (Platform.OS === "web") {
+    raw = webGet(CACHE_PREFIX + key);
+  } else {
+    raw = await nativeGet(CACHE_PREFIX + key);
+  }
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.ts > maxAgeMs) return null;
+    return parsed.data as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearCache(): Promise<void> {
+  const keys = [TOKEN_KEY, USER_KEY];
+  for (const k of keys) {
+    const cacheKey = CACHE_PREFIX + k;
+    if (Platform.OS === "web") {
+      webDelete(cacheKey);
+    } else {
+      await nativeDelete(cacheKey);
+    }
+  }
+}
