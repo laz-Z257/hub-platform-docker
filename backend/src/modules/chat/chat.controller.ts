@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { messages, incidents } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 const DEFAULT_BOT_RESPONSE =
   "Gracias por tu mensaje. Un agente revisará tu consulta y te responderá pronto. ¿Necesitas ayuda con algo más?";
@@ -84,7 +85,7 @@ export async function sendMessage(
     // Simulate delay for more realistic chat
     res.json({ userMessage: userMsg, botMessage: botMsg });
   } catch (error) {
-    console.error("Send message error:", error);
+    logger.error("Send message error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al enviar mensaje" });
   }
 }
@@ -105,7 +106,7 @@ export async function getHistory(
 
     res.json(history.reverse());
   } catch (error) {
-    console.error("Get history error:", error);
+    logger.error("Get history error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener historial" });
   }
 }

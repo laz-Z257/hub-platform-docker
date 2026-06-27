@@ -21,7 +21,12 @@ export default function Logo({ size = 72 }: LogoProps) {
     return (
       <Image
         source={LOGO_SOURCE}
-        style={{ width: imageSize, height: imageSize }}
+        style={{
+          width: imageSize,
+          height: imageSize,
+          alignSelf: "center",
+          borderRadius: imageSize * 0.15,
+        }}
         resizeMode="contain"
       />
     );

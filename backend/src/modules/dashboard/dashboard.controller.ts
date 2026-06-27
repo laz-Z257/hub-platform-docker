@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, users } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 export async function getKpis(req: Request, res: Response): Promise<void> {
   try {
@@ -54,7 +55,7 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
       usuariosActivos: usuarioCount.total,
     });
   } catch (error) {
-    console.error("Get KPIs error:", error);
+    logger.error("Get KPIs error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener métricas" });
   }
 }

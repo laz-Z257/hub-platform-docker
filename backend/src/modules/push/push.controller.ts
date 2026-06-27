@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { pushTokens } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 export async function registerToken(
   req: Request,
@@ -30,7 +31,7 @@ export async function registerToken(
 
     res.json({ message: "Token registrado" });
   } catch (error) {
-    console.error("Register push token error:", error);
+    logger.error("Register push token error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al registrar token" });
   }
 }

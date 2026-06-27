@@ -136,7 +136,7 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
                 <span className="text-[11px] truncate font-inter" style={{ color: labelColor }}>
                   {name}
                 </span>
-                <span className="text-[11px] shrink-0 font-inter" style={{ fontWeight: hasData ? 600 : 400, color: hasData ? color : "#D1D5DB" }}>
+                <span className="text-[11px] shrink-0 font-inter text-gray-300" style={{ fontWeight: hasData ? 600 : 400, color: hasData ? color : undefined }}>
                   {hasData ? `${valor}%` : "0%"}
                 </span>
               </div>

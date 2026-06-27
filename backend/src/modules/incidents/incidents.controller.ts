@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 export async function createIncident(
   req: Request,
@@ -25,7 +26,7 @@ export async function createIncident(
 
     res.status(201).json(incident);
   } catch (error) {
-    console.error("Create incident error:", error);
+    logger.error("Create incident error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al crear el incidente" });
   }
 }
@@ -105,7 +106,7 @@ export async function listIncidents(
       totalPages: Math.ceil(totalResult / limit),
     });
   } catch (error) {
-    console.error("List incidents error:", error);
+    logger.error("List incidents error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al listar incidentes" });
   }
 }
@@ -152,7 +153,7 @@ export async function getIncident(
 
     res.json({ ...incident, cerrado_por_nombre, comments });
   } catch (error) {
-    console.error("Get incident error:", error);
+    logger.error("Get incident error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener el incidente" });
   }
 }
@@ -221,13 +222,13 @@ export async function updateIncident(
           });
         }
       } catch (pushErr) {
-        console.error("Push notification error:", pushErr);
+        logger.error("Push notification error", { error: (pushErr as Error).message });
       }
     }
 
     res.json(updated);
   } catch (error) {
-    console.error("Update incident error:", error);
+    logger.error("Update incident error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al actualizar el incidente" });
   }
 }
@@ -306,13 +307,13 @@ export async function addComment(
           });
         }
       } catch (pushErr) {
-        console.error("Push notification error (comment):", pushErr);
+        logger.error("Push notification error (comment)", { error: (pushErr as Error).message });
       }
     }
 
     res.status(201).json(comment);
   } catch (error) {
-    console.error("Add comment error:", error);
+    logger.error("Add comment error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al agregar comentario" });
   }
 }
@@ -367,7 +368,7 @@ export async function exportIncidents(
 
     res.json({ items: result, total: result.length });
   } catch (error) {
-    console.error("Export incidents error:", error);
+    logger.error("Export incidents error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al exportar incidentes" });
   }
 }
@@ -384,7 +385,7 @@ export async function getAgentes(
 
     res.json(agentes.map((a) => a.agente).filter(Boolean));
   } catch (error) {
-    console.error("Get agentes error:", error);
+    logger.error("Get agentes error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al listar agentes" });
   }
 }
@@ -482,7 +483,7 @@ export async function getStats(
 
     res.json({ timeline, distribution, statusCounts });
   } catch (error) {
-    console.error("Get stats error:", error);
+    logger.error("Get stats error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener estadísticas" });
   }
 }
@@ -499,7 +500,7 @@ export async function unreadCount(
 
     res.json({ count: result.count });
   } catch (error) {
-    console.error("Unread count error:", error);
+    logger.error("Unread count error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener notificaciones" });
   }
 }
@@ -516,7 +517,7 @@ export async function markSeen(
 
     res.json({ message: "Marcados como vistos" });
   } catch (error) {
-    console.error("Mark seen error:", error);
+    logger.error("Mark seen error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al marcar como vistos" });
   }
 }
@@ -540,7 +541,7 @@ export async function deleteIncident(
 
     res.json({ message: "Incidente eliminado", id: deleted.id });
   } catch (error) {
-    console.error("Delete incident error:", error);
+    logger.error("Delete incident error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al eliminar el incidente" });
   }
 }

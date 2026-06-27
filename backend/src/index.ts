@@ -28,18 +28,16 @@ app.use(requestId);
 
 app.use(
   helmet({
-    contentSecurityPolicy: env.NODE_ENV === "production"
-      ? {
-          directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:"],
-            fontSrc: ["'self'"],
-            connectSrc: ["'self'"],
-          },
-        }
-      : false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        fontSrc: ["'self'"],
+        connectSrc: env.NODE_ENV === "development" ? ["'self'", "ws:", "http://localhost:*"] : ["'self'"],
+      },
+    },
   })
 );
 app.use(
@@ -59,10 +57,14 @@ app.use(
     credentials: true,
   })
 );
-if (env.NODE_ENV !== "production") {
-  morgan.token("request-id", (req) => (req as Request).requestId);
-  app.use(morgan(":method :url :status :response-time ms [:request-id]"));
-}
+morgan.token("request-id", (req) => (req as Request).requestId);
+app.use(
+  morgan(
+    env.NODE_ENV === "production"
+      ? ":remote-addr :method :url :status :response-time ms [:request-id]"
+      : ":method :url :status :response-time ms [:request-id]"
+  )
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(csrfProtection);

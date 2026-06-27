@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ilike } from "drizzle-orm";
 import { db } from "../../db";
 import { puntosVenta } from "../../db/schema";
+import { logger } from "../../lib/logger";
 
 export async function listPuntosVenta(
   req: Request,
@@ -18,7 +19,7 @@ export async function listPuntosVenta(
 
     res.json(items);
   } catch (error) {
-    console.error("List puntos venta error:", error);
+    logger.error("List puntos venta error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al listar puntos de venta" });
   }
 }

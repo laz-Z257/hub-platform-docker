@@ -68,7 +68,7 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-[rgba(0,0,0,0.4)] z-[100] overflow-y-auto"
+      className="fixed inset-0 bg-black/40 z-[100] overflow-y-auto"
     >
       <div className="flex min-h-full items-center justify-center p-6">
       <div
@@ -76,7 +76,7 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
         className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-[560px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] dark:shadow-gray-900/30"
       >
         {/* Header */}
-        <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-5 border-b border-[#E5E7EB] dark:border-gray-700 flex items-start justify-between">
+        <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-base font-bold text-gray-900 dark:text-white font-inter">
@@ -95,13 +95,13 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
                 {status}
               </span>
             </div>
-            <h2 className="text-lg font-bold text-[#1F2937] dark:text-gray-100 font-inter leading-snug">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-inter leading-snug">
               {incident.descripcion}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer shrink-0 ml-4"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer shrink-0 ml-4"
           >
             <X size={14} color="#6B7280" strokeWidth={2} />
           </button>
@@ -132,11 +132,11 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
         </div>
 
         {/* Footer */}
-        <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-3 border-t border-[#E5E7EB] dark:border-gray-700 flex justify-between items-center">
-          <span className="text-[11px] text-[#9CA3AF] dark:text-gray-400 font-inter">
+        <div className="bg-[#F8F8FC] dark:bg-gray-950 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <span className="text-[11px] text-gray-400 dark:text-gray-400 font-inter">
             Creado: {formatDate(incident.created_at)}
           </span>
-          <span className="text-[11px] text-[#9CA3AF] dark:text-gray-400 font-inter">
+          <span className="text-[11px] text-gray-400 dark:text-gray-400 font-inter">
             Actualizado: {formatDate(incident.updated_at)}
           </span>
         </div>
@@ -161,10 +161,10 @@ function InfoBlock({
         <Icon size={14} color="var(--brand)" strokeWidth={2} />
       </div>
       <div>
-        <p className="text-[11px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px]">
+        <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px]">
           {label}
         </p>
-        <p className="text-[13px] font-medium text-[#1F2937] dark:text-gray-100 font-inter mt-0.5">
+        <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter mt-0.5">
           {value}
         </p>
       </div>

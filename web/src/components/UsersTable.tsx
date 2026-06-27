@@ -127,7 +127,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
 
       {!Array.isArray(users) ? null : users.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter">No se encontraron usuarios</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400 font-inter">No se encontraron usuarios</p>
         </div>
       )}
       {Array.isArray(users) && users.map((user) => (
@@ -153,8 +153,8 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
 
           <div className="py-3 px-2">
             <span
-              className="inline-block px-3 py-[3px] rounded-full text-[11px] font-semibold font-inter"
-              style={{ backgroundColor: ROLE_STYLES[user.rol]?.bg ?? "#E5E7EB", color: ROLE_STYLES[user.rol]?.color ?? "#6B7280" }}
+              className="inline-block px-3 py-[3px] rounded-full text-[11px] font-semibold font-inter bg-gray-200 text-gray-500"
+              style={{ backgroundColor: ROLE_STYLES[user.rol]?.bg, color: ROLE_STYLES[user.rol]?.color }}
             >
               {user.rol.toUpperCase()}
             </span>
@@ -163,12 +163,12 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
           <div className="py-3 px-2">
             <div className="flex items-center gap-1.5">
               <div
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.dot ?? "#9CA3AF" }}
+                className="w-2 h-2 rounded-full shrink-0 bg-gray-400"
+                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.dot }}
               />
               <span
-                className="inline-block px-2 py-[2px] rounded-full text-[11px] font-medium font-inter"
-                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.bg ?? "#F3F4F6", color: ESTADO_STYLES[user.estado]?.color ?? "#6B7280" }}
+                className="inline-block px-2 py-[2px] rounded-full text-[11px] font-medium font-inter bg-gray-100 text-gray-500"
+                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.bg, color: ESTADO_STYLES[user.estado]?.color }}
               >
                 {user.estado === "activo" ? "Activo" : "Bloqueado"}
               </span>

@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { env } from "../config/env";
+import { logger } from "../lib/logger";
 import "dotenv/config";
 
 async function runMigrations() {
@@ -14,59 +15,59 @@ async function runMigrations() {
 
   const db = drizzle(pool);
 
-  console.log("Running migrations...");
+  logger.info("Running migrations...");
   try {
     await migrate(db, { migrationsFolder: "./drizzle" });
-    console.log("Migrations completed.");
+    logger.info("Migrations completed.");
   } catch (err) {
-    console.error("Migration warning:", (err as Error).message);
-    console.log("Continuing anyway...");
+    logger.warn("Migration warning", { error: (err as Error).message });
+    logger.info("Continuing anyway...");
   }
 
   try {
-    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS intentos_fallidos integer DEFAULT 0 NOT NULL");
-    console.log("Column intentos_fallidos verified.");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS failedAttempts integer DEFAULT 0 NOT NULL");
+    logger.info("Column failedAttempts verified.");
   } catch (err) {
-    console.error("Column migration warning:", (err as Error).message);
+    logger.warn("Column migration warning", { error: (err as Error).message });
   }
 
   try {
-    await pool.query("ALTER TABLE incidents ADD COLUMN IF NOT EXISTS visto_por_admin boolean DEFAULT false NOT NULL");
-    console.log("Column visto_por_admin verified.");
+    await pool.query("ALTER TABLE incidents ADD COLUMN IF NOT EXISTS seenByAdmin boolean DEFAULT false NOT NULL");
+    logger.info("Column seenByAdmin verified.");
   } catch (err) {
-    console.error("Column migration warning:", (err as Error).message);
+    logger.warn("Column migration warning", { error: (err as Error).message });
   }
 
   try {
-    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS bloqueado_por uuid");
-    console.log("Column bloqueado_por verified.");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS blockedBy uuid");
+    logger.info("Column blockedBy verified.");
   } catch (err) {
-    console.error("Column migration warning:", (err as Error).message);
+    logger.warn("Column migration warning", { error: (err as Error).message });
   }
 
   try {
     await pool.query("ALTER TYPE rol ADD VALUE IF NOT EXISTS 'tecnico'");
-    console.log("Role tecnico added.");
+    logger.info("Role tecnico added.");
   } catch (err) {
-    console.error("Role migration warning:", (err as Error).message);
+    logger.warn("Role migration warning", { error: (err as Error).message });
   }
 
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS puntos_venta (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nombre VARCHAR(150) NOT NULL UNIQUE,
-      activo BOOLEAN NOT NULL DEFAULT true,
+      active BOOLEAN NOT NULL DEFAULT true,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`);
-    console.log("Table puntos_venta verified.");
+    logger.info("Table puntos_venta verified.");
   } catch (err) {
-    console.error("PV table migration warning:", (err as Error).message);
+    logger.warn("PV table migration warning", { error: (err as Error).message });
   }
 
   await pool.end().catch(() => {});
-  console.log("Migrate script done.");
+  logger.info("Migrate script done.");
 }
 
 runMigrations().catch((err) => {
-  console.error("Migration warning:", err instanceof Error ? err.message : err);
+  logger.warn("Migration warning", { error: err instanceof Error ? err.message : err });
 });

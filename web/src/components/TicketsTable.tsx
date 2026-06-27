@@ -93,10 +93,9 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-2 h-2 rounded-full shrink-0"
+                      className="w-2 h-2 rounded-full shrink-0 bg-gray-300"
                       style={{
-                        backgroundColor:
-                          STATUS_COLORS[ticket.estado] || "#D1D5DB",
+                        backgroundColor: STATUS_COLORS[ticket.estado],
                       }}
                     />
                     <span className="text-[13px] text-gray-700 dark:text-gray-300 font-inter">

@@ -15,18 +15,18 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
   return (
     <div>
       {/* Fila 1: Distribución por estrella */}
-      <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Distribución por estrella</h3>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+        <h3 className="text-[13px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px] mb-5">Distribución por estrella</h3>
         <div className="space-y-3">
           {distData.map((d) => {
             const pct = total > 0 ? (d.cantidad / total) * 100 : 0;
             return (
               <div key={d.valor} className="flex items-center gap-3">
-                <span className="text-sm text-[#F59E0B] shrink-0">{["★", "★★", "★★★", "★★★★", "★★★★★"][d.valor - 1]}</span>
-                <div className="flex-1 h-3 bg-[#F3F4F6] dark:bg-gray-800 rounded-full overflow-hidden">
+                <span className="text-sm text-amber-500 shrink-0">{["★", "★★", "★★★", "★★★★", "★★★★★"][d.valor - 1]}</span>
+                <div className="flex-1 h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: COLORS[d.valor - 1] }} />
                 </div>
-                <span className="w-8 text-sm text-right text-[#6B7280] dark:text-gray-400 font-inter">{d.cantidad}</span>
+                <span className="w-8 text-sm text-right text-gray-500 dark:text-gray-400 font-inter">{d.cantidad}</span>
               </div>
             );
           })}
@@ -34,10 +34,10 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
       </div>
 
       {/* Fila 2: Promedio por PV */}
-      <div className="bg-white dark:bg-gray-900 border border-[#E5E7EB] dark:border-gray-700 rounded-xl p-6 mt-5">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mt-5">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-[13px] font-semibold text-[#9CA3AF] dark:text-gray-400 font-inter uppercase tracking-[0.3px]">Promedio por punto de venta</h3>
-          <span className="text-[11px] text-[#9CA3AF] font-inter">{ratedPvs.length} calificados</span>
+          <h3 className="text-[13px] font-semibold text-gray-400 dark:text-gray-400 font-inter uppercase tracking-[0.3px]">Promedio por punto de venta</h3>
+          <span className="text-[11px] text-gray-400 font-inter">{ratedPvs.length} calificados</span>
         </div>
         {ratedPvs.length > 0 ? (
           <div style={{ height: `${Math.min(360, Math.max(120, ratedPvs.length * 32 + 20))}px` }}>
@@ -50,7 +50,7 @@ export default function RatingCharts({ distData, pvChartData }: Props) {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        ) : <p className="text-sm text-[#9CA3AF] dark:text-gray-400 font-inter text-center py-8">Sin calificaciones</p>}
+        ) : <p className="text-sm text-gray-400 dark:text-gray-400 font-inter text-center py-8">Sin calificaciones</p>}
       </div>
 
     </div>
