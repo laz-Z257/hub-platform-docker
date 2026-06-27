@@ -7,23 +7,15 @@ Repositorio de demostración para una aplicación de soporte corporativo con das
 ## 🚀 Quick Start — Para continuar en casa
 
 ```bash
-# 1. Clonar el repo
+# 1. Clonar
 git clone https://github.com/laz-Z257/hub-platform-docker.git
 cd hub-platform-docker
 
-# 2. Compilar APK (recomendado — con Docker)
-# Requiere: Docker instalado. Genera el APK automáticamente sin instalar Android SDK.
+# 2. Compilar APK (solo necesitas Docker)
 docker compose --profile build-only run mobile-builder
-# El APK queda en: mobile/output/app-release.apk
+# APK generado en: mobile/output/app-release.apk
 
-# 3. Alternativa: compilar APK sin Docker
-# Requiere: Java 17 + Android SDK configurado
-cd mobile
-npm install
-cd android && ./gradlew assembleRelease
-# APK en: android/app/build/outputs/apk/release/app-release.apk
-
-# 4. Desarrollo en vivo (probar en teléfono con Expo Go)
+# 3. Desarrollo en vivo (opcional — probar con Expo Go)
 cd mobile
 npm install
 npx expo start
