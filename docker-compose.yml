@@ -71,8 +71,8 @@ services:
 
   mobile-builder:
     build:
-      context: ./mobile
-      dockerfile: Dockerfile.builder
+      context: .
+      dockerfile: mobile/Dockerfile.builder
     container_name: hub-mobile-builder
     profiles:
       - build-only

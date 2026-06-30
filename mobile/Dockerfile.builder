@@ -27,14 +27,17 @@ RUN yes | sdkmanager --licenses > /dev/null 2>&1 && \
 WORKDIR /app
 
 # Copy dependency manifests first (leverages Docker layer caching)
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY mobile/package.json mobile/package-lock.json ./mobile/
+COPY shared/package.json ./shared/ 2>/dev/null || true
+RUN cd mobile && npm ci
 
 # Copy the rest of the source
-COPY . .
+COPY shared/ ./shared/
+COPY mobile/ ./mobile/
 
 # Prebuild the Android native project
-RUN npx expo prebuild --platform android --no-install
+RUN cd mobile && npx expo prebuild --platform android --no-install
 
 # Default: build APK and copy to /output volume
+WORKDIR /app/mobile
 CMD ["./scripts/build-apk.sh"]
