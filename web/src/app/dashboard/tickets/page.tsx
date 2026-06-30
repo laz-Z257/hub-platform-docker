@@ -9,6 +9,7 @@ import TicketDetailModal from "@/components/TicketDetailModal";
 import ResolveTicketModal from "@/components/ResolveTicketModal";
 import Pagination from "@/components/Pagination";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import type { Incident } from "@hub/shared/types/incident";
 
 type IncidentItem = Incident;
@@ -104,7 +105,7 @@ export default function TicketsPage() {
         setTotal(data.total);
       })
       .catch((err) =>
-        console.error("Tickets:", err instanceof Error ? err.message : err)
+        logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
   }, [page, searchTerm, estadoFilter, dateFilter]);
@@ -127,7 +128,7 @@ export default function TicketsPage() {
         });
       })
       .catch((err) =>
-        console.error("Stats:", err instanceof Error ? err.message : err)
+        logger.error("Error fetching stats", { error: err instanceof Error ? err.message : err })
       );
   }, [dateFilter]);
 
@@ -150,10 +151,7 @@ export default function TicketsPage() {
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
       } catch (err) {
-        console.error(
-          "Status change error:",
-          err instanceof Error ? err.message : err
-        );
+        logger.error("Status change error", { error: err instanceof Error ? err.message : err });
       }
     },
     []
@@ -167,10 +165,7 @@ export default function TicketsPage() {
         );
         setSelectedIncident(incident);
       } catch (err) {
-        console.error(
-          "Detail error:",
-          err instanceof Error ? err.message : err
-        );
+        logger.error("Detail error", { error: err instanceof Error ? err.message : err });
       }
     },
     []
@@ -202,10 +197,7 @@ export default function TicketsPage() {
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
       } catch (err) {
-        console.error(
-          "Assign agent error:",
-          err instanceof Error ? err.message : err
-        );
+        logger.error("Assign agent error", { error: err instanceof Error ? err.message : err });
       }
     },
     []

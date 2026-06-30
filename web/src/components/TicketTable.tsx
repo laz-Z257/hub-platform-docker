@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MoreVertical, Eye, CheckCircle, Clock, Loader, UserPlus } from "lucide-react";
+import { STATUS_ACTION_COLORS, TICKET_STATUS_BADGES } from "@/lib/styles";
 
 interface TicketRow {
   id: string;
@@ -13,10 +14,10 @@ interface TicketRow {
   agente?: string | null;
 }
 
-const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
-  Abierto: { bg: "#DBEAFE", text: "#2563EB" },
-  "En Proceso": { bg: "#E9D5FF", text: "#7C3AED" },
-  Resuelto: { bg: "#E2E8F0", text: "#475569" },
+const STATUS_BADGES: Record<string, string> = {
+  Abierto: "bg-blue-100 text-blue-600",
+  "En Proceso": "bg-purple-100 text-purple-600",
+  Resuelto: "bg-slate-100 text-slate-600",
 };
 
 function formatTicketId(id: string): string {
@@ -71,9 +72,9 @@ function ActionMenu({
   }, [currentAgente, open]);
 
   const statusOptions = [
-    { label: "Pendiente", value: "pendiente", icon: Clock, color: "#3B82F6" },
-    { label: "En Proceso", value: "en_proceso", icon: Loader, color: "#7C3AED" },
-    { label: "Resuelto", value: "resuelto", icon: CheckCircle, color: "#22C55E" },
+    { label: "Pendiente", value: "pendiente", icon: Clock, color: STATUS_ACTION_COLORS.pendiente },
+    { label: "En Proceso", value: "en_proceso", icon: Loader, color: STATUS_ACTION_COLORS.en_proceso },
+    { label: "Resuelto", value: "resuelto", icon: CheckCircle, color: STATUS_ACTION_COLORS.resuelto },
   ];
 
   const safeStatus = currentStatus === "Abierto" ? "pendiente" : currentStatus === "En Proceso" ? "en_proceso" : "resuelto";
@@ -155,8 +156,7 @@ function ActionMenu({
                         }
                         setOpen(false);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-inter bg-transparent border-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md text-left"
-                      style={{ color: opt.color }}
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-inter bg-transparent border-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md text-left ${opt.color}`}
                     >
                       <opt.icon size={13} />
                       <span className="font-medium">{opt.label}</span>
@@ -220,11 +220,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
 
           <div className="py-3 px-2">
             <span
-              className="inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter bg-blue-100 text-blue-600"
-              style={{
-                backgroundColor: STATUS_BADGES[ticket.estado]?.bg,
-                color: STATUS_BADGES[ticket.estado]?.text,
-              }}
+              className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${STATUS_BADGES[ticket.estado] || "bg-gray-100 text-gray-600"}`}
             >
               {ticket.estado}
             </span>

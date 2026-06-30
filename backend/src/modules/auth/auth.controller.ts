@@ -6,6 +6,7 @@ import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
 import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
+import { env } from "../../config/env";
 
 const MAX_LOGIN_ATTEMPTS = parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10);
 
@@ -44,7 +45,7 @@ export async function register(
         documento,
         nombre,
         contrasena: hashed,
-        email: `${documento}@${process.env.EMAIL_DOMAIN || "hub.ai"}`,
+        email: `${documento}@${env.EMAIL_DOMAIN}`,
         rol: "user",
       })
       .returning();

@@ -2,6 +2,7 @@
 
 import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { Incident } from "@hub/shared/types/incident";
+import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
 
 interface IncidentDetail extends Incident {}
 
@@ -10,22 +11,10 @@ interface TicketDetailModalProps {
   onClose: () => void;
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  alta: "#EF4444",
-  media: "#F59E0B",
-  baja: "#22C55E",
-};
-
 const STATUS_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
   en_proceso: "En Proceso",
   resuelto: "Resuelto",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pendiente: "#3B82F6",
-  en_proceso: "#7C3AED",
-  resuelto: "#22C55E",
 };
 
 function formatTicketId(id: string): string {
@@ -47,8 +36,8 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
   if (!incident) return null;
 
   const status = STATUS_LABELS[incident.estado] || incident.estado;
-  const statusColor = STATUS_COLORS[incident.estado] || "#6B7280";
-  const priorityColor = PRIORITY_COLORS[incident.urgencia] || "#6B7280";
+  const priorityBadge = PRIORITY_BADGES[incident.urgencia] || "bg-gray-500 text-white";
+  const statusBadge = STATUS_BADGES[incident.estado] || "bg-gray-500 text-white";
 
   return (
     <div
@@ -68,14 +57,12 @@ export default function TicketDetailModal({ incident, onClose }: TicketDetailMod
                 {formatTicketId(incident.id)}
               </span>
               <span
-                className="inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter text-white"
-                style={{ backgroundColor: priorityColor }}
+                className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${priorityBadge}`}
               >
                 {incident.urgencia.toUpperCase()}
               </span>
               <span
-                className="inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter text-white"
-                style={{ backgroundColor: statusColor }}
+                className={`inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold font-inter ${statusBadge}`}
               >
                 {status}
               </span>

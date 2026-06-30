@@ -20,6 +20,7 @@ import StarRating from "../components/StarRating";
 import FaqModal from "../components/FaqModal";
 import BottomTab from "../components/BottomTab";
 import { api } from "../services/api";
+import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Message {
@@ -101,7 +102,7 @@ export default function ChatScreen() {
         setMessages([...INITIAL_MESSAGES, welcome, ...historyMsgs]);
       })
       .catch((err) => {
-        console.error("Chat history:", err instanceof Error ? err.message : err);
+        logger.error("Chat history error", { error: err instanceof Error ? err.message : err });
         setMessages([...INITIAL_MESSAGES, welcome]);
       })
       .finally(() => setLoadingHistory(false));
@@ -120,7 +121,7 @@ export default function ChatScreen() {
         }
       })
       .catch((err) => {
-        console.error("Latest incident fetch error:", err instanceof Error ? err.message : err);
+        logger.error("Latest incident fetch error", { error: err instanceof Error ? err.message : err });
       });
   }, [initializing, user, router]);
 
@@ -152,7 +153,7 @@ export default function ChatScreen() {
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.error("ChatScreen sendMessage error:", err);
+      logger.error("ChatScreen sendMessage error", { error: (err as Error).message });
       setTyping(false);
 
       const errorMsg: Message = {

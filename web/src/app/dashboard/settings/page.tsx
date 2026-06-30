@@ -7,6 +7,7 @@ import logoImg from "@/assets/logo.png";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import type { CompanySettings } from "@hub/shared/types/api";
 
 const TABS = [
   { label: "Perfil de la Empresa", key: "empresa" },
@@ -73,12 +74,6 @@ function getCacheStats() {
 }
 
 const SETTINGS_KEY = "hub-platform-settings";
-
-interface CompanySettings {
-  nombre: string;
-  contribuyente: string;
-  direccion: string;
-}
 
 const defaultSettings: CompanySettings = {
   nombre: "Mi Empresa",

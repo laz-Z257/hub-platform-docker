@@ -86,7 +86,6 @@ interface DonutChartProps {
 export function DonutChart({ data, allPvNames }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
-  const labelColor = theme === "dark" ? "#9CA3AF" : "#6B7280";
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
@@ -133,10 +132,10 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
             return (
               <div key={name} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-[11px] truncate font-inter" style={{ color: labelColor }}>
+                <span className="text-[11px] truncate font-inter text-gray-500 dark:text-gray-400">
                   {name}
                 </span>
-                <span className="text-[11px] shrink-0 font-inter text-gray-300" style={{ fontWeight: hasData ? 600 : 400, color: hasData ? color : undefined }}>
+                <span className={`text-[11px] shrink-0 font-inter text-gray-300 ${hasData ? "font-semibold" : "font-normal"}`} style={{ color: hasData ? color : undefined }}>
                   {hasData ? `${valor}%` : "0%"}
                 </span>
               </div>

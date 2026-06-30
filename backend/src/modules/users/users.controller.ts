@@ -5,6 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { logger } from "../../lib/logger";
+import { env } from "../../config/env";
 
 const blockerUsers = alias(users, "blocker_users");
 
@@ -31,7 +32,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         documento,
         nombre,
         contrasena: hashed,
-        email: `${documento}@${process.env.EMAIL_DOMAIN || "hub.ai"}`,
+        email: `${documento}@${env.EMAIL_DOMAIN}`,
         rol: rol || "user",
       })
       .returning();

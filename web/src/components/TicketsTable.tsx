@@ -1,12 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-const STATUS_COLORS: Record<string, string> = {
-  "En Proceso": "#FBBF24",
-  Pendiente: "#3B82F6",
-  Resuelto: "#22C55E",
-};
+import { STATUS_DOTS } from "@/lib/styles";
 
 function mapStatus(estado: string): string {
   const map: Record<string, string> = {
@@ -93,10 +88,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-2 h-2 rounded-full shrink-0 bg-gray-300"
-                      style={{
-                        backgroundColor: STATUS_COLORS[ticket.estado],
-                      }}
+                      className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOTS[ticket.estado] || "bg-gray-300"}`}
                     />
                     <span className="text-[13px] text-gray-700 dark:text-gray-300 font-inter">
                       {ticket.estado}

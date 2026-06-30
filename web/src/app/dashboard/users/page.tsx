@@ -10,6 +10,7 @@ import EditUserModal from "@/components/EditUserModal";
 import CreateUserModal from "@/components/CreateUserModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@hub/shared/types/user";
 
@@ -41,7 +42,7 @@ export default function UsersPage() {
       .then((data) => {
         if (Array.isArray(data?.items)) setUsers(data.items);
       })
-      .catch((err) => console.error("Users:", err instanceof Error ? err.message : err))
+      .catch((err) => logger.error("Error fetching users", { error: err instanceof Error ? err.message : err }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,7 +58,7 @@ export default function UsersPage() {
       await api.patch(`/users/${user.id}/toggle-status`);
       fetchUsers();
     } catch (err) {
-      console.error("Toggle status:", err instanceof Error ? err.message : err);
+      logger.error("Toggle status error", { error: err instanceof Error ? err.message : err });
     } finally {
       setActionLoading(null);
     }

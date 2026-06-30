@@ -28,28 +28,28 @@ export default function TicketSummaryCards({
       icon: Ticket,
       title: "Total Tickets",
       value: loading ? "..." : total.toLocaleString(),
-      iconBg: "#F3F0FF",
+      iconBg: "bg-[#F3F0FF]",
       iconColor: "#25207E",
     },
     {
       icon: AlertCircle,
       title: "Pendientes",
       value: loading ? "..." : pendientes.toLocaleString(),
-      iconBg: "#FEE2E2",
+      iconBg: "bg-red-100",
       iconColor: "#DC2626",
     },
     {
       icon: Loader,
       title: "En Proceso",
       value: loading ? "..." : enProceso.toLocaleString(),
-      iconBg: "#F3F0FF",
+      iconBg: "bg-[#F3F0FF]",
       iconColor: "#25207E",
     },
     {
       icon: CheckCircle,
       title: "Resueltos",
       value: loading ? "..." : resueltos.toLocaleString(),
-      iconBg: "#F3F0FF",
+      iconBg: "bg-[#F3F0FF]",
       iconColor: "#25207E",
     },
   ];
@@ -62,8 +62,7 @@ export default function TicketSummaryCards({
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-[18px] min-h-[120px] flex flex-col justify-center gap-2.5"
         >
           <div
-            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
-            style={{ backgroundColor: card.iconBg }}
+            className={`w-[38px] h-[38px] rounded-[10px] flex items-center justify-center ${card.iconBg}`}
           >
             <card.icon size={19} color={card.iconColor} strokeWidth={2} />
           </div>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "./logger";
 
 const API_URL =
   typeof window !== "undefined" && window.location.hostname !== "localhost"
@@ -73,7 +74,7 @@ async function request<T>(
       credentials: "include",
     });
   } catch (err) {
-    console.error("Network error:", endpoint, err);
+    logger.error("Network error", { endpoint, error: (err as Error).message });
     throw new Error(
       `No se pudo conectar con el servidor (${API_URL}). Verifica que la API esté corriendo.`
     );
@@ -89,7 +90,7 @@ async function request<T>(
           credentials: "include",
         });
       } catch (err) {
-        console.error("Network error after refresh:", endpoint, err);
+        logger.error("Network error after refresh", { endpoint, error: (err as Error).message });
         throw new Error("Error de conexión");
       }
     }
@@ -107,7 +108,7 @@ async function request<T>(
   try {
     data = await res.json();
   } catch {
-    console.error("JSON parse error:", endpoint, res.status);
+    logger.error("JSON parse error", { endpoint, status: res.status });
     throw new Error(`Respuesta inesperada del servidor (${res.status})`);
   }
 
@@ -137,23 +138,15 @@ async function request<T>(
       return schema.parse(data);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        console.error(`Validation error for ${endpoint}:`, err.issues);
+        logger.error("Validation error", { endpoint, issues: err.issues });
         throw new Error(`Respuesta inválida del servidor (${endpoint})`);
       }
       throw err;
     }
   }
 
-  if (data === null || data === undefined) {
-    throw new Error(
-      `Respuesta inválida: ${endpoint} retornó ${data === null ? "null" : "undefined"}`
-    );
-  }
-
-  if (typeof data !== "object" || data === null) {
-    throw new Error(
-      `Respuesta inválida: ${endpoint} retornó un tipo inesperado (${typeof data})`
-    );
+  if (process.env.NODE_ENV !== "production") {
+    logger.warn(`Respuesta sin schema de validación para ${endpoint}`);
   }
 
   return data as T;

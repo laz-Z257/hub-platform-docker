@@ -3,14 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import type { ApiUser } from "@hub/shared/types/user";
-
-const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-  admin: { bg: "#F3F0FF", color: "#25207E" },
-  asesor: { bg: "#FEF3C7", color: "#D97706" },
-  user: { bg: "#DBEAFE", color: "#2563EB" },
-  tecnico: { bg: "#DBEAFE", color: "#1D4ED8" },
-};
+import { ROLE_BADGES } from "@/lib/styles";
 
 function getInitials(user: ApiUser): string {
   const name = hasName(user) ? user.nombre : user.documento;
@@ -58,7 +53,7 @@ export default function UserManagement() {
       })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : "Error al cargar usuarios";
-        console.error("UserManagement:", msg);
+        logger.error("Error loading users", { error: msg });
         setError(msg);
       })
       .finally(() => setLoading(false));
@@ -125,11 +120,7 @@ export default function UserManagement() {
                         {displayName(user)}
                       </span>
                       <span
-                        className="inline-block px-2 py-[2px] rounded-full text-[10px] font-semibold font-inter bg-gray-100 text-gray-500"
-                        style={{
-                          backgroundColor: ROLE_COLORS[user.rol]?.bg,
-                          color: ROLE_COLORS[user.rol]?.color,
-                        }}
+                        className={`inline-block px-2 py-[2px] rounded-full text-[10px] font-semibold font-inter ${ROLE_BADGES[user.rol] || "bg-gray-100 text-gray-500"}`}
                       >
                       {user.rol.toUpperCase()}
                     </span>

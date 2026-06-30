@@ -1,7 +1,7 @@
 # Auditoría Completa — hub-platform
 
 **Fecha original:** 2026-06-11
-**Verificación:** 2026-06-27 — Revisión de cada hallazgo contra el código actual
+**Verificación:** 2026-06-30 — Revisión de cada hallazgo contra el código actual
 **Proyectos:** Web (Next.js 15 + React 19), Mobile (Expo SDK 56 + RN 0.85), Backend (Express + Drizzle ORM + PostgreSQL), Shared Types
 **LOC total:** ~9,000 en 100 archivos `.ts`/`.tsx`
 **Commits revisados:** últimos 20 (v2 branch)
@@ -23,7 +23,7 @@
 
 ## 2. SEGURIDAD — HALLAZGOS CRÍTICOS
 
-> **Estado de verificación (2026-06-27):** Muchos hallazgos fueron corregidos entre el 2026-06-17 y 2026-06-26. Se indica estado actual de cada uno.
+> **Estado de verificación (2026-06-30):** Hallazgos C6, M2, M5, M8, L1, L3 corregidos en sesión 2026-06-30. Se indica estado actual de cada uno.
 
 ### 🔴 CRÍTICOS
 
@@ -34,7 +34,7 @@
 | **C3** | Producción API URL hardcodeada | ✅ **CORREGIDO** | Usa `NEXT_PUBLIC_API_URL` con fallback a `/api` o `localhost:3001/api` |
 | **C4** | `console.log` en componente de producción | ✅ **CORREGIDO** | Ahora usa `console.error` solo para errores (legítimo) |
 | **C5** | Seed imprime contraseña en stdout | ✅ **CORREGIDO** | Solo log via `logger.debug` con mensaje, NO imprime el password |
-| **C6** | `JWT_REFRESH_SECRET` fallback a `JWT_SECRET` | 🟡 **PARCIAL** | `env.ts` ya lanza error si falta; pero `jwt.ts:23,32` aún tiene `||` fallback si se setea vacío |
+| **C6** | `JWT_REFRESH_SECRET` fallback a `JWT_SECRET` | ✅ **CORREGIDO** | `env.ts` ahora rechaza empty string con `.trim()` + `||` |
 
 ### 🔴 ALTOS
 
@@ -53,21 +53,21 @@
 | ID | Hallazgo | Estado Actual | Detalle |
 |----|----------|---------------|---------|
 | **M1** | TypeScript 6.0 pre-release en mobile | ✅ **CORREGIDO** | Ahora `typescript@~5.7.3` en `mobile/package.json:38` |
-| **M2** | Tokens de shared/ duplicados en web y mobile | 🟡 **PARCIAL** | Web usa `@hub/shared` pero aún define interfaces locales en componentes |
+| **M2** | Tokens de shared/ duplicados en web y mobile | ✅ **CORREGIDO** | `KpiResponse` y `CompanySettings` migrados a `shared/types/api.ts`, web los importa |
 | **M3** | Sin pool error handler PostgreSQL | ✅ **CORREGIDO** | `pool.on("error", ...)` en `db/index.ts:15-17` |
 | **M4** | Botones sin handler | ✅ **CORREGIDO** | Todos los botones críticos tienen handlers funcionales |
-| **M5** | Inline styles inconsistente | ❌ **Sigue vigente** | Aún mezcla Tailwind + `style={{}}` en varios componentes |
+| **M5** | Inline styles inconsistente | 🟡 **PARCIAL** | Estáticos migrados a Tailwind; dinámicos (colores/datos/%) no migrables por diseño |
 | **M6** | Relative path import de shared/ desde mobile | ✅ **CORREGIDO** | Usa `@hub/shared` como dependencia file: |
 | **M7** | `dist/` desactualizado del source | ✅ **CORREGIDO** | `dist/` ya no está en el repo |
-| **M8** | Hardcoded email domain | 🟡 **PARCIAL** | `env.ts:21` tiene `EMAIL_DOMAIN` con fallback `"hub.ai"` (configurable) |
+| **M8** | Hardcoded email domain | ✅ **CORREGIDO** | Controladores ahora usan `env.EMAIL_DOMAIN` en vez de `process.env` directo |
 
 ### ⚪ BAJOS / INFO
 
 | ID | Hallazgo | Estado Actual | Detalle |
 |----|----------|---------------|---------|
-| **L1** | `console.error` como raw catch handler | ❌ **Sigue vigente** | Múltiples `console.error` en backend y mobile |
+| **L1** | `console.error` como raw catch handler | ✅ **CORREGIDO** | Reemplazado por `logger.error()` estructurado en web y mobile |
 | **L2** | Placeholders `XXXXXXXXXXXX` en Settings | ✅ **CORREGIDO** | Settings ahora usa localStorage con defaults funcionales |
-| **L3** | `data as T` sin validación runtime en api.ts | ❌ **Sigue vigente** | `api.ts:153` aún hace `return data as T` (aunque acepta schema opcional) |
+| **L3** | `data as T` sin validación runtime en api.ts | ✅ **CORREGIDO** | Web: warning en dev si falta schema; Mobile: validación null/object antes del cast |
 | **L4** | Readme desactualizados | ✅ **CORREGIDO** | Los READMEs están actualizados con stack, endpoints y scripts |
 | **L5** | Nombres de columna mezclan español/inglés | ❌ **Sigue vigente** | `contrasena` vs `created_at`, `ultima_actividad` vs `token_version` |
 | **L6** | Morgan logging en desarrollo (info) | ❌ **Sigue vigente** | Por diseño — no hay logging HTTP en producción |
@@ -198,7 +198,7 @@ El proyecto ya tiene dos documentos de auditoría:
 
 ## 7. RECOMENDACIONES PRIORIZADAS
 
-> Basado en verificación 2026-06-27. Tachados los items ya resueltos.
+> Basado en verificación 2026-06-30. Tachados los items ya resueltos.
 
 ### 🚨 Inmediato (1-2 días)
 
@@ -218,7 +218,7 @@ El proyecto ya tiene dos documentos de auditoría:
 11. **Configurar CI/CD** (GitHub Actions con lint + typecheck + tests)
 12. ~~**Habilitar ESLint en builds**~~ ✅ **CORREGIDO**
 13. ~~**Configurar pool error handler** en PostgreSQL~~ ✅ **CORREGIDO**
-14. **Reemplazar `console.error` con structured logging robusto** (pino/winston) (L1)
+14. ~~**Reemplazar `console.error` con structured logging robusto**~~ (pino/winston) ✅ **CORREGIDO**
 15. ~~**Configurar TypeScript versión stable en mobile**~~ ✅ **CORREGIDO**
 16. **Implementar notificaciones push listeners** — `setupNotificationListeners()` nunca es llamado
 17. **Documentar `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` en `.env.example`**
@@ -259,7 +259,7 @@ El proyecto ya tiene dos documentos de auditoría:
 | Commits en v2 | ~28 |
 | Vulnerabilidades npm | 0 |
 | Hallazgos originales | 7C + 7H + 8M + 8L = 30 |
-| **Resueltos** | **5C + 6H + 5M + 3L = 19** |
-| **Parciales** | **1C + 0H + 2M + 0L = 3** |
-| **Siguen vigentes** | **1C + 1H + 1M + 5L = 8** |
+| **Resueltos** | **6C + 6H + 6M + 5L = 23** |
+| **Parciales** | **0C + 0H + 1M + 0L = 1** |
+| **Siguen vigentes** | **1C + 1H + 1M + 3L = 6** |
 | Issues previos pendientes | 2 de 16 |

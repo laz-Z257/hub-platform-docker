@@ -13,21 +13,21 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
       icon: Users,
       title: "Total Usuarios",
       value: loading ? "..." : totalUsers.toLocaleString(),
-      iconBg: "#F3F0FF",
+      iconBg: "bg-[#F3F0FF]",
       iconColor: "#25207E",
     },
     {
       icon: Zap,
       title: "Administradores",
       value: loading ? "..." : adminCount.toLocaleString(),
-      iconBg: "#ECFDF5",
+      iconBg: "bg-emerald-50",
       iconColor: "#22C55E",
     },
     {
       icon: Mail,
       title: "Usuarios",
       value: loading ? "..." : userCount.toLocaleString(),
-      iconBg: "#F3F0FF",
+      iconBg: "bg-[#F3F0FF]",
       iconColor: "#25207E",
     },
   ];
@@ -40,8 +40,7 @@ export default function UserSummaryCards({ totalUsers, adminCount, userCount, lo
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-[18px] min-h-[110px] flex flex-col justify-center gap-2.5"
         >
           <div
-            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
-            style={{ backgroundColor: card.iconBg }}
+            className={`w-[38px] h-[38px] rounded-[10px] flex items-center justify-center ${card.iconBg}`}
           >
             <card.icon size={19} color={card.iconColor} strokeWidth={2} />
           </div>
