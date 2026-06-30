@@ -10,3 +10,7 @@ web-build/
 *.key
 *.log
 .git/
+backend/
+web/
+ota-server/
+mobile/output/
