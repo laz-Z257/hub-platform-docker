@@ -5,12 +5,12 @@ dotenv.config();
 export const env = {
   DATABASE_URL: process.env.DATABASE_URL!,
   JWT_SECRET:
-    process.env.JWT_SECRET ??
+    (process.env.JWT_SECRET || "").trim() ||
     (() => {
       throw new Error("JWT_SECRET es requerida. Define la variable de entorno.");
     })(),
   JWT_REFRESH_SECRET:
-    process.env.JWT_REFRESH_SECRET ??
+    (process.env.JWT_REFRESH_SECRET || "").trim() ||
     (() => {
       throw new Error("JWT_REFRESH_SECRET es requerida. Define la variable de entorno.");
     })(),

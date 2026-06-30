@@ -1,6 +1,7 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { api } from "./api";
+import { logger } from "./logger";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -38,7 +39,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     await api.post("/push/register", { token });
     return token;
   } catch (err) {
-    console.error("Error registering push token:", err);
+    logger.error("Error registering push token", { error: (err as Error).message });
     return null;
   }
 }

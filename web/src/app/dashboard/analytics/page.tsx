@@ -14,15 +14,8 @@ import {
 import AnalyticsMetrics from "@/components/AnalyticsMetrics";
 import AnalyticsFilters, { type FilterPreset } from "@/components/AnalyticsFilters";
 import { api } from "@/lib/api";
-
-interface KpiResponse {
-  totalIncidentes: number;
-  pendientes: number;
-  enProceso: number;
-  resueltos: number;
-  altaUrgencia: number;
-  usuariosActivos: number;
-}
+import { logger } from "@/lib/logger";
+import type { KpiResponse } from "@hub/shared/types/api";
 
 function formatDateRange(start: string, end: string): string {
   const s = new Date(start + "T00:00:00");
@@ -87,10 +80,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     api.get<string[]>("/incidents/agentes")
       .then(setAgentes)
-      .catch((err) => console.error("Error fetching agentes:", err));
+      .catch((err) => logger.error("Error fetching agentes", { error: (err as Error).message }));
     api.get<{ nombre: string }[]>("/puntos-venta")
       .then((list) => setAllPvNames(list.map((p) => p.nombre)))
-      .catch((err) => console.error("Error fetching puntos-venta:", err));
+      .catch((err) => logger.error("Error fetching puntos-venta", { error: (err as Error).message }));
   }, []);
 
   function fetchData(start: string, end: string, agente?: string) {
@@ -109,7 +102,7 @@ export default function AnalyticsPage() {
         ]);
       })
       .catch((err) => {
-        console.error("Analytics KPIs:", err instanceof Error ? err.message : err);
+        logger.error("Analytics KPIs error", { error: err instanceof Error ? err.message : err });
       });
 
     api
@@ -133,7 +126,7 @@ export default function AnalyticsPage() {
         }
       })
       .catch((err) => {
-        console.error("Analytics stats:", err instanceof Error ? err.message : err);
+        logger.error("Analytics stats error", { error: err instanceof Error ? err.message : err });
       });
   }
 

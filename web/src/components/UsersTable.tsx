@@ -3,18 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 import type { ApiUser } from "@hub/shared/types/user";
-
-const ROLE_STYLES: Record<string, { bg: string; color: string }> = {
-  admin: { bg: "#25207E", color: "#FFFFFF" },
-  tecnico: { bg: "#1D4ED8", color: "#FFFFFF" },
-  asesor: { bg: "#FEF3C7", color: "#D97706" },
-  user: { bg: "#DCCFFF", color: "#6D4AFF" },
-};
-
-const ESTADO_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
-  activo: { bg: "#DCFCE7", color: "#16A34A", dot: "#22C55E" },
-  bloqueado: { bg: "#FEE2E2", color: "#DC2626", dot: "#EF4444" },
-};
+import { ROLE_BADGES, ESTADO_BADGES } from "@/lib/styles";
 
 function getInitials(user: ApiUser): string {
   const name = hasName(user) ? user.nombre : user.documento;
@@ -153,8 +142,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
 
           <div className="py-3 px-2">
             <span
-              className="inline-block px-3 py-[3px] rounded-full text-[11px] font-semibold font-inter bg-gray-200 text-gray-500"
-              style={{ backgroundColor: ROLE_STYLES[user.rol]?.bg, color: ROLE_STYLES[user.rol]?.color }}
+              className={`inline-block px-3 py-[3px] rounded-full text-[11px] font-semibold font-inter ${ROLE_BADGES[user.rol] || "bg-gray-200 text-gray-500"}`}
             >
               {user.rol.toUpperCase()}
             </span>
@@ -163,12 +151,10 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
           <div className="py-3 px-2">
             <div className="flex items-center gap-1.5">
               <div
-                className="w-2 h-2 rounded-full shrink-0 bg-gray-400"
-                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.dot }}
+                className={`w-2 h-2 rounded-full shrink-0 ${ESTADO_BADGES[user.estado]?.dot || "bg-gray-400"}`}
               />
               <span
-                className="inline-block px-2 py-[2px] rounded-full text-[11px] font-medium font-inter bg-gray-100 text-gray-500"
-                style={{ backgroundColor: ESTADO_STYLES[user.estado]?.bg, color: ESTADO_STYLES[user.estado]?.color }}
+                className={`inline-block px-2 py-[2px] rounded-full text-[11px] font-medium font-inter ${ESTADO_BADGES[user.estado]?.bg || "bg-gray-100"} ${ESTADO_BADGES[user.estado]?.text || "text-gray-500"}`}
               >
                 {user.estado === "activo" ? "Activo" : "Bloqueado"}
               </span>

@@ -7,15 +7,7 @@ import TicketsTable from "@/components/TicketsTable";
 import UserManagement from "@/components/UserManagement";
 import { api } from "@/lib/api";
 import type { Incident } from "@hub/shared/types/incident";
-
-interface KpiResponse {
-  totalIncidentes: number;
-  pendientes: number;
-  enProceso: number;
-  resueltos: number;
-  altaUrgencia: number;
-  usuariosActivos: number;
-}
+import type { KpiResponse } from "@hub/shared/types/api";
 
 type IncidentItem = Pick<Incident, "id" | "nombre" | "descripcion" | "urgencia" | "estado" | "created_at">;
 

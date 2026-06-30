@@ -8,6 +8,7 @@ import {
   saveCache,
   getCache,
 } from "./storage";
+import { logger } from "./logger";
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || "https://hub-platform-api.onrender.com/api";
@@ -47,7 +48,7 @@ export async function clearToken() {
     await deleteToken();
     await deleteUser();
   } catch (err) {
-    console.error("clearToken error:", err);
+    logger.error("clearToken error", { error: (err as Error).message });
   }
 }
 
@@ -114,7 +115,7 @@ async function request<T>(
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
     }
-    console.error("Network error:", endpoint, err);
+    logger.error("Network error", { endpoint, error: (err as Error).message });
     if (isGet) {
       const cached = await getCache<T>(endpoint);
       if (cached) return cached;
@@ -142,7 +143,7 @@ async function request<T>(
         if (err instanceof DOMException && err.name === "AbortError") {
           throw new Error("La solicitud tardó demasiado. Intenta de nuevo.");
         }
-        console.error("Network error after refresh:", endpoint, err);
+        logger.error("Network error after refresh", { endpoint, error: (err as Error).message });
         if (isGet) {
           const cached = await getCache<T>(endpoint);
           if (cached) return cached;
@@ -165,7 +166,7 @@ async function request<T>(
   try {
     data = await res.json();
   } catch {
-    console.error("JSON parse error:", endpoint, res.status);
+    logger.error("JSON parse error", { endpoint, status: res.status });
     throw new Error(`Respuesta inesperada del servidor (${res.status})`);
   }
 
@@ -190,6 +191,13 @@ async function request<T>(
 
   if (isGet) {
     saveCache(endpoint, data);
+  }
+
+  if (data === null || data === undefined) {
+    throw new Error(`Respuesta inválida: ${endpoint} retornó ${data === null ? "null" : "undefined"}`);
+  }
+  if (typeof data !== "object") {
+    throw new Error(`Respuesta inválida: ${endpoint} retornó un tipo inesperado (${typeof data})`);
   }
 
   return data as T;
