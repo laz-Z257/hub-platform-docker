@@ -19,5 +19,18 @@
     --brand: #818CF8;
     --brand-light: #A78BFA;
     --brand-bg: rgba(129, 140, 248, 0.1);
+    color: #f3f4f6;
+  }
+
+  .dark .text-gray-100,
+  .dark .text-gray-200,
+  .dark .text-gray-300,
+  .dark .text-gray-400,
+  .dark .text-gray-500,
+  .dark .text-gray-600,
+  .dark .text-gray-700,
+  .dark .text-gray-800,
+  .dark .text-gray-900 {
+    color: #f3f4f6;
   }
 }

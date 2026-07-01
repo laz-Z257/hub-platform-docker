@@ -14,20 +14,15 @@ import type { Incident } from "@hub/shared/types/incident";
 
 type IncidentItem = Incident;
 
-function getRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const diff = now - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-
-  if (mins < 1) return "Ahora";
-  if (mins < 60) return `Hace ${mins} min`;
-  if (hours < 24) {
-    const d = new Date(dateStr);
-    return `Hoy, ${d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`;
-  }
+function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
-  return `Ayer, ${d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`;
+  return d.toLocaleDateString("es-CO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDescription(desc: string): string {
@@ -288,7 +283,8 @@ export default function TicketsPage() {
             : inc.estado === "en_proceso"
               ? "En Proceso"
               : "Resuelto",
-        updatedAt: getRelativeTime(inc.updated_at),
+        createdAt: formatDate(inc.created_at),
+        fechaCierre: inc.fecha_cierre ? formatDate(inc.fecha_cierre) : null,
         agente: inc.agente,
       }));
     },

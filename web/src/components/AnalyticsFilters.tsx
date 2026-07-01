@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Download } from "lucide-react";
 import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
@@ -273,9 +274,10 @@ async function handleExport(
     { header: "Descripción", key: "desc", width: 50 },
     { header: "Solución", key: "sol", width: 50 },
     { header: "Creado", key: "creado", width: 18 },
+    { header: "Cierre", key: "cierre", width: 18 },
   ];
   const h2 = ws2.getRow(1);
-  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
+  ["A", "B", "C", "D", "E", "F", "G", "H", "I"].forEach((col) => Object.assign(h2.getCell(col), headerStyle("FF25207E")));
   incidents.forEach((inc, i) => {
     const row = ws2.getRow(2 + i);
     row.getCell("A").value = inc.documento;
@@ -286,9 +288,10 @@ async function handleExport(
     row.getCell("F").value = inc.descripcion;
     row.getCell("G").value = inc.solucion || "";
     row.getCell("H").value = fmtDateTime(inc.created_at);
-    ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
+    row.getCell("I").value = inc.fecha_cierre ? fmtDateTime(inc.fecha_cierre) : "—";
+    ["A", "B", "C", "D", "E", "F", "G", "H", "I"].forEach((col) => Object.assign(row.getCell(col), cellBorder));
   });
-  ws2.autoFilter = { from: "A1", to: `H${incidents.length + 1}` };
+  ws2.autoFilter = { from: "A1", to: `I${incidents.length + 1}` };
 
   // ── Guardar ──
   const buffer = await wb.xlsx.writeBuffer();
@@ -301,7 +304,7 @@ async function handleExport(
   URL.revokeObjectURL(url);
 }
 
-export default function AnalyticsFilters(props: AnalyticsFiltersProps) {
+export default memo(function AnalyticsFilters(props: AnalyticsFiltersProps) {
   const {
     filter,
     showDatePicker,
@@ -368,4 +371,4 @@ export default function AnalyticsFilters(props: AnalyticsFiltersProps) {
       )}
     </div>
   );
-}
+});

@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-07-01 — Chat inteligente, bloqueo con mensaje original, scroll chat, modo oscuro, optimización analytics
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Detección de intención en chat** | `chat.controller.ts` | Keywords y `PROBLEM_OPTIONS` (7 categorías) detectan la intención del usuario. Respuesta incluye `suggestedActions` con `{ label, action }`. |
+| **Respuestas formales sin emojis** | `chat.controller.ts`, `incidents.controller.ts` | Mensajes sin emojis ni negritas, tono formal. `**Resuelto**` se muestra en bold en mobile. |
+| **Dockerfile: npm ci → npm install** | `Dockerfile` | Cambio a `npm install` para evitar errores de lockfile mismatch. |
+
+### Web Dashboard
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Modo oscuro completo** | `globals.css` | Clases `.dark` sobreescriben todos los textos `text-gray-*` a `#f3f4f6`. Variables CSS `--brand` adaptadas al tema oscuro. |
+| **Scroll horizontal en chart** | `AnalyticsCharts.tsx` | TrafficChart con ancho dinámico (`80px × items`), scroll horizontal en fechas. |
+| **Loading skeleton en charts** | `analytics/page.tsx` | `ChartSkeleton` (pulse animation) mientras cargan los datos, evita layout shift. |
+| **Memoización de handlers** | `analytics/page.tsx` | `fetchData`, `handleFilterChange`, `handleAgentChange` envueltos en `useCallback`. `Promise.allSettled` para llamadas en paralelo. |
+| **React.memo en gráficos** | `AnalyticsCharts.tsx`, `AnalyticsFilters.tsx` | `memo()` en `TrafficChart`, `DonutChart`, `StatusBarChart` y `AnalyticsFilters` para evitar re-renders innecesarios. |
+| **Barras apiladas en StatusBarChart** | `AnalyticsCharts.tsx` | `stackId="a"` + `maxBarSize={120}` para columna única con 3 colores en vez de 3 barritas delgadas. |
+| **Fix stale closure en statusData** | `analytics/page.tsx` | `name: agente || "General"` usa el parámetro en vez de `selectedAgente` del closure. |
+
+### Mobile App (Android)
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Suggested actions en chat** | `BotMessageCard.tsx`, `ChatScreen.tsx` | Chips tappables con acciones sugeridas. `handleSuggestedAction` envía label como display text. |
+| **Texto bold parseado** | `BotMessageCard.tsx` | `**texto**` se renderiza en negrita con `Inter_700Bold`, se eliminan los asteriscos. |
+| **Mensaje original de bloqueo** | `api.ts`, `AuthContext.tsx`, `LoginScreen.tsx` | `originalMsg` preserva el mensaje del backend. LoginScreen lo muestra en rojo. `onBlocked` solo se dispara si había token activo. |
+| **Botón scroll to bottom** | `ChatScreen.tsx` | Botón flotante `ChevronDown` aparece al scrollear arriba (>150px). |
+
+---
+
 ## 2026-06-17 — Bloqueo usuarios, notificaciones, push, columna bloqueado por, ayuda rápida, calificaciones
 
 ### Backend

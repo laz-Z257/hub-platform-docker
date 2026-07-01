@@ -215,7 +215,7 @@ export async function updateIncident(
     // Send chat notification when ticket is resolved
     if (estado === "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
-      const botMessage = `✅ Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solución:** ${solucion}\n\n` : ""}Si necesitas más ayuda, no dudes en escribirnos. ¡Gracias por contactarnos!`;
+      const botMessage = `Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solucion:** ${solucion}\n\n` : ""}Si necesita mas ayuda, contactenos.`;
 
       await db.insert(messages).values({
         user_id: updated.user_id,
