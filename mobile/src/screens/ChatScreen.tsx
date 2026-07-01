@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Ticket, ArrowRight } from "lucide-react-native";
+import { Ticket, ArrowRight, ChevronDown } from "lucide-react-native";
 import ChatHeader from "../components/ChatHeader";
 import BotMessageCard from "../components/BotMessageCard";
 import ChatBubble from "../components/ChatBubble";
@@ -23,11 +23,17 @@ import { api } from "../services/api";
 import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
 
+interface SuggestedAction {
+  label: string;
+  action: string;
+}
+
 interface Message {
   id: string;
   type: "bot-card" | "user" | "date" | "typing";
   text?: string;
   timestamp: string;
+  suggestedActions?: SuggestedAction[];
 }
 
 const INITIAL_MESSAGES: Message[] = [
@@ -68,6 +74,7 @@ export default function ChatScreen() {
   const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
   const [alreadyRated, setAlreadyRated] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   useEffect(() => {
     if (initializing) return;
@@ -79,8 +86,12 @@ export default function ChatScreen() {
     const welcome: Message = {
       id: "bot-card-welcome",
       type: "bot-card",
-      text: "¡Hola! Bienvenido de nuevo. Soy tu Soporte Administrativo, ¿en qué puedo ayudarte hoy?",
+      text: "Bienvenido. Soy el asistente de soporte. Seleccione una opcion para comenzar:",
       timestamp: getTimeString(),
+      suggestedActions: [
+        { label: "Reportar un problema", action: "menu_principal" },
+        { label: "Ver mi historial", action: "ir_historial" },
+      ],
     };
 
     api
@@ -125,11 +136,11 @@ export default function ChatScreen() {
       });
   }, [initializing, user, router]);
 
-  const handleSend = useCallback(async (text: string) => {
+  const handleSend = useCallback(async (text: string, displayText?: string) => {
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       type: "user",
-      text,
+      text: displayText || text,
       timestamp: getTimeString(),
     };
 
@@ -140,6 +151,7 @@ export default function ChatScreen() {
       const data = await api.post<{
         userMessage: { id: string; content: string };
         botMessage: { id: string; content: string };
+        suggestedActions?: SuggestedAction[];
       }>("/chat/message", { content: text });
 
       setTyping(false);
@@ -149,6 +161,7 @@ export default function ChatScreen() {
         type: "bot-card",
         text: data.botMessage.content,
         timestamp: getTimeString(),
+        suggestedActions: data.suggestedActions,
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -159,13 +172,40 @@ export default function ChatScreen() {
       const errorMsg: Message = {
         id: `bot-card-${Date.now()}`,
         type: "bot-card",
-        text: "Lo siento, hubo un error. ¿Necesitas ayuda con algo más?",
+        text: "Ocurrio un error al procesar el mensaje. Seleccione una opcion:",
         timestamp: getTimeString(),
+        suggestedActions: [
+          { label: "Volver al menu principal", action: "menu_principal" },
+          { label: "Reportar incidente", action: "reportar" },
+        ],
       };
 
       setMessages((prev) => [...prev, errorMsg]);
     }
   }, []);
+
+  const handleSuggestedAction = useCallback(
+    (action: string, label: string) => {
+      switch (action) {
+        case "reportar":
+          router.push("/reportar");
+          break;
+        case "ir_historial":
+          router.push("/historial");
+          break;
+        case "ver_faq":
+          setShowFaq(true);
+          break;
+        case "menu_principal":
+          handleSend(action, label);
+          break;
+        default:
+          handleSend(action, label);
+          break;
+      }
+    },
+    [router, handleSend]
+  );
 
   const handleSubmenuPress = useCallback(
     (label: string) => {
@@ -257,6 +297,8 @@ export default function ChatScreen() {
             timestamp={item.timestamp}
             onSubmenuPress={handleSubmenuPress}
             onMenuPress={handleMenuPress}
+            onSuggestedAction={handleSuggestedAction}
+            suggestedActions={item.suggestedActions}
             isResolvedNotification={isResolved}
             alreadyRated={alreadyRated}
             onRateService={async () => {
@@ -300,7 +342,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, handleSend, latestIncident, alreadyRated]
+    [handleSubmenuPress, handleSend, handleSuggestedAction, latestIncident, alreadyRated]
   );
 
   const msgList = typing
@@ -346,6 +388,12 @@ export default function ChatScreen() {
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
             }
+            onScroll={(e) => {
+              const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+              const distanceFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
+              setShowScrollBtn(distanceFromBottom > 150);
+            }}
+            scrollEventThrottle={200}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               latestIncident ? (
@@ -444,6 +492,31 @@ export default function ChatScreen() {
             <FaqModal onClose={() => setShowFaq(false)} />
           </View>
         </Modal>
+
+        {showScrollBtn && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            style={{
+              position: "absolute",
+              bottom: 72,
+              right: 16,
+              backgroundColor: "#201A7A",
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <ChevronDown size={22} color="#FFFFFF" strokeWidth={2.5} />
+          </TouchableOpacity>
+        )}
 
         <ChatInput onSend={handleSend} />
 

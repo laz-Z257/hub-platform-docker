@@ -119,6 +119,7 @@ async function request<T>(
         : "";
     if (msg.includes("bloqueado")) {
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        alert("Su cuenta ha sido bloqueada. Contacte al administrador.");
         window.location.href = "/login";
       }
       throw new Error("Usuario bloqueado");

@@ -1,12 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import ExpandableMenu from "./ExpandableMenu";
+
+interface SuggestedAction {
+  label: string;
+  action: string;
+}
+
+function parseBold(text: string): { text: string; bold: boolean }[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p) => {
+    if (p.startsWith("**") && p.endsWith("**")) {
+      return { text: p.slice(2, -2), bold: true };
+    }
+    return { text: p.replace(/\*/g, ""), bold: false };
+  });
+}
 
 interface BotMessageCardProps {
   message: string;
   timestamp: string;
   onSubmenuPress?: (label: string) => void;
   onMenuPress?: (label: string) => void;
+  onSuggestedAction?: (action: string, label: string) => void;
+  suggestedActions?: SuggestedAction[];
   isResolvedNotification?: boolean;
   onRateService?: () => void;
   alreadyRated?: boolean;
@@ -17,6 +34,8 @@ export default function BotMessageCard({
   timestamp,
   onSubmenuPress,
   onMenuPress,
+  onSuggestedAction,
+  suggestedActions,
   isResolvedNotification,
   onRateService,
   alreadyRated,
@@ -49,10 +68,50 @@ export default function BotMessageCard({
             marginBottom: 4,
           }}
         >
-          {message}
+          {useMemo(() => parseBold(message), [message]).map((seg, i) => (
+            <Text
+              key={i}
+              style={seg.bold ? { fontFamily: "Inter_700Bold", fontWeight: "700" } : undefined}
+            >
+              {seg.text}
+            </Text>
+          ))}
         </Text>
 
-        {isResolvedNotification && !showMenu ? (
+        {suggestedActions && suggestedActions.length > 0 && (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            {suggestedActions.map((item) => (
+              <TouchableOpacity
+                key={item.action}
+                onPress={() => onSuggestedAction?.(item.action, item.label)}
+                activeOpacity={0.8}
+                style={{
+                  backgroundColor: "#F3F0FF",
+                  borderRadius: 8,
+                  height: 44,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#DCD4FF",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#201A7A",
+                    fontSize: 14,
+                    fontFamily: "Inter_400Regular",
+                    fontWeight: "500",
+                  }}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {isResolvedNotification && !showMenu && (!suggestedActions || suggestedActions.length === 0) ? (
           <View style={{ marginTop: 12, gap: 8 }}>
             {alreadyRated ? (
               <View
@@ -68,7 +127,7 @@ export default function BotMessageCard({
                 }}
               >
                 <Text style={{ color: "#6B7280", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
-                  ✅ Ya calificado
+                  Ya calificado
                 </Text>
               </View>
             ) : (
@@ -85,7 +144,7 @@ export default function BotMessageCard({
                 }}
               >
                 <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
-                  ⭐ Puntuar servicio
+                  Puntuar servicio
                 </Text>
               </TouchableOpacity>
             )}
@@ -104,13 +163,13 @@ export default function BotMessageCard({
               }}
             >
               <Text style={{ color: "#201A7A", fontSize: 15, fontFamily: "Inter_400Regular", fontWeight: "500" }}>
-                📝 Hacer otra petición
+                Hacer otra peticion
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : !suggestedActions || suggestedActions.length === 0 ? (
           <ExpandableMenu onSubmenuPress={onSubmenuPress} onMenuPress={onMenuPress} />
-        )}
+        ) : null}
       </View>
 
       <Text

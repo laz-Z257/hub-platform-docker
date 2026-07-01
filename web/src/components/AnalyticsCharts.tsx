@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   AreaChart,
   Area,
@@ -39,51 +40,58 @@ interface TrafficChartProps {
   data: AreaDataPoint[];
 }
 
-export function TrafficChart({ data }: TrafficChartProps) {
+export const TrafficChart = memo(function TrafficChart({ data }: TrafficChartProps) {
   const { theme } = useTheme();
-  const tickFill = theme === "dark" ? "#9CA3AF" : "#9CA3AF";
+  const tickFill = theme === "dark" ? "#f3f4f6" : "#9CA3AF";
   const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
+  const minWidth = 80;
+  const chartWidth = Math.max(data.length * minWidth, 400);
+
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id="colorTrafico" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#25207E" stopOpacity={0.12} />
-            <stop offset="95%" stopColor="#25207E" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="colorConvs" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#A1A1AA" stopOpacity={0.08} />
-            <stop offset="95%" stopColor="#A1A1AA" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={50} />
-        <Tooltip
-          contentStyle={{
-            borderRadius: "8px",
-            border: "1px solid #E5E7EB",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-            backgroundColor: tooltipBg,
-            color: tooltipColor,
-          }}
-        />
-        <Area type="monotone" dataKey="trafico" stroke="#25207E" strokeWidth={2.5} fill="url(#colorTrafico)" />
-        <Area type="monotone" dataKey="conversiones" stroke="#A1A1AA" strokeWidth={2.5} fill="url(#colorConvs)" />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ width: chartWidth, height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorTrafico" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#25207E" stopOpacity={0.12} />
+                <stop offset="95%" stopColor="#25207E" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorConvs" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#A1A1AA" stopOpacity={0.08} />
+                <stop offset="95%" stopColor="#A1A1AA" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={50} />
+            <Tooltip
+              contentStyle={{
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                backgroundColor: tooltipBg,
+                color: tooltipColor,
+              }}
+            />
+            <Area type="monotone" dataKey="trafico" stroke="#25207E" strokeWidth={2.5} fill="url(#colorTrafico)" />
+            <Area type="monotone" dataKey="conversiones" stroke="#A1A1AA" strokeWidth={2.5} fill="url(#colorConvs)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
-}
+});
 
 interface DonutChartProps {
   data: DonutDataPoint[];
   allPvNames?: string[];
 }
 
-export function DonutChart({ data, allPvNames }: DonutChartProps) {
+export const DonutChart = memo(function DonutChart({ data, allPvNames }: DonutChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
@@ -145,16 +153,16 @@ export function DonutChart({ data, allPvNames }: DonutChartProps) {
       </div>
     </div>
   );
-}
+});
 
 interface StatusBarChartProps {
   data: StatusBarDataPoint[];
 }
 
-export function StatusBarChart({ data }: StatusBarChartProps) {
+export const StatusBarChart = memo(function StatusBarChart({ data }: StatusBarChartProps) {
   const { theme } = useTheme();
   const safeData = Array.isArray(data) ? data : [];
-  const tickFill = theme === "dark" ? "#9CA3AF" : "#9CA3AF";
+  const tickFill = theme === "dark" ? "#f3f4f6" : "#9CA3AF";
   const gridStroke = theme === "dark" ? "#374151" : "#F3F4F6";
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
@@ -184,10 +192,10 @@ export function StatusBarChart({ data }: StatusBarChartProps) {
             color: tooltipColor,
           }}
         />
-        <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
-        <Bar dataKey="enProceso" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={60} />
-        <Bar dataKey="resueltos" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="pendientes" stackId="a" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={120} />
+        <Bar dataKey="enProceso" stackId="a" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={120} />
+        <Bar dataKey="resueltos" stackId="a" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={120} />
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

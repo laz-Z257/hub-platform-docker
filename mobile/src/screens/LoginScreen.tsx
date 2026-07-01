@@ -47,7 +47,12 @@ export default function LoginScreen() {
       await login(form.documento, form.contrasena);
       router.replace("/chat");
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : "Credenciales inválidas");
+      if (err instanceof Error) {
+        const originalMsg = (err as { originalMsg?: string }).originalMsg;
+        setLoginError(originalMsg || err.message);
+      } else {
+        setLoginError("Credenciales inválidas");
+      }
     }
   };
 

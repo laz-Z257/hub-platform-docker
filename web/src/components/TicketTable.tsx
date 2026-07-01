@@ -10,7 +10,8 @@ interface TicketRow {
   categoria: string;
   solicitante: string;
   estado: string;
-  updatedAt: string;
+  createdAt: string;
+  fechaCierre: string | null;
   agente?: string | null;
 }
 
@@ -174,8 +175,8 @@ function ActionMenu({
 export default function TicketTable({ tickets, onStatusChange, onViewDetail, onAssignAgent, onResolve }: TicketTableProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-visible">
-      <div className="grid grid-cols-[100px_1fr_140px_110px_120px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
-        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "ÚLTIMA ACT.", "ACCIONES"].map(
+      <div className="grid grid-cols-[100px_1fr_140px_110px_110px_110px_60px] bg-[#EEF2FF] dark:bg-gray-800 px-5">
+        {["ID TICKET", "ASUNTO", "SOLICITANTE", "ESTADO", "CREADO", "CIERRE", "ACCIONES"].map(
           (col) => (
             <div
               key={col}
@@ -195,7 +196,7 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
       {(Array.isArray(tickets) ? tickets : []).map((ticket) => (
         <div
           key={ticket.id}
-          className="grid grid-cols-[100px_1fr_140px_110px_120px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center min-h-[56px]"
+          className="grid grid-cols-[100px_1fr_140px_110px_110px_110px_60px] px-5 border-t border-gray-100 dark:border-gray-700 items-center min-h-[56px]"
         >
           <div className="py-3 px-2">
             <span className="text-[13px] font-medium text-[var(--brand)] font-inter">
@@ -228,7 +229,13 @@ export default function TicketTable({ tickets, onStatusChange, onViewDetail, onA
 
           <div className="py-3 px-2">
             <span className="text-[12px] text-gray-500 dark:text-gray-400 font-inter">
-              {ticket.updatedAt}
+              {ticket.createdAt}
+            </span>
+          </div>
+
+          <div className="py-3 px-2">
+            <span className="text-[12px] text-gray-500 dark:text-gray-400 font-inter">
+              {ticket.fechaCierre || "—"}
             </span>
           </div>
 

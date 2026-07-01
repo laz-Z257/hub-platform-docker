@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import {
   api,
@@ -14,6 +15,7 @@ import {
   saveUser,
   getSavedUser,
   setForceLogoutHandler,
+  setBlockedHandler,
 } from "../services/api";
 import { registerForPushNotifications, setupNotificationListeners } from "../services/notifications";
 import type { AuthUser } from "@hub/shared/types/auth";
@@ -54,6 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await clearToken();
             setUser(null);
             if (err instanceof Error && err.message === "bloqueado") {
+              const originalMsg = (err as { originalMsg?: string }).originalMsg;
+              Alert.alert(
+                "Cuenta bloqueada",
+                originalMsg || "Su cuenta ha sido bloqueada. Contacte al administrador."
+              );
               router.replace("/");
             }
           }
@@ -81,6 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       router.replace("/");
     });
+
+    setBlockedHandler(() => {
+      Alert.alert(
+        "Cuenta bloqueada",
+        "Su cuenta ha sido bloqueada. Contacte al administrador para mas informacion."
+      );
+    });
   }, [router]);
 
   const login = useCallback(
@@ -97,6 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data.user);
 
         registerForPushNotifications().catch(() => {});
+      } catch (err) {
+        if (err instanceof Error && err.message === "bloqueado") {
+          const originalMsg = (err as { originalMsg?: string }).originalMsg;
+          throw new Error(originalMsg || "Usuario bloqueado");
+        }
+        throw err;
       } finally {
         setLoading(false);
       }

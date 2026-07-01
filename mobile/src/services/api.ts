@@ -17,11 +17,16 @@ const REQUEST_TIMEOUT = 15000;
 
 let authToken: string | null = null;
 let onForceLogout: (() => void) | null = null;
+let onBlocked: (() => void) | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
 export function setForceLogoutHandler(handler: () => void) {
   onForceLogout = handler;
+}
+
+export function setBlockedHandler(handler: () => void) {
+  onBlocked = handler;
 }
 
 export async function initToken(): Promise<string | null> {
@@ -126,6 +131,12 @@ async function request<T>(
   clearTimeout(timeoutId);
 
   if (res.status === 401) {
+    if (!authToken) {
+      const body = await res.json().catch(() => ({}));
+      const msg = body?.error || "Documento o contraseña incorrectos";
+      throw new Error(msg);
+    }
+
     const refreshed = await tryRefresh();
     if (refreshed) {
       const newToken = authToken;
@@ -177,9 +188,15 @@ async function request<T>(
           ? (data as { error: string }).error
           : "";
       if (msg.includes("bloqueado")) {
+        const hadToken = !!authToken;
         await clearToken();
-        onForceLogout?.();
-        throw new Error("bloqueado");
+        if (hadToken) {
+          onBlocked?.();
+          onForceLogout?.();
+        }
+        const err = new Error("bloqueado");
+        (err as { originalMsg?: string }).originalMsg = msg;
+        throw err;
       }
     }
     const msg =

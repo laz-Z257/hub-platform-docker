@@ -17,6 +17,12 @@ import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import type { KpiResponse } from "@hub/shared/types/api";
 
+function ChartSkeleton() {
+  return (
+    <div className="animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" style={{ height: 280 }} />
+  );
+}
+
 function formatDateRange(start: string, end: string): string {
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
@@ -76,6 +82,7 @@ export default function AnalyticsPage() {
   const [agentes, setAgentes] = useState<string[]>([]);
   const [selectedAgente, setSelectedAgente] = useState("");
   const [allPvNames, setAllPvNames] = useState<string[]>([]);
+  const [chartsLoading, setChartsLoading] = useState(false);
 
   useEffect(() => {
     api.get<string[]>("/incidents/agentes")
@@ -86,28 +93,29 @@ export default function AnalyticsPage() {
       .catch((err) => logger.error("Error fetching puntos-venta", { error: (err as Error).message }));
   }, []);
 
-  function fetchData(start: string, end: string, agente?: string) {
+  const fetchData = useCallback((start: string, end: string, agente?: string) => {
+    setChartsLoading(true);
     const params = new URLSearchParams({ start, end });
     if (agente) params.set("agente", agente);
     const qs = `?${params.toString()}`;
 
-    api
-      .get<KpiResponse>(`/dashboard/kpis${qs}`)
-      .then((kpis) => {
+    Promise.allSettled([
+      api.get<KpiResponse>(`/dashboard/kpis${qs}`),
+      api.get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
+    ]).then(([kpiResult, statsResult]) => {
+      if (kpiResult.status === 'fulfilled') {
+        const kpis = kpiResult.value;
         setMetrics([
           { icon: ClipboardList, title: "Incidentes Reportados", value: kpis.totalIncidentes.toLocaleString(), desc: "Total de incidentes registrados" },
           { icon: Clock, title: "Pendientes", value: kpis.pendientes.toLocaleString(), desc: "A la espera de asignación" },
           { icon: Activity, title: "En Proceso", value: kpis.enProceso.toLocaleString(), desc: "Siendo atendidos actualmente" },
           { icon: CheckCircle, title: "Resueltos", value: kpis.resueltos.toLocaleString(), desc: "Cerrados exitosamente" },
         ]);
-      })
-      .catch((err) => {
-        logger.error("Analytics KPIs error", { error: err instanceof Error ? err.message : err });
-      });
-
-    api
-      .get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
-      .then((stats) => {
+      } else {
+        logger.error("Analytics KPIs error", { error: kpiResult.reason instanceof Error ? kpiResult.reason.message : kpiResult.reason });
+      }
+      if (statsResult.status === 'fulfilled') {
+        const stats = statsResult.value;
         setAreaData(
           (Array.isArray(stats.timeline) ? stats.timeline : []).map((d) => ({
             name: d.fecha,
@@ -118,24 +126,24 @@ export default function AnalyticsPage() {
         setDonutData(stats.distribution);
         if (stats.statusCounts) {
           setStatusData([{
-            name: selectedAgente || "General",
+            name: agente || "General",
             pendientes: stats.statusCounts.pendientes,
             enProceso: stats.statusCounts.enProceso,
             resueltos: stats.statusCounts.resueltos,
           }]);
         }
-      })
-      .catch((err) => {
-        logger.error("Analytics stats error", { error: err instanceof Error ? err.message : err });
-      });
-  }
+      } else {
+        logger.error("Analytics stats error", { error: statsResult.reason instanceof Error ? statsResult.reason.message : statsResult.reason });
+      }
+    }).finally(() => setChartsLoading(false));
+  }, []);
 
   useEffect(() => {
     const range = getDefaultRange("30d");
     fetchData(range.start, range.end);
-  }, []);
+  }, [fetchData]);
 
-  const handleFilterChange = (newFilter: FilterPreset) => {
+  const handleFilterChange = useCallback((newFilter: FilterPreset) => {
     if (newFilter === "custom") {
       setFilter("custom");
       setShowDatePicker(true);
@@ -153,13 +161,13 @@ export default function AnalyticsPage() {
       setEndDate(range.end);
       fetchData(range.start, range.end, selectedAgente);
     }
-  };
+  }, [selectedAgente, startDate, fetchData]);
 
-  const handleAgentChange = (agente: string) => {
+  const handleAgentChange = useCallback((agente: string) => {
     setSelectedAgente(agente);
     const range = filter === "custom" && appliedRange ? appliedRange : getDefaultRange(filter);
     fetchData(range.start, range.end, agente || undefined);
-  };
+  }, [filter, appliedRange, fetchData]);
 
   const handleApplyRange = useCallback(() => {
     if (!startDate || !endDate) return;
@@ -168,7 +176,7 @@ export default function AnalyticsPage() {
     setShowDatePicker(false);
     setFilter("custom");
     fetchData(startDate, endDate, selectedAgente || undefined);
-  }, [startDate, endDate, selectedAgente]);
+  }, [startDate, endDate, selectedAgente, fetchData]);
 
   const handleCancelRange = useCallback(() => {
     const range = getDefaultRange("30d");
@@ -178,7 +186,7 @@ export default function AnalyticsPage() {
     setStartDate(range.start);
     setEndDate(range.end);
     fetchData(range.start, range.end, selectedAgente);
-  }, [selectedAgente]);
+  }, [selectedAgente, fetchData]);
 
   const filterLabels: Record<FilterPreset, string> = {
     today: "Hoy",
@@ -266,7 +274,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <TrafficChart data={areaData} />
+          {chartsLoading ? <ChartSkeleton /> : <TrafficChart data={areaData} />}
         </div>
 
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
@@ -278,7 +286,7 @@ export default function AnalyticsPage() {
               Distribución de tickets por sucursal
             </p>
           </div>
-          <DonutChart data={donutData} allPvNames={allPvNames} />
+          {chartsLoading ? <ChartSkeleton /> : <DonutChart data={donutData} allPvNames={allPvNames} />}
         </div>
       </div>
 
@@ -307,7 +315,7 @@ export default function AnalyticsPage() {
               <span className="text-xs text-gray-500 dark:text-gray-400 font-inter">Resueltos</span>
             </div>
           </div>
-          <StatusBarChart data={statusData} />
+          {chartsLoading ? <ChartSkeleton /> : <StatusBarChart data={statusData} />}
         </div>
       </div>
     </div>

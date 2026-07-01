@@ -134,6 +134,10 @@ npx expo start
 | `PATCH` | `/api/users/:id` | Sí | Sí | Actualizar rol/nombre |
 | `PATCH` | `/api/users/:id/toggle-status` | Sí | Sí | Bloquear/desbloquear usuario |
 
+### Chat Bot
+- **POST** `/api/chat/message` — Retorna `{ userMessage, botMessage, suggestedActions[] }` con detección de intención por keywords (7 categorías de problema)
+- Las respuestas son formales, sin emojis. Texto con `**negrita**` se renderiza en mobile como bold.
+
 ### Seguridad
 
 - CORS restrictivo con orígenes explícitos
@@ -151,16 +155,17 @@ npx expo start
 - **Next.js 15.5.19** (App Router) + **React 19** + **TypeScript**
 - **TailwindCSS 3.4** + **Recharts 3.x** + **Lucide React**
 - **exceljs** (exportación Excel)
+- **Modo oscuro** con variables CSS y overrides para todos los textos
 
 ### Páginas
 
 | Ruta | Descripción |
 |------|---|
-| `/login` | Login |
+| `/login` | Login (muestra mensaje de bloqueo en rojo) |
 | `/dashboard` | KPIs, tickets recientes, gestión de usuarios |
 | `/dashboard/tickets` | Gestión de tickets con tabla, filtros, acciones |
-| `/dashboard/analytics` | Analíticas con gráficos y exportación Excel |
-| `/dashboard/users` | Gestión de usuarios |
+| `/dashboard/analytics` | Analíticas con gráficos (scroll horizontal, carga lazy, memoizados), exportación Excel |
+| `/dashboard/users` | Gestión de usuarios con bloqueo/desbloqueo |
 | `/dashboard/ratings` | Calificaciones y estadísticas |
 
 ---
@@ -178,8 +183,8 @@ npx expo start
 
 | Ruta | Descripción |
 |------|---|
-| `/` (index) | Login |
-| `/chat` | Chatbot con IA, menú expandible |
+| `/` (index) | Login (mensaje de bloqueo en rojo, Alert si estaba en sesión) |
+| `/chat` | Chatbot con detección de intención, chips de acciones sugeridas, scroll to bottom flotante |
 | `/reportar` | Formulario de reporte de incidente |
 | `/exito` | Confirmación post-reporte |
 | `/historial` | Lista de incidentes con pull-to-refresh |
