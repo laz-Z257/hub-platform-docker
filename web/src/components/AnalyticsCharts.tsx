@@ -47,36 +47,41 @@ export const TrafficChart = memo(function TrafficChart({ data }: TrafficChartPro
   const tooltipBg = theme === "dark" ? "#1e293b" : "#FFFFFF";
   const tooltipColor = theme === "dark" ? "#e2e8f0" : undefined;
 
+  const minWidth = 80;
+  const chartWidth = Math.max(data.length * minWidth, 400);
+
   return (
-    <div style={{ height: 280 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorTrafico" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#25207E" stopOpacity={0.12} />
-              <stop offset="95%" stopColor="#25207E" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorConvs" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#A1A1AA" stopOpacity={0.08} />
-              <stop offset="95%" stopColor="#A1A1AA" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={50} />
-          <Tooltip
-            contentStyle={{
-              borderRadius: "8px",
-              border: "1px solid #E5E7EB",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-              backgroundColor: tooltipBg,
-              color: tooltipColor,
-            }}
-          />
-          <Area type="monotone" dataKey="trafico" stroke="#25207E" strokeWidth={2.5} fill="url(#colorTrafico)" />
-          <Area type="monotone" dataKey="conversiones" stroke="#A1A1AA" strokeWidth={2.5} fill="url(#colorConvs)" />
-        </AreaChart>
-      </ResponsiveContainer>
+    <div style={{ overflowX: "auto", height: 280 }}>
+      <div style={{ width: chartWidth, height: "100%", minWidth: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorTrafico" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#25207E" stopOpacity={0.12} />
+                <stop offset="95%" stopColor="#25207E" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorConvs" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#A1A1AA" stopOpacity={0.08} />
+                <stop offset="95%" stopColor="#A1A1AA" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 12, fill: tickFill }} axisLine={false} tickLine={false} width={50} />
+            <Tooltip
+              contentStyle={{
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                backgroundColor: tooltipBg,
+                color: tooltipColor,
+              }}
+            />
+            <Area type="monotone" dataKey="trafico" stroke="#25207E" strokeWidth={2.5} fill="url(#colorTrafico)" />
+            <Area type="monotone" dataKey="conversiones" stroke="#A1A1AA" strokeWidth={2.5} fill="url(#colorConvs)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 });
