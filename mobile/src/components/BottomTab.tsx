@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { MessageSquare, AlertTriangle, History, Settings, LucideIcon } from "lucide-react-native";
 

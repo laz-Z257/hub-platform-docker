@@ -134,15 +134,15 @@ app.use((_req, res) => {
 app.use(
   (
     err: Error,
-    _req: express.Request,
+    req: express.Request,
     res: express.Response,
     _next: express.NextFunction
   ) => {
     logger.error(`Unhandled error: ${err.message}`, {
-      requestId: _req.requestId,
+      requestId: req.requestId,
       stack: err.stack,
     });
-    res.status(500).json({ error: "Error interno del servidor", requestId: _req.requestId });
+    res.status(500).json({ error: "Error interno del servidor", requestId: req.requestId });
   }
 );
 

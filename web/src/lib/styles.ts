@@ -34,9 +34,3 @@ export const ESTADO_BADGES: Record<string, { bg: string; text: string; dot: stri
   activo: { bg: "bg-green-100", text: "text-green-600", dot: "bg-green-500" },
   bloqueado: { bg: "bg-red-100", text: "text-red-600", dot: "bg-red-500" },
 };
-
-export const TICKET_STATUS_BADGES: Record<string, string> = {
-  Abierto: "bg-blue-100 text-blue-600",
-  "En Proceso": "bg-purple-100 text-purple-600",
-  Resuelto: "bg-slate-100 text-slate-600",
-};

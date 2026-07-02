@@ -119,7 +119,7 @@ function detectIntent(text: string): { text: string; actions: SuggestedAction[] 
   return null;
 }
 
-function getDefaultResponse(text: string): { text: string; actions: SuggestedAction[] } {
+function getDefaultResponse(): { text: string; actions: SuggestedAction[] } {
   return {
     text: "Su mensaje ha sido registrado. Un agente revisara su consulta y le respondera pronto.",
     actions: [
@@ -192,7 +192,7 @@ export async function sendMessage(
 
     const ticketInfo = await lookupTicket(req.user!.userId, content);
     const intentInfo = !ticketInfo ? detectIntent(content) : null;
-    const response = ticketInfo || intentInfo || getDefaultResponse(content);
+    const response = ticketInfo || intentInfo || getDefaultResponse();
 
     const [botMsg] = await db
       .insert(messages)

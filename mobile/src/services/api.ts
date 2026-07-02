@@ -43,10 +43,6 @@ export async function setToken(token: string) {
   await saveToken(token);
 }
 
-export async function getToken(): Promise<string | null> {
-  return authToken;
-}
-
 export async function clearToken() {
   authToken = null;
   try {
@@ -224,6 +220,4 @@ export const api = {
   get: <T>(endpoint: string, timeoutMs?: number) => request<T>(endpoint, undefined, timeoutMs),
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, { method: "POST", body: JSON.stringify(body) }),
-  patch: <T>(endpoint: string, body?: unknown) =>
-    request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }),
 };

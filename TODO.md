@@ -8,7 +8,7 @@
 
 | # | Tarea | Componente | Detalle | Estado |
 |---|-------|-----------|---------|--------|
-| 1 | ~~Agregar suite de tests~~ | ~~Todo el repo~~ | ~~Requiere planificación dedicada~~ | ⏸️ **Pospuesto** |
+| 1 | ~~Agregar suite de tests~~ | ~~Todo el repo~~ | ~~Requiere planificación dedicada~~ | ✅ **CORREGIDO** (128 tests: 105 backend + 23 web) |
 | 2 | ~~Configurar CI/CD~~ | ~~Todo el repo~~ | ~~Requiere planificación dedicada~~ | ⏸️ **Pospuesto** |
 | 3 | ~~Eliminar `console.log` que expone data de API~~ | ~~`web/src/components/UserManagement.tsx`~~ | ~~Filtra respuesta cruda de API en consola~~ | ✅ **CORREGIDO** |
 | 4 | ~~Sacar seed password de stdout~~ | ~~`backend/src/db/seed.ts`~~ | ~~La contraseña se imprime en logs~~ | ✅ **CORREGIDO** |
@@ -70,3 +70,47 @@
 | #5, #8, #9, #13, #16, #18, #22–#26, #29, #33, #34, #35 | Batch fixes sesión 2026-06-27 | `074d0ad` |
 | #30, #32 | Monitoreo + Offline support mobile | `074d0ad` |
 | C6, M2, M5, M8, L1, L3 | auditoría: JWT empty string, EMAIL_DOMAIN, shared types, inline styles, console.error, as T | `working tree` (sin commitear) |
+
+---
+
+## 🧹 Limpieza completa del proyecto (2026-07-02)
+
+Se realizó una revisión exhaustiva del código y se eliminaron/corrigieron los siguientes problemas:
+
+### Archivos eliminados
+- `suger` (archivo basura de 1 byte)
+- `web/vercel.json` (redundante, proyecto usa Docker)
+- `web/public/.gitkeep` (directorio público vacío)
+- `web/src/types/` (directorio vacío)
+- `mobile/.claude/` (config de herramienta específica)
+- Directorios generados: `backend/dist/`, `mobile/android/`, `mobile/.expo/`, `mobile/output/`, `web/.next/`, `web/tsconfig.tsbuildinfo`
+
+### Código muerto eliminado
+- Import sin usar: `z` en `web/src/lib/logger.test.ts`
+- Import sin usar: `TICKET_STATUS_BADGES` en `web/src/components/TicketTable.tsx`
+- Export sin usar: `TICKET_STATUS_BADGES` en `web/src/lib/styles.ts`
+- Función sin usar: `toggleTheme` en `web/src/contexts/ThemeContext.tsx`
+- State sin usar: `cleared` en `web/src/app/dashboard/settings/page.tsx`
+- Import sin usar: `Alert` en `mobile/app/historial.tsx`
+- Imports de `React` innecesarios en 8 componentes mobile
+- Función sin usar: `clearCache()` en `mobile/src/services/storage.ts`
+- Función sin usar: `getToken()` en `mobile/src/services/api.ts`
+- Método sin usar: `api.patch()` en `mobile/src/services/api.ts`
+- Parámetro sin usar: `text` en `getDefaultResponse()` en `backend/src/modules/chat/chat.controller.ts`
+- Variable mal nombrada: `_req` renombrado a `req` en `backend/src/index.ts`
+
+### Dependencias eliminadas
+- `@types/uuid` en backend (se usa `crypto.randomUUID()` nativo)
+- `expo-module-scripts` en mobile (ningún script la usa)
+
+### Bugs críticos corregidos
+- **Settings route/controller mismatch**: Schema de ruta ahora usa `nombre`, `contribuyente`, `direccion` (alineado con controller y DB)
+- **migrate.ts código muerto**: Eliminadas sentencias ALTER TABLE que creaban columnas con nombres incorrectos en inglés
+- **Migración 0008 duplicada**: Corregida para no duplicar contenido de 0006 y 0007
+- **CHANGELOG.md duplicado**: Eliminada sección duplicada (líneas 179-218)
+
+### Estado final
+- ✅ 128 tests pasando (105 backend + 23 web)
+- ✅ TypeScript compila sin errores
+- ✅ ESLint sin warnings ni errores
+- ✅ Proyecto limpio y funcional
