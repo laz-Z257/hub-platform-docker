@@ -152,6 +152,7 @@ export default function ChatScreen() {
         userMessage: { id: string; content: string };
         botMessage: { id: string; content: string };
         suggestedActions?: SuggestedAction[];
+        autoAction?: string;
       }>("/chat/message", { content: text });
 
       setTyping(false);
@@ -165,6 +166,22 @@ export default function ChatScreen() {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+
+      if (data.autoAction) {
+        setTimeout(() => {
+          switch (data.autoAction) {
+            case "reportar":
+              router.push("/reportar");
+              break;
+            case "ir_historial":
+              router.push("/historial");
+              break;
+            case "ver_faq":
+              setShowFaq(true);
+              break;
+          }
+        }, 1500);
+      }
     } catch (err) {
       logger.error("ChatScreen sendMessage error", { error: (err as Error).message });
       setTyping(false);
@@ -172,7 +189,7 @@ export default function ChatScreen() {
       const errorMsg: Message = {
         id: `bot-card-${Date.now()}`,
         type: "bot-card",
-        text: "Ocurrio un error al procesar el mensaje. Seleccione una opcion:",
+        text: "Ocurrio un error al procesar el mensaje. Selecciona una opcion:",
         timestamp: getTimeString(),
         suggestedActions: [
           { label: "Volver al menu principal", action: "menu_principal" },
@@ -182,7 +199,7 @@ export default function ChatScreen() {
 
       setMessages((prev) => [...prev, errorMsg]);
     }
-  }, []);
+  }, [router]);
 
   const handleSuggestedAction = useCallback(
     (action: string, label: string) => {

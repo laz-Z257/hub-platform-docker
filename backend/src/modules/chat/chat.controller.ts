@@ -15,6 +15,12 @@ interface SuggestedAction {
   action: string;
 }
 
+interface ChatResponse {
+  text: string;
+  actions: SuggestedAction[];
+  autoAction?: string;
+}
+
 const PROBLEM_OPTIONS: SuggestedAction[] = [
   { label: "Problema con el sistema", action: "problema_sistema" },
   { label: "Problema de hardware", action: "problema_hardware" },
@@ -27,64 +33,195 @@ const PROBLEM_OPTIONS: SuggestedAction[] = [
 
 const HELP_KEYWORDS = ["hola", "ayuda", "necesito", "problema", "tengo un", "quisiera", "puedes", "buenos dias", "buenas tardes", "buenas noches", "ayudame", "como", "que hago"];
 
-const PROBLEM_RESPONSES: Record<string, { text: string; actions: SuggestedAction[] }> = {
+const PROBLEM_RESPONSES: Record<string, ChatResponse> = {
   problema_sistema: {
-    text: "Ha seleccionado problema con el sistema. Por favor reporte el incidente indicando los detalles del error y el modulo donde ocurre.",
-    actions: [
-      { label: "Reportar incidente", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Entiendo que tienes un problema con el sistema. Voy a redirigirte al formulario de reporte para que describas el error y el modulo donde ocurre.",
+    actions: [],
+    autoAction: "reportar",
   },
   problema_hardware: {
-    text: "Para problemas de hardware, reporte el incidente indicando el equipo afectado y la descripcion de la falla.",
-    actions: [
-      { label: "Reportar incidente", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Detecte que tienes un problema de hardware. Te llevo al formulario para que reportes el equipo afectado y la descripcion de la falla.",
+    actions: [],
+    autoAction: "reportar",
   },
   problema_pv: {
-    text: "Describa el problema con su punto de venta para que sea reportado al area correspondiente.",
-    actions: [
-      { label: "Reportar incidente", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Veo que hay un problema con tu punto de venta. Te redirijo al formulario de reporte para que detalles la situacion.",
+    actions: [],
+    autoAction: "reportar",
   },
   problema_acceso: {
-    text: "Si tiene problemas para acceder al sistema, verifique su usuario y contrasena. Si el problema persiste, reportelo para restablecer su acceso.",
-    actions: [
-      { label: "Reportar incidente", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Entiendo que tienes problemas para acceder. Te llevo al formulario para que reportes el problema de acceso y un agente te ayude a restablecerlo.",
+    actions: [],
+    autoAction: "reportar",
   },
   consultar_estado: {
-    text: "Puede consultar el estado de sus reportes en la seccion Historial de la aplicacion. Alli aparecen todos sus incidentes con su estado actual.",
-    actions: [
-      { label: "Ir a historial", action: "ir_historial" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Te llevo a tu historial donde puedes ver el estado de todos tus reportes.",
+    actions: [],
+    autoAction: "ir_historial",
   },
   faq: {
-    text: "Seleccione Ver preguntas frecuentes para consultar las dudas mas comunes. Si no encuentra lo que busca, puede reportar un incidente.",
-    actions: [
-      { label: "Ver preguntas frecuentes", action: "ver_faq" },
-      { label: "Reportar incidente", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Abro las preguntas frecuentes para ti.",
+    actions: [],
+    autoAction: "ver_faq",
   },
   reportar: {
-    text: "Será redirigido al formulario de reporte para que ingrese los detalles del incidente.",
-    actions: [
-      { label: "Ir a reportar", action: "reportar" },
-      { label: "Volver al menu", action: "menu_principal" },
-    ],
+    text: "Te redirijo al formulario de reporte.",
+    actions: [],
+    autoAction: "reportar",
   },
   menu_principal: {
-    text: "Seleccione una opcion:",
+    text: "Claro, puedo ayudarte con lo siguiente:",
     actions: [...PROBLEM_OPTIONS],
   },
 };
 
-function detectIntent(text: string): { text: string; actions: SuggestedAction[] } | null {
+const INTENT_PATTERNS: Record<string, string[]> = {
+  problema_sistema: [
+    "sistema no funciona",
+    "sistema no responde",
+    "sistema caido",
+    "sistema lento",
+    "error en el sistema",
+    "falla del sistema",
+    "no puedo usar el sistema",
+    "sistema no carga",
+    "sistema se congela",
+    "sistema se cuelga",
+    "aplicacion no funciona",
+    "app no funciona",
+    "software no funciona",
+    "plataforma no funciona",
+    "pagina no carga",
+    "web no funciona",
+    "no puedo ingresar al sistema",
+    "sistema no me deja",
+  ],
+  problema_hardware: [
+    "impresora no funciona",
+    "impresora no imprime",
+    "impresora atascada",
+    "impresora no enciende",
+    "impresora no conecta",
+    "lector no funciona",
+    "lector no lee",
+    "lector no reconoce",
+    "pantalla no funciona",
+    "pantalla negra",
+    "pantalla azul",
+    "computadora no enciende",
+    "pc no enciende",
+    "teclado no funciona",
+    "mouse no funciona",
+    "cable no funciona",
+    "hardware no funciona",
+    "equipo no funciona",
+    "equipo no enciende",
+    "no funciona el equipo",
+    "maquina no funciona",
+    "dispositivo no funciona",
+  ],
+  problema_pv: [
+    "punto de venta no funciona",
+    "punto de venta no abre",
+    "punto de venta no conecta",
+    "pdv no funciona",
+    "pdv no abre",
+    "pdv no conecta",
+    "caja no funciona",
+    "caja no abre",
+    "terminal no funciona",
+    "terminal no conecta",
+    "no puedo vender",
+    "no puedo cobrar",
+    "no puedo hacer venta",
+    "problema con punto de venta",
+    "problema con pdv",
+    "problema con la caja",
+    "problema con la terminal",
+  ],
+  problema_acceso: [
+    "no puedo entrar",
+    "no puedo iniciar sesion",
+    "no puedo loguearme",
+    "no puedo acceder",
+    "olvide mi contrasena",
+    "olvide mi password",
+    "olvide mi usuario",
+    "olvide mi documento",
+    "contrasena incorrecta",
+    "password incorrecta",
+    "usuario incorrecto",
+    "no me deja entrar",
+    "no me deja iniciar sesion",
+    "me bloquearon",
+    "cuenta bloqueada",
+    "usuario bloqueado",
+    "no tengo acceso",
+    "perdi mi acceso",
+    "no puedo ingresar",
+    "credenciales incorrectas",
+  ],
+  consultar_estado: [
+    "estado de mi reporte",
+    "estado de mi ticket",
+    "estado de mi incidente",
+    "como va mi reporte",
+    "como va mi ticket",
+    "como va mi incidente",
+    "quiero ver mis reportes",
+    "quiero ver mis tickets",
+    "quiero ver mis incidentes",
+    "mis reportes",
+    "mis tickets",
+    "mis incidentes",
+    "historial de reportes",
+    "historial de tickets",
+    "historial de incidentes",
+    "ver historial",
+    "consultar reporte",
+    "consultar ticket",
+    "consultar incidente",
+    "seguimiento de reporte",
+    "seguimiento de ticket",
+    "seguimiento de incidente",
+  ],
+  faq: [
+    "preguntas frecuentes",
+    "faq",
+    "dudas frecuentes",
+    "preguntas mas comunes",
+    "ayuda rapida",
+    "guia de uso",
+    "como usar",
+    "como funciona",
+    "instrucciones",
+    "manual",
+    "tutorial",
+  ],
+  reportar: [
+    "quiero reportar",
+    "necesito reportar",
+    "reportar problema",
+    "reportar incidente",
+    "reportar falla",
+    "reportar error",
+    "crear reporte",
+    "crear ticket",
+    "crear incidente",
+    "nuevo reporte",
+    "nuevo ticket",
+    "nuevo incidente",
+    "hacer reporte",
+    "hacer ticket",
+    "hacer incidente",
+    "reportar otro",
+    "otro reporte",
+    "otro ticket",
+    "otro incidente",
+  ],
+};
+
+function detectIntent(text: string): ChatResponse | null {
   const lower = text.toLowerCase().trim();
 
   if (PROBLEM_RESPONSES[lower]) {
@@ -96,6 +233,14 @@ function detectIntent(text: string): { text: string; actions: SuggestedAction[] 
   );
   if (labelMatch && PROBLEM_RESPONSES[labelMatch.action]) {
     return PROBLEM_RESPONSES[labelMatch.action];
+  }
+
+  for (const [intent, patterns] of Object.entries(INTENT_PATTERNS)) {
+    for (const pattern of patterns) {
+      if (lower.includes(pattern)) {
+        return PROBLEM_RESPONSES[intent];
+      }
+    }
   }
 
   const REPORT_KEYWORDS = ["reportar", "reporte", "incidente", "quiero reportar"];
@@ -111,7 +256,7 @@ function detectIntent(text: string): { text: string; actions: SuggestedAction[] 
   const isHelpRequest = HELP_KEYWORDS.some((kw) => lower.includes(kw));
   if (isHelpRequest) {
     return {
-      text: "Bienvenido al asistente de soporte. Seleccione el tipo de problema que necesita reportar:",
+      text: "Bienvenido al asistente de soporte. ¿En que puedo ayudarte?",
       actions: [...PROBLEM_OPTIONS],
     };
   }
@@ -119,9 +264,9 @@ function detectIntent(text: string): { text: string; actions: SuggestedAction[] 
   return null;
 }
 
-function getDefaultResponse(): { text: string; actions: SuggestedAction[] } {
+function getDefaultResponse(): ChatResponse {
   return {
-    text: "Su mensaje ha sido registrado. Un agente revisara su consulta y le respondera pronto.",
+    text: "No entendi tu mensaje. Un agente revisara tu consulta y te respondera pronto. Mientras tanto, puedes seleccionar una opcion:",
     actions: [
       { label: "Volver al menu principal", action: "menu_principal" },
       { label: "Reportar incidente", action: "reportar" },
@@ -132,7 +277,7 @@ function getDefaultResponse(): { text: string; actions: SuggestedAction[] } {
 async function lookupTicket(
   userId: string,
   text: string
-): Promise<{ text: string; actions: SuggestedAction[] } | null> {
+): Promise<ChatResponse | null> {
   const match = text.match(/(?:#?TK-)?([A-Fa-f0-9]{4,8})/);
   if (!match) return null;
 
@@ -207,6 +352,7 @@ export async function sendMessage(
       userMessage: userMsg,
       botMessage: botMsg,
       suggestedActions: response.actions,
+      autoAction: response.autoAction,
     });
   } catch (error) {
     logger.error("Send message error", { error: (error as Error).message });
