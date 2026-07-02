@@ -187,9 +187,9 @@ export const StatusBarChart = memo(function StatusBarChart({ data }: StatusBarCh
             color: tooltipColor,
           }}
         />
-        <Bar dataKey="pendientes" stackId="a" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={120} />
-        <Bar dataKey="enProceso" stackId="a" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={120} />
-        <Bar dataKey="resueltos" stackId="a" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={120} />
+        <Bar dataKey="pendientes" name="Pendientes" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="enProceso" name="En Proceso" fill="#7C3AED" radius={[4, 4, 0, 0]} maxBarSize={60} />
+        <Bar dataKey="resueltos" name="Resueltos" fill="#22C55E" radius={[4, 4, 0, 0]} maxBarSize={60} />
       </BarChart>
     </ResponsiveContainer>
   );
