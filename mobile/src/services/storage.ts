@@ -112,15 +112,3 @@ export async function getCache<T>(key: string, maxAgeMs = 60000): Promise<T | nu
     return null;
   }
 }
-
-export async function clearCache(): Promise<void> {
-  const keys = [TOKEN_KEY, USER_KEY];
-  for (const k of keys) {
-    const cacheKey = CACHE_PREFIX + k;
-    if (Platform.OS === "web") {
-      webDelete(cacheKey);
-    } else {
-      await nativeDelete(cacheKey);
-    }
-  }
-}

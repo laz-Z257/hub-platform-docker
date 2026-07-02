@@ -10,7 +10,6 @@ import {
 
 interface ThemeContextType {
   theme: "light" | "dark";
-  toggleTheme: () => void;
   setTheme: (t: "light" | "dark") => void;
 }
 
@@ -37,7 +36,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("hub-theme", theme);
   }, [theme, mounted]);
 
-  const toggleTheme = () => setThemeState((t) => (t === "light" ? "dark" : "light"));
   const setTheme = (t: "light" | "dark") => setThemeState(t);
 
   if (!mounted) {
@@ -45,7 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

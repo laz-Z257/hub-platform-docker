@@ -95,7 +95,6 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const isTecnico = user?.rol === "tecnico";
   const [activeTab, setActiveTab] = useState("empresa");
-  const [cleared, setCleared] = useState(false);
   const { theme, setTheme } = useTheme();
   const cacheStats = getCacheStats();
   const [settings, setSettings] = useState<CompanySettings>(loadSettings);
@@ -328,7 +327,6 @@ export default function SettingsPage() {
                     onClick={() => {
                       localStorage.clear();
                       sessionStorage.clear();
-                      setCleared((c) => !c);
                       alert(`Caché local limpiado correctamente (${cacheStats.size}, ${cacheStats.items} ítems eliminados). Se recargará la página.`);
                       window.location.reload();
                     }}
@@ -388,7 +386,6 @@ export default function SettingsPage() {
                       if (confirm(`¿Estás seguro de restablecer toda la configuración local? (${cacheStats.items} ítems, ${cacheStats.size})`)) {
                         localStorage.clear();
                         sessionStorage.clear();
-                        setCleared((c) => !c);
                         alert(`Configuración restablecida (${cacheStats.size} eliminados). Se recargará la página.`);
                         window.location.reload();
                       }

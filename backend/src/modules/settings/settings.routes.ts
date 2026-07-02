@@ -7,9 +7,8 @@ import { validate } from "../../middlewares/validate";
 
 const updateSchema = {
   body: z.object({
-    nombre_empresa: z.string().optional(),
-    email_contacto: z.string().optional(),
-    telefono_contacto: z.string().optional(),
+    nombre: z.string().optional(),
+    contribuyente: z.string().optional(),
     direccion: z.string().optional(),
   }),
 };

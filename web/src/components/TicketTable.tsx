@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MoreVertical, Eye, CheckCircle, Clock, Loader, UserPlus } from "lucide-react";
-import { STATUS_ACTION_COLORS, TICKET_STATUS_BADGES } from "@/lib/styles";
+import { STATUS_ACTION_COLORS } from "@/lib/styles";
 
 interface TicketRow {
   id: string;
