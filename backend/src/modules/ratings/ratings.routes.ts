@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createRating, getRating, getRatingStats } from "./ratings.controller";
+import { createRating, getRating, getRatingStats, getMyRatedIncidents } from "./ratings.controller";
 import { createRatingSchema, ratingParamsSchema } from "./ratings.schema";
 import { validate } from "../../middlewares/validate";
 import { authMiddleware } from "../../middlewares/auth";
@@ -10,6 +10,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post("/:id", validate({ body: createRatingSchema, params: ratingParamsSchema }), createRating);
+router.get("/my-ratings", getMyRatedIncidents);
 router.get("/:id", validate({ params: ratingParamsSchema }), getRating);
 router.get("/", adminOnly, getRatingStats);
 

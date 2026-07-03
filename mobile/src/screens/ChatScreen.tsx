@@ -72,7 +72,7 @@ export default function ChatScreen() {
     estado: string;
   } | null>(null);
   const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
-  const [alreadyRated, setAlreadyRated] = useState(false);
+  const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
@@ -125,14 +125,19 @@ export default function ChatScreen() {
       .then((data) => {
         if (data.items.length > 0) {
           setLatestIncident(data.items[0]);
-          api
-            .get(`/ratings/${data.items[0].id}`)
-            .then(() => setAlreadyRated(true))
-            .catch(() => setAlreadyRated(false));
         }
       })
       .catch((err) => {
         logger.error("Latest incident fetch error", { error: err instanceof Error ? err.message : err });
+      });
+
+    api
+      .get<{ ratedIncidentIds: string[] }>("/ratings/my-ratings")
+      .then((data) => {
+        setRatedIncidents(new Set(data.ratedIncidentIds));
+      })
+      .catch((err) => {
+        logger.error("Rated incidents fetch error", { error: err instanceof Error ? err.message : err });
       });
   }, [initializing, user, router]);
 
@@ -259,7 +264,7 @@ export default function ChatScreen() {
       try {
         await api.post(`/ratings/${id}`, { puntuacion, comentario });
         setRatingIncidentId(null);
-        setAlreadyRated(true);
+        setRatedIncidents((prev) => new Set(prev).add(id));
         const thanksMsg: Message = {
           id: `bot-card-${Date.now()}`,
           type: "bot-card",
@@ -270,7 +275,7 @@ export default function ChatScreen() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         if (msg.includes("Ya has calificado")) {
-          setAlreadyRated(true);
+          setRatedIncidents((prev) => new Set(prev).add(id));
         }
         setRatingIncidentId(null);
         Alert.alert("Ya calificado", msg || "Este servicio ya fue calificado.");
@@ -308,6 +313,16 @@ export default function ChatScreen() {
 
       if (item.type === "bot-card") {
         const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
+        let isRated = false;
+        if (isResolved) {
+          const match = item.text?.match(/#TK-([A-Z0-9]+)/);
+          if (match) {
+            const shortId = match[1];
+            isRated = Array.from(ratedIncidents).some(
+              (id) => id.replace(/-/g, "").slice(-8).toUpperCase() === shortId
+            );
+          }
+        }
         return (
           <BotMessageCard
             message={item.text || ""}
@@ -317,7 +332,7 @@ export default function ChatScreen() {
             onSuggestedAction={handleSuggestedAction}
             suggestedActions={item.suggestedActions}
             isResolvedNotification={isResolved}
-            alreadyRated={alreadyRated}
+            alreadyRated={isRated}
             onRateService={async () => {
               const id = latestIncident?.id;
               if (id) {
@@ -359,7 +374,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, handleSend, handleSuggestedAction, latestIncident, alreadyRated]
+    [handleSubmenuPress, handleSend, handleSuggestedAction, latestIncident, ratedIncidents]
   );
 
   const msgList = typing
@@ -401,6 +416,7 @@ export default function ChatScreen() {
             data={msgList}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
+            extraData={ratedIncidents}
             contentContainerStyle={{ paddingVertical: 8, paddingBottom: 8 }}
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })

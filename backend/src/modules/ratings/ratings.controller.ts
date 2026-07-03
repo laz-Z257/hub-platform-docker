@@ -80,6 +80,20 @@ export async function getRating(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function getMyRatedIncidents(req: Request, res: Response): Promise<void> {
+  try {
+    const rows = await db
+      .select({ incident_id: ratings.incident_id })
+      .from(ratings)
+      .where(eq(ratings.user_id, req.user!.userId));
+
+    res.json({ ratedIncidentIds: rows.map((r) => r.incident_id) });
+  } catch (error) {
+    logger.error("Get my rated incidents error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al obtener calificaciones" });
+  }
+}
+
 export async function getRatingStats(_req: Request, res: Response): Promise<void> {
   try {
     const rows = await db
