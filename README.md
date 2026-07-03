@@ -1,5 +1,7 @@
 # HUB AI Assistant — Plataforma Multi-Aplicación
 
+> **Última actualización:** 2026-07-03
+
 Repositorio de demostración para una aplicación de soporte corporativo con dashboard admin web, app móvil (Expo), y API backend (Express + PostgreSQL).
 
 ---
@@ -40,6 +42,17 @@ npx expo start
 > ```
 > EXPO_PUBLIC_API_URL=http://localhost:3001/api
 > ```
+
+---
+
+## Resumen de funcionalidades recientes (Julio 2026)
+
+| Fecha | Funcionalidad | Descripción |
+|-------|---------------|-------------|
+| 2026-07-03 | **Fix múltiples valoraciones** | El usuario solo puede calificar un servicio una vez. Se optimizó la consulta de ratings con un nuevo endpoint `/ratings/my-ratings`. |
+| 2026-07-01 | **Chatbot inteligente** | Detección automática de intención del usuario (7 categorías de problemas). Respuestas formales con sugerencias de acciones. |
+| 2026-07-01 | **Modo oscuro web** | Dashboard web con tema oscuro completo y variables CSS. |
+| 2026-07-01 | **Optimización analytics** | Gráficos con scroll horizontal, memoización de componentes y handlers, loading skeletons. |
 
 ---
 
@@ -130,6 +143,10 @@ npx expo start
 | `POST` | `/api/chat/message` | Sí | No | Enviar mensaje al bot |
 | `GET` | `/api/chat/history` | Sí | No | Historial de chat |
 | `GET` | `/api/dashboard/kpis` | Sí | Sí | KPIs del dashboard |
+| `POST` | `/api/ratings/:id` | Sí | No | Calificar incidente resuelto |
+| `GET` | `/api/ratings/my-ratings` | Sí | No | IDs de incidentes calificados por el usuario |
+| `GET` | `/api/ratings/:id` | Sí | No | Obtener calificación de un incidente |
+| `GET` | `/api/ratings` | Sí | Sí | Estadísticas de calificaciones (admin) |
 | `GET` | `/api/users` | Sí | Sí | Listar usuarios |
 | `PATCH` | `/api/users/:id` | Sí | Sí | Actualizar rol/nombre |
 | `PATCH` | `/api/users/:id/toggle-status` | Sí | Sí | Bloquear/desbloquear usuario |

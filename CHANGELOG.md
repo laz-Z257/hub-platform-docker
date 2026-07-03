@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-03 — Fix múltiples valoraciones, endpoint optimizado ratings
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Endpoint `/ratings/my-ratings`** | `ratings.controller.ts`, `ratings.routes.ts` | Nuevo endpoint que devuelve todos los IDs de incidentes calificados por el usuario autenticado en una sola petición. Evita rate limit al consultar ratings individuales. |
+
+### Mobile App (Android)
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Fix múltiples valoraciones** | `ChatScreen.tsx` | Cambiado estado `alreadyRated` (boolean) a `ratedIncidents` (Set<string>) para tracking por incidente específico. |
+| **Match por shortId** | `ChatScreen.tsx` | Extrae `#TK-XXXXXXXX` del mensaje de resolución y lo compara con incidentes calificados para mostrar "Ya calificado" correctamente. |
+| **FlatList re-renderizado** | `ChatScreen.tsx` | Agregado `extraData={ratedIncidents}` para forzar re-render cuando cambia el estado de calificación. |
+| **Optimización de peticiones** | `ChatScreen.tsx` | Reemplazado loop de `GET /ratings/:id` por `GET /ratings/my-ratings` (1 sola petición). |
+
+---
+
 ## 2026-07-01 — Chat inteligente, bloqueo con mensaje original, scroll chat, modo oscuro, optimización analytics
 
 ### Backend
