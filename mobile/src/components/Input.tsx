@@ -54,6 +54,9 @@ export default function Input({
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType={keyboardType}
+          autoComplete="new-password"
+          name="password-field"
+          id="password-input"
           editable={true}
         />
         {isPassword && (

@@ -2,6 +2,8 @@
 
 Plataforma de soporte corporativo completa con arquitectura de microservicios containerizados.
 
+> **Estado: En desarrollo** | PWA Mobile implementada - 2026-07-08
+
 ## Tabla de Contenidos
 
 1. [Estructura General](#1-estructura-general-del-proyecto)
@@ -28,6 +30,8 @@ hub-platform-docker/
 ├── docker-compose.yml
 ├── .env / .env.example
 ├── README.md, CHANGELOG.md, TODO.md, AUDIT-COMPLETA.md
+├── PWA-PLAN-3-PASOS.md      # Plan de migración a PWA
+├── PWA-MIGRATION-PLAN.md    # Documentación original de migración PWA
 └── render.yaml
 ```
 
@@ -38,7 +42,7 @@ hub-platform-docker/
 | **postgres** | PostgreSQL 16 | 5432 | Base de datos relacional |
 | **api** | Express.js + TypeScript | 3001 | Backend REST API |
 | **web** | Next.js 15 (React 19) | 3000 | Dashboard administrativo |
-| **ota-server** | nginx Alpine | 3002 | Servidor de bundles OTA |
+| **ota-server** | nginx Alpine | 3002 | Servidor PWA mobile + proxy API + OTA legacy |
 | **mobile-builder** | Node + Java 17 + Android SDK | - | Compilador de APK (bajo demanda) |
 | **ota-builder** | Expo/React Native | - | Generador de bundles OTA (bajo demanda) |
 
@@ -458,6 +462,19 @@ SEED_ADMIN_PASSWORD=admin123
 NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100
 ```
 
+### Variables de Entorno Mobile (mobile/.env)
+
+```bash
+# Para desarrollo local:
+EXPO_PUBLIC_API_URL=http://localhost:3001/api
+
+# Para PWA con cloudflared (temporal):
+EXPO_PUBLIC_API_URL=https://abc123.trycloudflare.com/api
+
+# Para producción (Render):
+EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
+```
+
 ### Puertos de Servicios
 
 | Servicio | Puerto | URL |
@@ -465,7 +482,7 @@ NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100
 | PostgreSQL | 5432 | `postgres://localhost:5432/hub_platform` |
 | API Backend | 3001 | `http://localhost:3001/api` |
 | Web Dashboard | 3000 | `http://localhost:3000` |
-| OTA Server | 3002 | `http://localhost:3002` |
+| OTA Server / PWA | 3002 | `http://localhost:3002` (incluye proxy API en `/api/`) |
 
 ### Credenciales de Prueba
 
@@ -569,6 +586,310 @@ docker compose --profile build-only run mobile-builder
 
 ---
 
+## 10. PWA Mobile (Progressive Web App)
+
+### Por qué PWA?
+
+La app móvil se migró de **APK nativa** a **PWA** para:
+
+- **Eliminar complejidad de build**: No más Java SDK de 8GB ni Android SDK
+- **Instalación instantánea**: Sin Play Store, sin APK
+- **Acceso universal**: Funciona en cualquier navegador, cualquier dispositivo
+- **Actualizaciones automáticas**: Siempre tienes la última versión
+- **No requiere compilación**: Un simple `npx expo export` genera el build
+
+### Arquitectura de la PWA
+
+```
+                        ┌─────────────────────────────────────┐
+                        │           cloudflared                │
+                        │   (túnel público temporal)           │
+                        │   https://abc123.trycloudflare.com    │
+                        └────────────────┬─────────────────────┘
+                                         │
+                        ┌────────────────▼─────────────────────┐
+                        │         nginx :3002                  │
+                        │  ┌─────────────────────────────────┐│
+                        │  │  Proxy /api/* → api:3001       ││
+                        │  │  Serve /hub-mobile/* (PWA)     ││
+                        │  │  Serve /ota/* (OTA legacy)     ││
+                        │  └─────────────────────────────────┘│
+                        └────────────────┬─────────────────────┘
+                                         │
+          ┌─────────────────────────────┼─────────────────────────────┐
+          │                             │                             │
+   ┌──────▼──────┐              ┌───────▼───────┐             ┌───────▼───────┐
+   │  ota-server │              │     api       │             │   postgres    │
+   │  (nginx)    │              │   :3001       │             │    :5432      │
+   │             │              │               │             │               │
+   │ hub-mobile/ │              │ Backend REST  │             │ PostgreSQL 16  │
+   │     PWA     │              │ Express+TS    │             │               │
+   └─────────────┘              └───────────────┘             └───────────────┘
+```
+
+### URLs de la PWA
+
+| Entorno | URL |
+|---------|-----|
+| Local | `http://localhost:3002/` |
+| Red local | `http://<tu-ip>:3002/` |
+| Tunnel público | Usar cloudflared (ver abajo) |
+
+### Configuración de nginx (ota-server/nginx.conf)
+
+El servidor nginx actúa como reverse proxy para que todo funcione desde el mismo puerto:
+
+```nginx
+server {
+    listen 3002;
+    server_name _;
+    root /usr/share/nginx/html/hub-mobile;
+
+    add_header Access-Control-Allow-Origin *;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS";
+    add_header Access-Control-Allow-Headers "Content-Type, Authorization";
+    add_header X-Content-Type-Options "nosniff";
+
+    # ===== API PROXY =====
+    location /api/ {
+        proxy_pass http://api:3001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # ===== PWA HUB MOBILE =====
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /hub-mobile/ {
+        alias /usr/share/nginx/html/hub-mobile/;
+        try_files $uri $uri/ /hub-mobile/index.html;
+    }
+
+    location /hub-mobile {
+        return 301 /hub-mobile/;
+    }
+
+    # ===== OTA LEGACY =====
+    location /ota/ {
+        alias /usr/share/nginx/html/;
+        try_files $uri $uri/ /ota/index.html;
+    }
+
+    location /ota {
+        return 301 /ota/;
+    }
+}
+```
+
+### Generar/Actualizar la PWA ( paso a paso )
+
+**Cuando hagas cambios en el código mobile, sigue estos pasos:**
+
+**1. Configurar la URL de la API en mobile/.env:**
+
+```bash
+cd /home/linux/Escritorio/hub-platform-docker/mobile
+echo "EXPO_PUBLIC_API_URL=https://TU_LINK_CLOUDFLARED/api" > .env
+```
+
+**2. Generar el build web de Expo:**
+
+```bash
+npx expo export --platform web --clear
+```
+
+**3. Ir a la carpeta raíz del proyecto:**
+
+```bash
+cd /home/linux/Escritorio/hub-platform-docker
+```
+
+**4. Copiar archivos al contenedor y reiniciar:**
+
+```bash
+docker compose build ota-server && docker compose up -d --force-recreate ota-server && docker compose cp mobile/dist/. ota-server:/usr/share/nginx/html/hub-mobile/
+```
+
+**5. Regenerar el tunnel cloudflared:**
+
+```bash
+./cloudflared tunnel --url http://localhost:3002
+```
+
+**6. Usar el nuevo link que cloudflared te da.**
+
+---
+
+### Acceso desde Celular (fuera de la red local)
+
+Usa **cloudflared** para crear un túnel público temporal:
+
+**1. Descargar cloudflared (solo una vez):**
+
+```bash
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
+chmod +x cloudflared
+```
+
+**2. Ejecutar tunnel:**
+
+```bash
+./cloudflared tunnel --url http://localhost:3002
+```
+
+Te dará un link como:
+```
+https://abc123.trycloudflare.com
+```
+
+**3. Ese link pónlo en el navegador del celular.**
+
+**Nota:** Cada vez que cierres cloudflared y lo vuelvas a abrir, el link cambia.
+
+---
+
+### Link Fijo con Cloudflare (producción)
+
+Para tener un link permanente:
+
+1. Crear cuenta en https://dash.cloudflare.com/
+2. Crear un tunnel named:
+   ```bash
+   cloudflared tunnel create pwa-hub
+   ```
+3. Configurar en `~/.cloudflared/config.yml`:
+   ```yaml
+   tunnel: <tu-tunnel-id>
+   credentials-file: /root/.cloudflared/<tu-tunnel-id>.json
+
+   ingress:
+     - hostname: pwa.tudominio.com
+       service: http://localhost:3002
+     - service: http_status:404
+   ```
+4. En Cloudflare DNS, agregar CNAME:
+   - Name: `pwa`
+   - Target: `<tu-tunnel-id>.cfargotunnel.com`
+5. Ejecutar:
+   ```bash
+   cloudflared service run pwa-hub
+   ```
+
+Resultado: `https://pwa.tudominio.com`
+
+---
+
+### Instalar PWA en Android
+
+1. Abrir el link de la PWA en Chrome
+2. Aparecerá banner "Instalar" o ir a **Menú > Agregar a pantalla de inicio**
+3. La app aparece como icono normal en el home
+
+---
+
+### Diferencias con APK
+
+| Característica | PWA | APK |
+|---------------|-----|-----|
+| Instalación | Instantánea (browser) | Play Store o APK |
+| Notificaciones push (Android) | Sí (Chrome) | Sí |
+| Notificaciones push (iOS) | No (Safari no soporta) | Sí |
+| Offline | Parcial (UI cacheada) | Completo |
+| Tamaño | ~0 MB (browser cache) | ~50-100 MB |
+| Cámara | `<input type="file">` | expo-camera |
+
+---
+
+### Estructura de archivos de la PWA
+
+```
+ota-server/
+├── Dockerfile
+├── nginx.conf              # Configuración nginx con proxy API
+└── usr/share/nginx/html/
+    ├── hub-mobile/         # PWA (carpeta principal)
+    │   ├── _expo/          # Assets JS/CSS
+    │   ├── assets/         # Imágenes y fonts
+    │   ├── index.html      # Entry point
+    │   ├── favicon.ico
+    │   └── metadata.json
+    └── ota/                # OTA legacy (para APK Expo)
+        ├── _expo/
+        ├── assets/
+        └── metadata.json
+```
+
+---
+
+### Nota sobre persistencia
+
+Los archivos de la PWA se copian **dentro del volumen Docker**. Si haces `docker compose down -v` se perderán.
+
+Para hacerlos persistentes en disco, modifica `docker-compose.yml`:
+
+```yaml
+# Cambiar de:
+volumes:
+  - ota-data:/usr/share/nginx/html:ro
+
+# A:
+volumes:
+  - ./ota-server/usr/share/nginx/html:/usr/share/nginx/html
+```
+
+---
+
 ## Licencia
 
 Privado - Todos los derechos reservados
+
+---
+
+## Historial de Desarrollo
+
+### 2026-07-08 - Implementación PWA Mobile
+
+**Lo que se hizo:**
+
+1. Se migró la app mobile de Expo (APK) a **PWA** (Progressive Web App)
+2. Se configuró `ota-server` como reverse proxy para servir:
+   - PWA en `/` y `/hub-mobile/`
+   - API proxy en `/api/` → `api:3001`
+   - OTA legacy en `/ota/`
+3. Se actualizó `nginx.conf` con proxy_pass a la API
+4. Se crearon scripts para generar build PWA con URL de API configurable
+5. Se implementó tunnel cloudflared para acceso público temporal
+
+**Archivos modificados:**
+- `mobile/app.json` - configuración web PWA
+- `mobile/package.json` - scripts para build web
+- `ota-server/nginx.conf` - proxy API + rutas PWA
+- `docker-compose.yml` - volumen ota-server sin `:ro`
+- `README.md` - documentado todo
+
+**Pendiente:**
+- [ ] Persistir archivos PWA en disco (actualmente en volumen Docker)
+- [ ] Link fijo con Cloudflare tunnel named
+- [ ] Dominio propio configurado
+- [ ] Posiblemente eliminar Dockerfiles de APK (`Dockerfile.builder`, `Dockerfile.ota`)
+
+**Link de prueba actual:**
+```
+https://initial-tells-franklin-tire.trycloudflare.com
+```
+
+---
+
+### Continuación sugerida para próxima sesión:
+
+1. **Probar PWA completa** - login, chat, reportar incidente, historial
+2. **Decidir si mantener APK o solo PWA**
+3. **Configurar link fijo** con cuenta Cloudflare
+4. **Persisitir archivos PWA** en disco修改 docker-compose.yml
+5. **Limpiar código** - eliminar Dockerfiles builder/ota si no se usan

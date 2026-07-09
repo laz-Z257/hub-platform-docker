@@ -31,7 +31,10 @@
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#F5F6FA",
+      "themeColor": "#F5F6FA",
+      "description": "HUB AI Assistant - App de soporte"
     },
     "plugins": [
       "expo-router",
