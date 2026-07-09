@@ -110,7 +110,11 @@ export default function ChatScreen() {
           }),
         }));
 
-        setMessages([...INITIAL_MESSAGES, welcome, ...historyMsgs]);
+        if (historyMsgs.length === 0) {
+          setMessages([...INITIAL_MESSAGES, welcome]);
+        } else {
+          setMessages([...INITIAL_MESSAGES, ...historyMsgs]);
+        }
       })
       .catch((err) => {
         logger.error("Chat history error", { error: err instanceof Error ? err.message : err });

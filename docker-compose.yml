@@ -56,7 +56,7 @@ services:
     ports:
       - "3002:3002"
     volumes:
-      - ota-data:/usr/share/nginx/html:ro
+      - ota-data:/usr/share/nginx/html
     restart: unless-stopped
 
   ota-builder:
