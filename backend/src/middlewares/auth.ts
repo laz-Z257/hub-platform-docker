@@ -25,11 +25,11 @@ function extractToken(req: Request): string | null {
   return null;
 }
 
-export function authMiddleware(
+export async function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const token = extractToken(req);
 
   if (!token) {
@@ -41,27 +41,23 @@ export function authMiddleware(
     const payload = verifyToken(token);
     req.user = payload;
 
-    db.select({ estado: users.estado })
+    const [user] = await db
+      .select({ estado: users.estado })
       .from(users)
       .where(eq(users.id, payload.userId))
-      .limit(1)
-      .then(([user]) => {
-        if (user?.estado === "bloqueado") {
-          res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
-          return;
-        }
+      .limit(1);
 
-        db.update(users)
-          .set({ ultima_actividad: new Date() })
-          .where(eq(users.id, payload.userId))
-          .execute()
-          .catch(() => {});
+    if (user?.estado === "bloqueado") {
+      res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
+      return;
+    }
 
-        next();
-      })
-      .catch(() => {
-        res.status(500).json({ error: "Error al verificar estado del usuario" });
-      });
+    await db
+      .update(users)
+      .set({ ultima_actividad: new Date() })
+      .where(eq(users.id, payload.userId));
+
+    next();
   } catch {
     res.status(401).json({ error: "Token inválido o expirado" });
   }

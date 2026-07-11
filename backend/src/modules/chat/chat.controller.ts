@@ -283,6 +283,8 @@ async function lookupTicket(
 
   const shortId = match[1].toUpperCase();
 
+  if (!/^[A-F0-9]{4,8}$/.test(shortId)) return null;
+
   const [incident] = await db
     .select({
       id: incidents.id,
@@ -365,7 +367,8 @@ export async function getHistory(
   res: Response
 ): Promise<void> {
   try {
-    const limit = (req.validatedQuery?.limit as number) || parseInt(req.query.limit as string) || 50;
+    const rawLimit = (req.validatedQuery?.limit as number) || parseInt(req.query.limit as string) || 50;
+    const limit = Math.min(Math.max(1, rawLimit), 200);
 
     const history = await db
       .select()

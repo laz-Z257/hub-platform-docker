@@ -10,8 +10,11 @@ import {
 } from "./storage";
 import { logger } from "./logger";
 
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "https://hub-platform-api.onrender.com/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "";
+
+if (!API_URL) {
+  throw new Error("EXPO_PUBLIC_API_URL environment variable is required");
+}
 
 const REQUEST_TIMEOUT = 15000;
 

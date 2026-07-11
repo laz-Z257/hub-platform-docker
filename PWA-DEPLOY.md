@@ -1,90 +1,127 @@
-# PWA Mobile - Guía de Despliegue y Mantenimiento
+# PWA Deploy - Quick Reference
 
-> Última actualización: 2026-07-09
+## ⚠️ REGLA CRÍTICA
+URL DEBE terminar en `/api`
 
-## Estado Actual
+```
+✅ CORRECTO:  https://tu-dominio.com/api
+❌ INCORRECTO: https://tu-dominio.com
+```
 
-✅ PWA funcionando en: **https://push-simulation-plc-trout.trycloudflare.com**
+**Sin `/api` → error 405 Method Not Allowed**
 
 ---
 
-## Cambios Realizados (2026-07-09)
+## Deploy (3 pasos)
 
-### 1. Fix: Preguntas frecuentes y acciones sugeridas
-
-**Problema:** Al navegar a otra pantalla y volver al chat, se perdía el mensaje de bienvenida con las acciones sugeridas.
-
-**Solución:** El mensaje de bienvenida solo aparece si no hay historial. Si ya existe historial, se mantienen los mensajes anteriores.
-
-**Archivo modificado:** `mobile/src/screens/ChatScreen.tsx`
-
-### 2. Favicon/Logo para PWA
-
-**Problema:** El favicon era muy pequeño para verse bien al instalar la PWA.
-
-**Solución:** Se copió `logo.png` como `favicon.png` y se creó `manifest.json` con el logo de 512x512.
-
-**Archivos modificados:**
-- `mobile/assets/favicon.png`
-- `mobile/dist/manifest.json` (creado)
-- `mobile/dist/index.html`
-
-### 3. Script de Deploy Manual
-
-**Archivo:** `deploy-pwa.sh` (ejecutable)
-
-**Uso:**
 ```bash
+# 1. Levantar servicios
+docker compose up -d postgres api web ota-server
+
+# 2. Deploy PWA
+./deploy-pwa.sh
+
+# 3. Tunnel
+./cloudflared tunnel --url http://localhost:3002
+```
+
+---
+
+## Si cambia el tunnel
+
+Cada vez que cloudflared genera URL nueva:
+
+```bash
+# 1. Copiar nueva URL del tunnel
+
+# 2. Actualizar mobile/.env
+echo "EXPO_PUBLIC_API_URL=https://NUEVA-URL.trycloudflare.com/api" > mobile/.env
+
+# 3. Redeploy
 ./deploy-pwa.sh
 ```
 
-**Qué hace:**
-1. Exporta la PWA desde mobile
-2. Copia los archivos al contenedor ota-server
-3. Reinicia el servidor
+---
 
-### 4. GitHub Actions (para deploy automático)
+## Icono para instalación (512x512)
 
-**Archivo:** `.github/workflows/deploy-pwa.yml`
+El icono de 512x512 ya está configurado en:
+- `mobile/assets/icon-512.png`
+- `mobile/assets/icon.png` (copia del 512)
+- `mobile/assets/favicon.png` (copia del 512)
 
-Se activa automáticamente cuando hay cambios en `mobile/**` en la rama main.
-
-**Secrets requeridos en GitHub:**
-- `SERVER_HOST` - IP del servidor
-- `SERVER_USER` - usuario SSH
-- `SERVER_SSH_KEY` - clave privada SSH
-- `SERVER_PORT` - puerto SSH (default 22)
-- `SERVER_DEPLOY_PATH` - ruta de despliegue
-- `EXPO_PUBLIC_API_URL` - URL de la API en producción
+Si se rompe o necesitas regenerar:
+```bash
+python3 << 'EOF'
+from PIL import Image
+logo = Image.open('mobile/assets/logo.png')
+size = 512
+new_img = Image.new('RGBA', (size, size), (245, 246, 250, 255))
+logo_ratio = logo.width / logo.height
+if logo_ratio > 1:
+    new_width = int(size * 0.8)
+    new_height = int(new_width / logo_ratio)
+else:
+    new_height = int(size * 0.8)
+    new_width = int(new_height * logo_ratio)
+x = (size - new_width) // 2
+y = (size - new_height) // 2
+logo_resized = logo.resize((new_width, new_height), Image.Resampling.LANCZOS)
+new_img.paste(logo_resized, (x, y), logo_resized)
+new_img.save('mobile/assets/icon-512.png')
+new_img.save('mobile/assets/icon.png')
+new_img.save('mobile/assets/favicon.png')
+EOF
+```
 
 ---
 
-## Comandos Útiles
+## Archivos que se generan
 
-### Levantar todos los servicios
-```bash
-docker compose up -d postgres api web ota-server
+```
+mobile/dist/
+├── index.html         (con manifest + meta tags)
+├── manifest.json      (para PWA)
+├── favicon.ico
+├── assets/
+│   └── icon-512.png   (512x512)
+└── _expo/static/...   (JS/CSS bundle)
 ```
 
-### Ver logs
+---
+
+## Debug
+
 ```bash
-docker compose logs -f
+# Ver estado servicios
+docker compose ps
+
+# Ver logs
+docker compose logs ota-server
+
+# Verificar URL embebida
+docker compose exec ota-server grep -o "https://[a-z0-9-]*\.trycloudflare\.com/api" /usr/share/nginx/html/_expo/static/js/web/index-*.js | head -1
+
+# Verificar API responde
+curl http://localhost:3002/api/health
+
+# Verificar manifest
+curl http://localhost:3002/manifest.json
+
+# Verificar icono
+curl -I http://localhost:3002/assets/icon-512.png
 ```
 
-### Regenerar PWA localmente
-```bash
-cd mobile
-echo "EXPO_PUBLIC_API_URL=https://tu-dominio.com/api" > .env
-npx expo export --platform web --clear
-cd ..
-docker compose cp mobile/dist/. ota-server:/usr/share/nginx/html/hub-mobile/
-docker compose restart ota-server
-```
+---
 
-### Levantar túnel cloudflared (temporal)
-```bash
-./cloudflared tunnel --url http://localhost:3002
-```
+## Errores Comunes
+
+| Error | Causa | Solución |
+|-------|-------|----------|
+| 405 Method Not Allowed | URL sin `/api` | Agregar `/api` al final |
+| Sin conexión a internet | API no responde | Verificar nginx + API |
+| Icono borroso | Icono pequeño | Regenerar 512x512 |
+| Cache old | PWA cacheada | Desinstalar y reinstallar |
 
 ---
 
@@ -92,35 +129,15 @@ docker compose restart ota-server
 
 | Servicio | URL |
 |----------|-----|
+| PWA (tunnel actual) | https://jvc-palace-partnerships-opponents.trycloudflare.com |
 | Dashboard Web | http://localhost:3000 |
-| PWA Móvil | http://localhost:3002/hub-mobile |
-| API Backend | http://localhost:3001/api |
-| Túnel temporal | (varía cada vez) |
+| API | http://localhost:3001/api |
 
 ---
 
-## Pendientes
-
-1. **Servidor propio** - Necesita VPS para producción
-2. **Deploy automático** - Configurar GitHub Actions cuando se tenga servidor
-3. **Dominio fijo** - Configurar dominio propio en lugar de cloudflared
-4. **Persistir archivos PWA** - Modificar docker-compose.yml para guardar en disco
-5. **Limpiar código** - Eliminar Dockerfiles de APK (mobile-builder, ota-builder) si no se usan
-
----
-
-## Credenciales de Prueba
+## Credenciales
 
 | Campo | Valor |
 |-------|-------|
 | Documento | `123456789` |
 | Contraseña | `admin123` |
-| Rol | `admin` |
-
----
-
-## Notas
-
-- El túnel cloudflared **no es permanente**. Se corta cuando se apaga el PC.
-- La PWA usa cache del navegador. Para ver cambios, hacer hard refresh o reinstalar.
-- Para producción, usar VPS propio con Docker.

@@ -1,0 +1,1 @@
+CREATE INDEX "incidents_user_estado_idx" ON "incidents" USING btree ("user_id","estado");

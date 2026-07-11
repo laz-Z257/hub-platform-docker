@@ -482,7 +482,8 @@ EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 | PostgreSQL | 5432 | `postgres://localhost:5432/hub_platform` |
 | API Backend | 3001 | `http://localhost:3001/api` |
 | Web Dashboard | 3000 | `http://localhost:3000` |
-| OTA Server / PWA | 3002 | `http://localhost:3002` (incluye proxy API en `/api/`) |
+| OTA Server | 3002 | `http://localhost:3002` (incluye proxy API en `/api/`) |
+| **Mobile PWA** | **3003** | `http://localhost:3003` (NO dockerizado) |
 
 ### Credenciales de Prueba
 
@@ -852,6 +853,99 @@ Privado - Todos los derechos reservados
 ---
 
 ## Historial de Desarrollo
+
+---
+
+## 11. Estado Actual (2026-07-10)
+
+### Servicios Locales - PUERTOS
+
+| Servicio | Puerto | URL Local | Estado |
+|----------|--------|-----------|--------|
+| **Web Dashboard** | 3000 | http://localhost:3000 | ✅ Corriendo (Docker) |
+| **Backend API** | 3001 | http://localhost:3001 | ✅ Corriendo (Docker) |
+| **OTA Server** | 3002 | http://localhost:3002 | ✅ Corriendo (Docker) |
+| **Mobile PWA** | 3003 | http://localhost:3003 | ✅ Corriendo (npx serve) |
+
+### Mobile PWA - IMPORTANTE
+
+El mobile **NO está dockerizado**. Se corre por separado:
+
+```bash
+# 1. Generar build (desde carpeta mobile):
+npx expo export --platform web --clear
+
+# 2. Servir con npx serve (desde carpeta mobile/dist):
+npx serve -l 3003
+
+# O usar next (más rápido para desarrollo):
+npx next start -p 3003
+```
+
+### Comandos Rápidos
+
+```bash
+# Iniciar todo Docker:
+cd /home/linux/Escritorio/hub-platform-docker
+docker compose up -d
+
+# Ver estado de contenedores:
+docker compose ps
+
+# Ver logs de un servicio:
+docker compose logs -f api
+
+# Reiniciar un servicio:
+docker compose restart api
+
+# Mobile (en otra terminal, desde carpeta mobile):
+npx serve -l 3003
+```
+
+### Cloudflare Tunnels (acceso desde celular)
+
+```bash
+# Backend API:
+./cloudflared tunnel --url http://localhost:3001
+
+# Mobile PWA:
+./cloudflared tunnel --url http://localhost:3003
+```
+
+**Nota:** Los links de cloudflared cambian cada vez que se reinician.
+
+### API URL en Mobile
+
+La URL del API está **hardcoded** en `mobile/src/services/api.ts`:
+
+```typescript
+const API_URL = "https://stuart-textile-collins-cold.trycloudflare.com/api";
+```
+
+**Para cambiar la URL:**
+1. Editar `mobile/src/services/api.ts`
+2. Hacer `npx expo export --platform web --clear`
+3. Reiniciar el serve en puerto 3003
+
+### ⚠️ ERROR CONOCIDO: "Sin conexión a internet" en puerto 3003
+
+Cuando el mobile corre en puerto 3003 (usando `npx serve`), aparece error de conexión aunque el backend esté funcionando.
+
+**Causa:** El ConnectivityContext detecta que no hay conexión a internet real.
+
+** workaround temporal:** Usar cloudflared tunnel para acceder desde el celular.
+
+**Solución pendiente:** Revisar `mobile/src/contexts/ConnectivityContext.tsx` y el manejo de `navigator.onLine`.
+
+### Credenciales
+
+| Campo | Valor |
+|-------|-------|
+| Documento | `123456789` |
+| Contraseña | `admin123` |
+| Rol | `admin` |
+
+---
 
 ### 2026-07-08 - Implementación PWA Mobile
 

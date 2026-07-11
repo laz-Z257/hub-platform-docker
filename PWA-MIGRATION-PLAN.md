@@ -1,5 +1,7 @@
 # Plan de Migración: Expo Native App → PWA
 
+> **ESTADO:** ✅ COMPLETADO (2026-07-11)
+
 ## Objetivo
 
 Migrar la aplicación mobile de **Expo (APK nativo)** a **PWA (Progressive Web App)** para eliminar la complejidad de compilación Android/Java SDK, manteniendo la misma experiencia de usuario.

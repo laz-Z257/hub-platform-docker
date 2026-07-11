@@ -62,6 +62,7 @@ export const incidents = pgTable(
     index("incidents_estado_idx").on(table.estado),
     index("incidents_urgencia_idx").on(table.urgencia),
     index("incidents_created_at_idx").on(table.created_at),
+    index("incidents_user_estado_idx").on(table.user_id, table.estado),
   ]
 );
 

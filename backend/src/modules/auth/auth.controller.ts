@@ -149,7 +149,7 @@ export async function me(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user) {
-      res.status(404).json({ error: "Usuario no encontrado" });
+      res.status(401).json({ error: "Sesión inválida" });
       return;
     }
 
@@ -213,11 +213,10 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
     if (token) {
       const payload = verifyToken(token);
-      db.update(users)
+      await db
+        .update(users)
         .set({ token_version: sql`token_version + 1` })
-        .where(eq(users.id, payload.userId))
-        .execute()
-        .catch(() => {});
+        .where(eq(users.id, payload.userId));
     }
   } catch {
     // Token invalid/expired — still clear cookies
