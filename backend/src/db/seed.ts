@@ -24,7 +24,7 @@ async function seed() {
     crypto.randomBytes(16).toString("hex");
 
   if (!process.env.SEED_ADMIN_PASSWORD) {
-    logger.debug("SEED ADMIN PASSWORD generada automáticamente. Define SEED_ADMIN_PASSWORD para controlarla.");
+    logger.info("Seed: SEED_ADMIN_PASSWORD no definida. Se usó password autogenerada (solo para desarrollo).");
   }
 
   const password = await bcrypt.hash(seedPassword, 10);
@@ -41,21 +41,14 @@ async function seed() {
         .where(eq(users.documento, u.documento))
         .limit(1);
 
-    if (!existing) {
-      await db
-        .insert(users)
-        .values({ ...u, contrasena: password });
-      logger.info(`User created: ${u.nombre} (${u.documento})`);
-    } else {
-      logger.info(`User exists: ${u.nombre}`);
-      if (process.env.SEED_ADMIN_PASSWORD) {
+      if (!existing) {
         await db
-          .update(users)
-          .set({ contrasena: password, estado: "activo", intentos_fallidos: 0 })
-          .where(eq(users.documento, u.documento));
-        logger.info(`Password updated for: ${u.nombre}`);
+          .insert(users)
+          .values({ ...u, contrasena: password });
+        logger.info(`User created: ${u.nombre} (${u.documento})`);
+      } else {
+        logger.info(`User exists: ${u.nombre} (password not modified)`);
       }
-    }
     } catch (err) {
       logger.warn(`Seed warning for ${u.documento}: ${(err as Error).message}`);
     }

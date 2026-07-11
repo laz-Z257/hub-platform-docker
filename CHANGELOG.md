@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-07-10 — Auditoría exhaustiva: 11 fixes de seguridad
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Límite archivo multer** | `upload.routes.ts` | Agregado `limits: { fileSize: 5 * 1024 * 1024 }` |
+| **Validación token push** | `push.schema.ts` | Regex para formato de token Expo Push |
+| **Rate limit push tokens** | `push.routes.ts` | Nuevo `pushLimiter` de 10 req/min |
+| **Validación shortId chat** | `chat.controller.ts` | Validación adicional con regex `^[A-F0-9]{4,8}$` |
+| **Rate limit login 3/min** | `auth.routes.ts` | Reducido de 5 a 3 req/min |
+| **Validación documento** | `auth.schema.ts` | Regex `/^\d+$/` para solo números |
+| **Fix mensaje rating** | `ratings.controller.ts` | Verifica user_id antes de error duplicado |
+| **Límite chat history** | `chat.controller.ts` | `Math.min(Math.max(1, limit), 200)` |
+| **Logging seed corregido** | `db/seed.ts` | Mensaje sin exponer password |
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Sin fallback API URL** | `services/api.ts` | Lanza error si `EXPO_PUBLIC_API_URL` no está definida |
+
+### Web
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Logger centralizado** | `Topbar.tsx` | `console.error` → `logger.error()` |
+
+---
+
+## 2026-07-10 — Auditoría seguridad: fixes críticos y altos (primera sesión)
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Auth middleware async/await** | `middlewares/auth.ts` | Refactorizado de `.then()` a async/await para mejor manejo de errores y mantenibilidad. |
+| **Logout con await** | `auth.controller.ts` | La actualización de `token_version` ahora espera confirmación de la BD antes de retornar. |
+| **Seed no resetea password** | `db/seed.ts` | El seed ya no actualiza la contraseña de usuarios existentes. Solo crea admin si no existe. |
+| **Rate limit login más estricto** | `auth.routes.ts` | Cambiado de 10 req/15min a 5 req/1min para mejor protección contra fuerza bruta. |
+| **Fix enumeración usuarios** | `auth.controller.ts` | `/auth/me` ahora retorna 401 en vez de 404 cuando el usuario no existe, evitando enumeración. |
+| **Índice compuesto incidents** | `db/schema.ts`, `drizzle/0010_*` | Nuevo índice `incidents_user_estado_idx` para optimizar queries por usuario y estado. |
+
+---
+
 ## 2026-07-03 — Fix múltiples valoraciones, endpoint optimizado ratings
 
 ### Backend

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, HelpCircle, UserPlus } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import HelpModal from "./HelpModal";
 
 export default function Topbar({ userName }: { userName?: string }) {
@@ -18,7 +19,7 @@ export default function Topbar({ userName }: { userName?: string }) {
       const data = await api.get<{ count: number }>("/incidents/unread-count");
       setUnreadCount(data.count);
     } catch (err) {
-      console.error("Error fetching unread count:", err);
+      logger.error("Error fetching unread count", { error: err });
     }
   }, []);
 

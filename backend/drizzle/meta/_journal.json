@@ -71,6 +71,13 @@
       "when": 1782573750914,
       "tag": "0009_next_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783689959168,
+      "tag": "0010_far_next_avengers",
+      "breakpoints": true
     }
   ]
 }

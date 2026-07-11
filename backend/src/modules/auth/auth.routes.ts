@@ -8,9 +8,9 @@ import { authMiddleware } from "../../middlewares/auth";
 const router = Router();
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { error: "Demasiados intentos. Intenta de nuevo en 15 minutos." },
+  windowMs: 60 * 1000,
+  max: 3,
+  message: { error: "Demasiados intentos. Intenta de nuevo en 1 minuto." },
   standardHeaders: true,
   legacyHeaders: false,
 });

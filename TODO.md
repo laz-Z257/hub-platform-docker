@@ -114,3 +114,52 @@ Se realizó una revisión exhaustiva del código y se eliminaron/corrigieron los
 - ✅ TypeScript compila sin errores
 - ✅ ESLint sin warnings ni errores
 - ✅ Proyecto limpio y funcional
+
+---
+
+## 🛡️ Auditoría Seguridad 2026-07-10 — Fixes Implementados
+
+### Primera sesión (AUDIT-003, 004, 006, 011, 012, 026)
+
+| AUDIT ID | Descripción | Archivos | Estado |
+|----------|-------------|----------|--------|
+| AUDIT-011 | Auth middleware refactorizado a async/await | `middlewares/auth.ts` | ✅ **CORREGIDO** |
+| AUDIT-012 | Logout ahora usa await en update | `auth.controller.ts` | ✅ **CORREGIDO** |
+| AUDIT-006 | Seed ya no resetea password existente | `db/seed.ts` | ✅ **CORREGIDO** |
+| AUDIT-003 | Rate limit login más estricto (3 req/min) | `auth.routes.ts` | ✅ **CORREGIDO** |
+| AUDIT-004 | /auth/me retorna 401 en vez de 404 | `auth.controller.ts` | ✅ **CORREGIDO** |
+| AUDIT-026 | Índice compuesto incidents(user_id, estado) | `db/schema.ts`, `drizzle/0010_*` | ✅ **CORREGIDO** |
+
+### Segunda sesión (CR-002, 003, 004, 005, ALTO-005, 007, 008, 009, 012, MED-005, BAJO-004)
+
+| ID | Descripción | Archivos | Estado |
+|----|-------------|----------|--------|
+| CR-002 | Límite archivo multer 5MB | `upload.routes.ts` | ✅ **CORREGIDO** |
+| CR-003 | Validación formato token push | `push.schema.ts` | ✅ **CORREGIDO** |
+| CR-004 | Validación shortId en chat | `chat.controller.ts` | ✅ **CORREGIDO** |
+| CR-005 | Rate limit login a 3/min | `auth.routes.ts` | ✅ **CORREGIDO** |
+| ALTO-005 | Validación documento regex | `auth.schema.ts` | ✅ **CORREGIDO** |
+| ALTO-007 | Rate limit push tokens | `push.routes.ts` | ✅ **CORREGIDO** |
+| ALTO-008 | Logging seed corregido | `db/seed.ts` | ✅ **CORREGIDO** |
+| ALTO-009 | Mensaje rating con user_id | `ratings.controller.ts` | ✅ **CORREGIDO** |
+| ALTO-012 | Sin fallback API URL prod | `mobile/services/api.ts` | ✅ **CORREGIDO** |
+| MED-005 | Límite chat history 200 | `chat.controller.ts` | ✅ **CORREGIDO** |
+| BAJO-004 | Logger centralizado | `Topbar.tsx` | ✅ **CORREGIDO** |
+
+### Pendientes de Auditoría
+
+| AUDIT ID | Descripción | Severidad | Estado |
+|----------|-------------|-----------|--------|
+| CR-001 | Secrets por defecto en .env.example | 🔴 CRÍTICA | ⏳ PENDIENTE |
+| ALTO-001 | IP interna hardcodeada | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-002 | Middleware admin incluye "tecnico" | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-003 | Sin resource limits Docker | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-004 | Credenciales en URL BD | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-006 | Enumeración usuarios (ya 401) | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-010 | CSRF bypass con Bearer | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-011 | Rol "asesor" sin permisos | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-036 | Docker sin SHA digest | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-037 | Sin resource limits Docker | 🟡 MEDIA | ⏳ PENDIENTE |
+| ALTO-038 | Secrets como env vars | 🟡 MEDIA | ⏳ PENDIENTE |
+
+> Para producción: regenerar todos los secrets con `openssl rand -hex 32`

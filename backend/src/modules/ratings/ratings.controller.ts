@@ -31,12 +31,12 @@ export async function createRating(req: Request, res: Response): Promise<void> {
     }
 
     const [existing] = await db
-      .select({ id: ratings.id })
+      .select({ id: ratings.id, user_id: ratings.user_id })
       .from(ratings)
       .where(eq(ratings.incident_id, id))
       .limit(1);
 
-    if (existing) {
+    if (existing && existing.user_id === req.user!.userId) {
       res.status(409).json({ error: "Ya has calificado este servicio" });
       return;
     }
