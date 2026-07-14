@@ -12,11 +12,11 @@
 
 | Categoría | Críticos | Altos | Medios | Bajos | Info |
 |-----------|----------|-------|--------|-------|------|
-| Seguridad | 2 | 6 | 9 | 7 | 4 |
+| Seguridad | 2 | 5 | 9 | 8 | 4 |
 | Código/Arquitectura | 0 | 3 | 8 | 5 | 2 |
 | Performance | 0 | 2 | 4 | 3 | 1 |
 | Docker | 0 | 1 | 3 | 2 | 1 |
-| **TOTAL** | **2** | **12** | **24** | **17** | **8** |
+| **TOTAL** | **2** | **11** | **24** | **18** | **8** |
 
 ---
 
@@ -27,11 +27,11 @@
 3. **[AUDIT-003]** Rate limit en auth solo en endpoints específicos
 4. **[AUDIT-004]** Posible enumeration de usuarios en `/api/auth/me`
 5. **[AUDIT-005]** Push notifications a exp.host sin autenticación
-6. **[AUDIT-006]** Seed recrea admin con contraseña configurada en cada启动
-7. **[AUDIT-007]** El rol "asesor" tiene acceso completo como admin
-8. **[AUDIT-008]** Ausencia de índices en campos de búsqueda frecuentes
+6. **[AUDIT-006]** Seed recrea admin con contraseña configurada en cada inicio
+7. **[AUDIT-007]** ~~El rol "asesor" tiene acceso completo como admin~~ → ✅ VERIFICADO: El rol asesor está correcto, tiene permisos limitados a móvil
+8. **[AUDIT-008]** Ausencia de índices en campos de búsqueda frecuentes → ✅ CORREGIDO
 9. **[AUDIT-009]** No hay validación de tamaño máximo en listados
-10. **[AUDIT-010]** El middleware de auth hace query asíncrona sin await directo
+10. **[AUDIT-010]** El middleware de auth hace query asíncrona sin await directo → ✅ CORREGIDO
 
 ---
 
@@ -203,27 +203,30 @@ if (process.env.SEED_ADMIN_PASSWORD) {
 
 ---
 
-**[AUDIT-007] El rol "asesor" tiene acceso completo de admin**
+**[AUDIT-007] El rol "asesor" - Documentación de permisos**
 
-**Severidad:** ALTA
-**Categoría:** Seguridad
-**Ubicación:** `backend/src/modules/incidents/incidents.routes.ts:42-50`
+**Severidad:** BAJA (era ALTA, verificado correcto)
+**Categoría:** Documentación
+**Ubicación:** `backend/src/middlewares/admin.ts`, `backend/src/modules/*/routes.ts`
 **Descripción:**
-El middleware `adminOnly` permite tanto "admin" como "tecnico", pero en la práctica "asesor" también parece tener permisos elevados inconsistentes:
+El rol "asesor" está configurado correctamente y tiene permisos limitados:
 
-```typescript
-router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
-router.get("/export", adminOnly, exportIncidents);
-// ... más endpoints de solo admin
-```
+**Permisos del rol "asesor":**
+| Acción | Asesor | Admin | Tecnico |
+|--------|:------:|:-----:|:-------:|
+| Login móvil | ✅ | ✅ | ✅ |
+| Crear incidentes | ✅ | ✅ | ✅ |
+| Ver sus incidentes | ✅ | ✅ | ✅ |
+| Chat | ✅ | ✅ | ✅ |
+| Calificar tickets | ✅ | ✅ | ✅ |
+| Dashboard admin | ❌ | ✅ | ✅ |
+| Modificar estados | ❌ | ✅ | ✅ |
+| Exportar | ❌ | ✅ | ✅ |
+| CRUD usuarios | ❌ | ✅ | ✅ |
 
-Pero en el schema, "asesor" no está incluido en `adminOnly`. Hay inconsistencia en cómo se manejan los roles.
+**Conclusión:** El rol "asesor" está funcionando correctamente. Solo tiene acceso a funciones básicas de móvil. No es necesario ningún cambio.
 
-**Impacto:** Usuarios con rol "asesor" podrían tener más permisos de los esperados.
-
-**Recomendación:**
-- Revisar y documentar claramente qué roles tienen qué permisos
-- Implementar un sistema de permisos más granular (RBAC)
+**Recomendación:** Solo agregar esta documentación al README para claridad.
 
 ---
 
