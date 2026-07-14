@@ -90,12 +90,17 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// Health check
-app.get("/api/health", async (_req, res) => {
+// Health check simple (sin DB)
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Health check completo (con DB)
+app.get("/api/health/db", async (_req, res) => {
   try {
     const { db } = await import("./db");
     await db.execute("SELECT 1");
-    res.json({ status: "ok", db: "connected" });
+    res.json({ status: "ok", db: "connected", timestamp: new Date().toISOString() });
   } catch {
     res.status(503).json({ status: "error", db: "disconnected" });
   }
@@ -138,6 +143,20 @@ app.use(
     res: express.Response,
     _next: express.NextFunction
   ) => {
+    // Zod validation errors
+    if (err.message.includes("ZodError") || err.name === "ZodError") {
+      logger.warn(`Validation error: ${err.message}`, { requestId: req.requestId });
+      res.status(400).json({ error: "Datos inválidos", requestId: req.requestId });
+      return;
+    }
+
+    // Auth errors
+    if (err.message.includes("Unauthorized") || err.message.includes("invalid token")) {
+      logger.warn(`Auth error: ${err.message}`, { requestId: req.requestId });
+      res.status(401).json({ error: "No autorizado", requestId: req.requestId });
+      return;
+    }
+
     logger.error(`Unhandled error: ${err.message}`, {
       requestId: req.requestId,
       stack: err.stack,

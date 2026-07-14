@@ -9,6 +9,11 @@ export async function createRating(req: Request, res: Response): Promise<void> {
     const { id } = req.params as { id: string };
     const { puntuacion, comentario } = req.body;
 
+    if (typeof puntuacion !== "number" || puntuacion < 1 || puntuacion > 5) {
+      res.status(400).json({ error: "La puntuación debe ser un número entre 1 y 5" });
+      return;
+    }
+
     const [incident] = await db
       .select({ id: incidents.id, user_id: incidents.user_id, estado: incidents.estado })
       .from(incidents)
