@@ -157,7 +157,7 @@ Se realizó una revisión exhaustiva del código y se eliminaron/corrigieron los
 | ALTO-004 | Credenciales en URL BD | 🟠 ALTA | ⏳ PENDIENTE |
 | ALTO-006 | Enumeración usuarios (ya 401) | 🟠 ALTA | ⏳ PENDIENTE |
 | ALTO-010 | CSRF bypass con Bearer | 🟠 ALTA | ⏳ PENDIENTE |
-| ALTO-011 | Rol "asesor" sin permisos | 🟠 ALTA | ⏳ PENDIENTE |
+| ALTO-011 | Rol "asesor" sin permisos | 🟠 ALTA | ✅ **VERIFICADO: permisos correctos** |
 | ALTO-036 | Docker sin SHA digest | 🟠 ALTA | ⏳ PENDIENTE |
 | ALTO-037 | Sin resource limits Docker | 🟡 MEDIA | ⏳ PENDIENTE |
 | ALTO-038 | Secrets como env vars | 🟡 MEDIA | ⏳ PENDIENTE |
