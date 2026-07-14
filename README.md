@@ -96,7 +96,7 @@ hub-platform-docker/
 ```yaml
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     ports: ["5432:5432"]
     healthcheck: pg_isready cada 5s
     restart: unless-stopped
@@ -156,6 +156,17 @@ services:
 - Node 22 + OpenJDK 17
 - Android SDK command-line tools
 - Build tools 36.0.0, platform android-36
+
+### Imágenes Docker con SHA (reproducibilidad)
+
+Las imágenes base usan SHA para garantizar versiones exactas:
+
+| Servicio | Imagen + SHA |
+|---------|--------------|
+| postgres | `postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777` |
+| nginx | `nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa` |
+
+> **Nota:** Las imágenes con `build:` (api, web, ota-server) se construyen localmente y no requieren SHA.
 
 ---
 
