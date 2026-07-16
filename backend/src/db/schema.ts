@@ -32,7 +32,9 @@ export const users = pgTable("users", {
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
   bloqueado_por: uuid("bloqueado_por"),
   created_at: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("users_estado_idx").on(table.estado),
+]);
 
 export const incidents = pgTable(
   "incidents",
@@ -63,6 +65,8 @@ export const incidents = pgTable(
     index("incidents_urgencia_idx").on(table.urgencia),
     index("incidents_created_at_idx").on(table.created_at),
     index("incidents_user_estado_idx").on(table.user_id, table.estado),
+    index("incidents_agente_idx").on(table.agente),
+    index("incidents_cerrado_por_idx").on(table.cerrado_por),
   ]
 );
 
