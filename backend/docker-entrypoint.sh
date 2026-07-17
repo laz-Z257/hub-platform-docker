@@ -4,7 +4,10 @@ set -e
 mkdir -p uploads
 
 echo "Running database migrations..."
-npx drizzle-kit migrate
+for f in /app/drizzle/*.sql; do
+  echo "Applying: $(basename $f)"
+  psql "$DATABASE_URL" -f "$f"
+done
 
 echo "Starting server..."
 node dist/index.js
