@@ -33,11 +33,6 @@ export async function seedPuntosVenta(
   res: Response
 ): Promise<void> {
   try {
-    if (req.user?.rol !== "admin") {
-      res.status(403).json({ error: "Solo admin" });
-      return;
-    }
-
     let created = 0;
     for (const nombre of PV_SEED_NAMES) {
       const [existing] = await db

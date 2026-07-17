@@ -4,9 +4,8 @@ import { authMiddleware } from "../../middlewares/auth";
 
 const router = Router();
 
-router.use(authMiddleware);
-
-router.get("/", listPuntosVenta);
 router.post("/seed", seedPuntosVenta);
+router.use(authMiddleware);
+router.get("/", listPuntosVenta);
 
 export default router;
