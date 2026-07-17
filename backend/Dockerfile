@@ -15,13 +15,14 @@ FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb
 
 WORKDIR /app
 
-RUN addgroup -S nodejs && adduser -S nodejs -G nodejs
+RUN addgroup -S nodejs && adduser -S nodejs -G nodejs && apk add --no-cache postgresql-client
 
 COPY package*.json ./
 RUN npm install --omit=dev && chown -R nodejs:nodejs /app
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
+COPY drizzle.config.json ./
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 COPY scripts/migrate-and-seed.sh /migrate-and-seed.sh
 
