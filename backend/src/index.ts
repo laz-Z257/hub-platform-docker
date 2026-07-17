@@ -60,6 +60,9 @@ app.use(
             "http://localhost:8081",
             "http://localhost:19006",
             /^https?:\/\/localhost(:\d+)?$/,
+            /^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+            /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/,
+            /^https?:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
           ]
         : env.CORS_ORIGIN?.split(",") ??
           (() => {
