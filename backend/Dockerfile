@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY tsconfig.json ./
+COPY drizzle.config.json ./
 COPY src/ ./src/
 COPY drizzle/ ./drizzle/
 RUN npm run build
