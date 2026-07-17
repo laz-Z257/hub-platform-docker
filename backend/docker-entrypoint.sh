@@ -9,5 +9,8 @@ for f in /app/drizzle/*.sql; do
   psql "$DATABASE_URL" -f "$f" || echo "Warning: $(basename $f) may have already been applied"
 done
 
+echo "Running seed..."
+node dist/db/seed.js
+
 echo "Starting server..."
 node dist/index.js

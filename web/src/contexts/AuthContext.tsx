@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api, setCsrfToken } from "@/lib/api";
+import { api, setCsrfToken, setAuthToken, clearAuthToken, getAuthToken } from "@/lib/api";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -29,12 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    if (!getAuthToken()) {
+      setInitializing(false);
+      return;
+    }
     api.get<AuthUser & { csrfToken?: string }>("/auth/me")
       .then((data) => {
         setUser(data);
         if (data.csrfToken) setCsrfToken(data.csrfToken);
       })
-      .catch(() => setUser(null))
+      .catch(() => {
+        clearAuthToken();
+        setUser(null);
+      })
       .finally(() => setInitializing(false));
   }, []);
 
@@ -42,10 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const data = await api.post<{ user: AuthUser; csrfToken?: string }>(
+        const data = await api.post<{ token: string; user: AuthUser; csrfToken?: string }>(
           "/auth/login",
           { documento, contrasena }
         );
+        setAuthToken(data.token);
         setUser(data.user);
         if (data.csrfToken) setCsrfToken(data.csrfToken);
         router.push("/dashboard");
@@ -58,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await api.post("/auth/logout").catch(() => {});
+    clearAuthToken();
     setUser(null);
     router.push("/login");
   }, [router]);

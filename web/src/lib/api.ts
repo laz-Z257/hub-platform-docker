@@ -14,9 +14,27 @@ export function setCsrfToken(token: string | null) {
   csrfToken = token;
 }
 
+export function setAuthToken(token: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("auth_token", token);
+  }
+}
+
+export function clearAuthToken() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("auth_token");
+  }
+  return null;
+}
+
 function getCsrfToken(): string | null {
   if (csrfToken) return csrfToken;
-  // Dev fallback: read from cookie (same-origin)
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(/csrf-token=([^;]+)/);
   return match?.[1] || null;
@@ -27,6 +45,11 @@ function requestHeaders(options: RequestInit): Record<string, string> {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   };
+
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   const csrf = getCsrfToken();
   if (csrf && options.method && options.method !== "GET") {
@@ -39,13 +62,18 @@ function requestHeaders(options: RequestInit): Record<string, string> {
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
+    headers,
     credentials: "include",
   }).then(async (r) => {
     if (r.ok) {
       const body = await r.json().catch(() => ({}));
       if (body.csrfToken) setCsrfToken(body.csrfToken);
+      if (body.token) setAuthToken(body.token);
     }
     return r.ok;
   });
@@ -83,10 +111,11 @@ async function request<T>(
   if (res.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
+      const retryHeaders = requestHeaders(options);
       try {
         res = await fetch(`${API_URL}${endpoint}`, {
           ...options,
-          headers,
+          headers: retryHeaders,
           credentials: "include",
         });
       } catch (err) {
@@ -96,6 +125,7 @@ async function request<T>(
     }
 
     if (!refreshed || res.status === 401) {
+      clearAuthToken();
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
