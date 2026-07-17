@@ -38,9 +38,18 @@ export function setTokenCookies(
   const token = signToken(payload);
   const refreshToken = signRefreshToken(payload);
 
-  res.cookie("token", token, { ...COOKIE_OPTIONS, maxAge: 3600 * 1000 });
+  const isSecure = res.req.protocol === "https";
+
+  const opts = {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? "none" as const : "lax" as const,
+    path: "/",
+  };
+
+  res.cookie("token", token, { ...opts, maxAge: 3600 * 1000 });
   res.cookie("refreshToken", refreshToken, {
-    ...COOKIE_OPTIONS,
+    ...opts,
     maxAge: 7 * 24 * 3600 * 1000,
   });
 

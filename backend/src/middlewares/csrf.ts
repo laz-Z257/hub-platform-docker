@@ -16,7 +16,15 @@ export function generateCsrfToken() {
 }
 
 export function setCsrfCookie(res: Response, token: string) {
-  res.cookie(CSRF_COOKIE, token, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 3600 * 1000 });
+  const isSecure = res.req.protocol === "https";
+  const opts = {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? "none" as const : "lax" as const,
+    path: "/",
+    maxAge: 7 * 24 * 3600 * 1000,
+  };
+  res.cookie(CSRF_COOKIE, token, opts);
 }
 
 export function csrfProtection(
