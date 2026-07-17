@@ -1,5 +1,55 @@
 # Changelog
 
+## 2026-07-16 — Migraciones corregidas
+
+> Se crearon las migraciones que faltaban para los índices de base de datos.
+
+### Base de Datos
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **users_estado_idx** | `drizzle/0011_charming_meteor.sql` | `CREATE INDEX users_estado_idx` |
+| **incidents_agente_idx** | `drizzle/0012_fuzzy_nova.sql` | `CREATE INDEX incidents_agente_idx` |
+| **incidents_cerrado_por_idx** | `drizzle/0013_tiny_blade.sql` | `CREATE INDEX incidents_cerrado_por_idx` |
+| **ratings_puntuacion_check** | `drizzle/0014_silent_horizon.sql` | `CHECK (puntuacion >= 1 AND puntuacion <= 5)` |
+
+### Schema
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **users.estado index** | `schema.ts` | Agregado índice `users_estado_idx` |
+| **incidents.agente index** | `schema.ts` | Agregado índice `incidents_agente_idx` |
+| **incidents.cerrado_por index** | `schema.ts` | Agregado índice `incidents_cerrado_por_idx` |
+
+---
+
+## 2026-07-15 — Limpieza y mejoras
+
+### Docker
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **SHA en imágenes** | `backend/Dockerfile`, `web/Dockerfile`, `ota-server/Dockerfile` | `node:22-alpine` y `nginx:alpine` con `@sha256` |
+| **USER directive** | `backend/Dockerfile`, `web/Dockerfile` | Contenedores corren como usuario `nodejs` |
+| **Scripts separados** | `backend/docker-entrypoint.sh`, `backend/scripts/migrate-and-seed.sh` | Migrate/seed ya no se ejecutan en startup |
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Teléfono numérico** | `incidents.schema.ts` | Regex `/^\d{6,20}$/` para validar teléfono |
+| **Agente no vacío** | `incidents.schema.ts` | `.min(1, "El agente no puede estar vacío")` |
+| **Email no vacío** | `users.schema.ts` | Eliminado `.or(z.literal(""))` |
+| **Límite search PV** | `puntos-venta.controller.ts` | `.limit(100)` para evitar resultados excesivos |
+
+### Base de Datos
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Índice incidents.user_estado** | `schema.ts`, `drizzle/0010_far_next_avengers.sql` | `CREATE INDEX incidents_user_estado_idx` |
+
+---
+
 ## 2026-07-10 — Auditoría exhaustiva: 11 fixes de seguridad
 
 ### Backend

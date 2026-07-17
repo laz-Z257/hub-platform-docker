@@ -16,6 +16,11 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
 
   api:
     build: ./backend
@@ -35,6 +40,11 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
 
   web:
     build:
@@ -49,6 +59,11 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
 
   ota-server:
     build: ./ota-server
@@ -58,6 +73,11 @@ services:
     volumes:
       - ota-data:/usr/share/nginx/html
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
 
   ota-builder:
     build:

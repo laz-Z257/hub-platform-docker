@@ -36,6 +36,9 @@
       "themeColor": "#F5F6FA",
       "description": "HUB AI Assistant - App de soporte"
     },
+    "experiments": {
+      "relativeBaseUrl": "/demo-aplicacion-dashboard/"
+    },
     "plugins": [
       "expo-router",
       "expo-font",

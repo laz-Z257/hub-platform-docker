@@ -34,7 +34,7 @@ export function csrfProtection(
   }
 
   // Auth endpoints don't need CSRF (login/register/refresh have no prior session)
-  if (req.path.startsWith("/api/auth")) {
+  if (req.path.startsWith("/api/auth") || req.path.startsWith("/api/users/register")) {
     return next();
   }
 

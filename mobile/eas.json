@@ -14,8 +14,8 @@
         "buildType": "apk"
       },
       "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://adelaide-grade-vendors-realty.trycloudflare.com/api"
+"env": {
+        "EXPO_PUBLIC_API_URL": "https://hub-platform-api.onrender.com/api"
       }
     },
     "production": {
@@ -23,8 +23,8 @@
       "android": {
         "buildType": "app-bundle"
       },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://adelaide-grade-vendors-realty.trycloudflare.com/api"
+"env": {
+        "EXPO_PUBLIC_API_URL": "https://hub-platform-api.onrender.com/api"
       }
     }
   },
