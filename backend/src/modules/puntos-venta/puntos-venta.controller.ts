@@ -15,7 +15,8 @@ export async function listPuntosVenta(
       .select()
       .from(puntosVenta)
       .where(search ? ilike(puntosVenta.nombre, `%${search}%`) : undefined)
-      .orderBy(puntosVenta.nombre);
+      .orderBy(puntosVenta.nombre)
+      .limit(100);
 
     res.json(items);
   } catch (error) {

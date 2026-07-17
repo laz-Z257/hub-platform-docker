@@ -6,14 +6,14 @@ export const createIncidentSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido").max(100),
   documento: z.string().min(1, "El documento es requerido").max(20),
   punto_venta: z.string().min(1, "El punto de venta es requerido").max(150),
-  telefono: z.string().max(20).optional().default(""),
+  telefono: z.string().regex(/^\d{6,20}$/, "El teléfono debe tener entre 6 y 20 dígitos").optional().default(""),
   descripcion: z.string().min(1, "La descripción es requerida").max(2000),
   urgencia: z.enum(["baja", "media", "alta"]).default("media"),
 });
 
 export const updateIncidentSchema = z.object({
   estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
-  agente: z.string().max(100).optional(),
+  agente: z.string().min(1, "El agente no puede estar vacío").max(100).optional(),
   solucion: z.string().max(5000).optional(),
   imagen_url: z.string().max(500).optional(),
 });

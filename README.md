@@ -2,7 +2,7 @@
 
 Plataforma de soporte corporativo completa con arquitectura de microservicios containerizados.
 
-> **Estado: En desarrollo** | PWA Mobile implementada - 2026-07-08
+> **Estado: Funcional** | Mobile PWA + APK disponibles - 2026-07-16
 
 ## Tabla de Contenidos
 
@@ -29,9 +29,9 @@ hub-platform-docker/
 ├── shared/           # Código compartido (tipos TypeScript)
 ├── docker-compose.yml
 ├── .env / .env.example
-├── README.md, CHANGELOG.md, TODO.md, AUDIT-COMPLETA.md
-├── PWA-PLAN-3-PASOS.md      # Plan de migración a PWA
-├── PWA-MIGRATION-PLAN.md    # Documentación original de migración PWA
+├── README.md, CHANGELOG.md, PENDIENTES.md, AUDIT-COMPLETA.md
+├── PWA-DEPLOY.md            # Guía deploy PWA
+├── DISTRIBUCION-APK.md     # Guía distribución APK
 └── render.yaml
 ```
 
@@ -139,8 +139,8 @@ services:
 
 **Backend Dockerfile** (multi-stage):
 - Build: Instala deps, compila TypeScript
-- Prod: Copia dist, usa `node:22-alpine`
-- CMD: Migra BD, ejecuta seed, inicia servidor
+- Prod: Copia dist, usa `node:22-alpine` como usuario `nodejs`
+- Scripts: Migrate y seed separados en `backend/scripts/`
 
 **Web Dockerfile** (multi-stage):
 - deps: Instala npm deps
@@ -318,7 +318,7 @@ Respuestas formales con soporte para `**negrita**` en mobile.
 - **Zod** validación en todos los inputs
 - **JWT** con expiración 1h (access) y 7d (refresh)
 - **bcrypt** 10 salt rounds para contraseñas
-- **Rate limiting**: 100 req/min global, 10 req/15min en auth
+- **Rate limiting**: 100 req/min global, 3 req/min en auth
 - **Bloqueo de usuarios** tras 5 intentos fallidos (configurable)
 - **Token versioning** para invalidación de sesiones
 - **CSRF** protection con cookies
@@ -501,7 +501,7 @@ EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 | Campo | Valor |
 |-------|-------|
 | Documento | `123456789` |
-| Contraseña | `admin123` |
+| Contraseña | Configurada via `SEED_ADMIN_PASSWORD` en `.env` |
 | Rol | `admin` |
 
 ### Seed de Datos
@@ -518,7 +518,7 @@ El proyecto incluye un script de seed que:
 
 - **README.md** - Este archivo
 - **CHANGELOG.md** - Historial de cambios del proyecto
-- **TODO.md** - Lista de tareas pendientes y mejoras planeadas
+- **PENDIENTES.md** - Lista de tareas pendientes y pendientes de auditoría
 - **AUDIT-COMPLETA.md** - Auditoría de seguridad completa con 53 hallazgos documentados
 
 ### Changelog Resumen
@@ -865,9 +865,17 @@ Privado - Todos los derechos reservados
 
 ## Historial de Desarrollo
 
+### 2026-07-16 - Estado Funcional
+
+**Correcciones:**
+- Migraciones DB 0011-0014 creadas (índices, CHECK constraint)
+- Fix expo-symbols postinstall
+- Splash screen fix para mobile
+- EAS Build/Update configurado
+
 ---
 
-## 11. Estado Actual (2026-07-10)
+## 11. Estado Actual (2026-07-16)
 
 ### Servicios Locales - PUERTOS
 

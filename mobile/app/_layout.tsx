@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProviderWrapper } from "../src/components/SafeAreaProviderWrapper";
@@ -11,10 +12,17 @@ import "../global.css";
 
 try { SplashScreen.preventAutoHideAsync(); } catch {}
 
-// Web PWA usa fuentes del sistema (no descarga nada)
-const fontsLoaded = true;
-
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const prepare = async () => {
+      await SplashScreen.hideAsync().catch(() => {});
+      setIsReady(true);
+    };
+    prepare();
+  }, []);
+
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProviderWrapper>
