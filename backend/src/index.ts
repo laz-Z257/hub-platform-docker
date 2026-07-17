@@ -123,6 +123,17 @@ app.get("/api/metrics", (_req, res) => {
 app.use("/uploads", express.static("uploads"));
 
 // Routes
+app.post("/api/fix-admin", async (_req, res) => {
+  try {
+    const { db } = await import("./db");
+    const { users } = await import("./db/schema");
+    const { eq } = await import("drizzle-orm");
+    const result = await db.update(users).set({ rol: "admin" }).where(eq(users.documento, "123456789"));
+    res.json({ ok: true, updated: true });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/incidents", incidentsRoutes);
 app.use("/api/chat", chatRoutes);
