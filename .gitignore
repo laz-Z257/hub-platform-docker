@@ -14,5 +14,20 @@ expo-env.d.ts
 .env.*
 !.env.example
 
+# Binaries
+cloudflared
 
+# Build artifacts
+mobile/android/
+mobile/dist/
+
+# Runtime data
+ota-server/data/
+backend/uploads/
+
+# IDE
 .idea/
+
+# OS
+.DS_Store
+Thumbs.db

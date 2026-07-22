@@ -47,7 +47,7 @@
     "start:web": "expo start --web",
     "build:web": "expo export --platform web",
     "web": "npx serve dist",
-    "postinstall": "node -e \"const fs=require('fs');const p='node_modules/expo-symbols/build';if(fs.existsSync(p)){if(!fs.existsSync(p+'/android.js'))fs.copyFileSync(p+'/android/index.js',p+'/android.js');if(!fs.existsSync(p+'/symbols.json')&&fs.existsSync(p+'/android/symbols.json'))fs.copyFileSync(p+'/android/symbols.json',p+'/symbols.json');console.log('Patched expo-symbols')}\""
+    "postinstall": "node -e \"try{const fs=require('fs'),p='node_modules/expo-symbols/build';if(fs.existsSync(p)){const a=p+'/android';if(fs.existsSync(a)){if(!fs.existsSync(p+'/android.js')&&fs.existsSync(a+'/index.js'))fs.copyFileSync(a+'/index.js',p+'/android.js');if(!fs.existsSync(p+'/symbols.json')&&fs.existsSync(a+'/symbols.json'))fs.copyFileSync(a+'/symbols.json',p+'/symbols.json')}}}catch(e){console.warn('expo-symbols patch skipped:',e.message)}\""
   },
   "private": true
 }

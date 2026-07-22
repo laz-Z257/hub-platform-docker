@@ -205,7 +205,7 @@ async function request<T>(
     throw new Error(msg);
   }
 
-  if (isGet) {
+  if (isGet && !endpoint.includes("/auth/") && !endpoint.includes("/users")) {
     saveCache(endpoint, data);
   }
 

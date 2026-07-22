@@ -4,10 +4,8 @@ import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide
 import type { Incident } from "@hub/shared/types/incident";
 import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
 
-interface IncidentDetail extends Incident {}
-
 interface TicketDetailModalProps {
-  incident: IncidentDetail | null;
+  incident: Incident | null;
   onClose: () => void;
 }
 

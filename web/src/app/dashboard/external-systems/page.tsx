@@ -7,21 +7,16 @@ interface Module {
   id: number;
   title: string;
   url?: string;
+  status?: string;
 }
 
 const modules: Module[] = [
   { id: 1, title: "Traslados", url: process.env.NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL ? `${process.env.NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL}/Seguridad-WEB/XHTML/general/login.xhtml` : undefined },
-  { id: 2, title: "Inventario" },
-  { id: 3, title: "Facturación" },
-  { id: 4, title: "Reportes" },
-  { id: 5, title: "Usuarios" },
-  { id: 6, title: "Configuración" },
-  { id: 7, title: "Módulo 7" },
-  { id: 8, title: "Módulo 8" },
-  { id: 9, title: "Módulo 9" },
-  { id: 10, title: "Módulo 10" },
-  { id: 11, title: "Módulo 11" },
-  { id: 12, title: "Módulo 12" },
+  { id: 2, title: "Inventario", status: "coming" },
+  { id: 3, title: "Facturación", status: "coming" },
+  { id: 4, title: "Reportes", status: "coming" },
+  { id: 5, title: "Usuarios", status: "coming" },
+  { id: 6, title: "Configuración", status: "coming" },
 ];
 
 export default function ExternalSystemsPage() {
@@ -89,7 +84,7 @@ export default function ExternalSystemsPage() {
               <span className="text-[#9CA3AF] text-[13px] font-semibold font-inter uppercase tracking-[1px]">
                 {mod.title}
               </span>
-              <span className="text-[11px] text-[#9CA3AF] font-inter">Sin configurar</span>
+              <span className="text-[11px] text-[#9CA3AF] font-inter">Próximamente</span>
             </div>
           )
         )}

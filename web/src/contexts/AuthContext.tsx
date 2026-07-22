@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api, setCsrfToken, setAuthToken, clearAuthToken, getAuthToken } from "@/lib/api";
+import { api, setCsrfToken } from "@/lib/api";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -22,6 +22,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function hasAuthCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((c) => c.trim().startsWith("token="));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -29,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    if (!getAuthToken()) {
+    if (!hasAuthCookie()) {
       setInitializing(false);
       return;
     }
@@ -39,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.csrfToken) setCsrfToken(data.csrfToken);
       })
       .catch(() => {
-        clearAuthToken();
         setUser(null);
       })
       .finally(() => setInitializing(false));
@@ -49,11 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const data = await api.post<{ token: string; user: AuthUser; csrfToken?: string }>(
+        const data = await api.post<{ user: AuthUser; csrfToken?: string }>(
           "/auth/login",
           { documento, contrasena }
         );
-        setAuthToken(data.token);
         setUser(data.user);
         if (data.csrfToken) setCsrfToken(data.csrfToken);
         router.push("/dashboard");
@@ -66,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await api.post("/auth/logout").catch(() => {});
-    clearAuthToken();
     setUser(null);
     router.push("/login");
   }, [router]);

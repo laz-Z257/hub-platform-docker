@@ -19,7 +19,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
   if (!Device.isDevice) {
-    console.log("Push notifications only work on physical devices");
+    logger.info("Push notifications only work on physical devices");
     return null;
   }
 
@@ -32,7 +32,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== "granted") {
-    console.log("Push notification permission not granted");
+    logger.info("Push notification permission not granted");
     return null;
   }
 

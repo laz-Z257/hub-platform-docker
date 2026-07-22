@@ -22,7 +22,6 @@ function createFetch(response: Partial<Response>, data?: unknown) {
 beforeEach(() => {
   vi.restoreAllMocks();
   setCsrfToken(null);
-  // Reset document.cookie
   Object.defineProperty(document, "cookie", {
     writable: true,
     value: "",

@@ -3,6 +3,7 @@ import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, sql } from 
 import { db } from "../../db";
 import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
 import { logger } from "../../lib/logger";
+import { env } from "../../config/env";
 
 export async function createIncident(
   req: Request,
@@ -239,9 +240,17 @@ export async function updateIncident(
             data: { incidentId: id },
           }));
 
+          const pushHeaders: Record<string, string> = {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          };
+          if (env.EXPO_ACCESS_TOKEN) {
+            pushHeaders["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
+          }
+
           await fetch("https://exp.host/--/api/v2/push/send", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: pushHeaders,
             body: JSON.stringify(pushMessages),
           });
         }
@@ -324,9 +333,17 @@ export async function addComment(
             data: { incidentId: id },
           }));
 
+          const commentPushHeaders: Record<string, string> = {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          };
+          if (env.EXPO_ACCESS_TOKEN) {
+            commentPushHeaders["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
+          }
+
           await fetch("https://exp.host/--/api/v2/push/send", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: commentPushHeaders,
             body: JSON.stringify(pushMessages),
           });
         }

@@ -1,5 +1,72 @@
 # Changelog
 
+## 2026-07-21 — Limpieza, seguridad y configuración PWA
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Endpoint fix-admin eliminado** | `backend/src/index.ts` | Endpoint público sin auth que permitía elevar usuarios a admin. Eliminado. |
+| **Seed PV protegido** | `puntos-venta.routes.ts` | `POST /puntos-venta/seed` movido detrás de auth + adminOnly. Ya no es público. |
+| **Tokens migrados a httpOnly cookies** | `web/src/lib/api.ts`, `web/src/contexts/AuthContext.tsx` | Eliminado localStorage para JWT. Auth ahora 100% via cookies httpOnly. |
+| **Middleware Next.js activo** | `web/src/middleware.ts` | Protección server-side: redirige a /login si no hay cookie, a /dashboard si ya hay sesión. |
+| **Push con auth** | `incidents.controller.ts` | Llamadas a exp.host incluyen header Accept y soporte para EXPO_ACCESS_TOKEN. |
+| **Upload con límite** | `upload.controller.ts` | Límite de 500MB de almacenamiento total. Rechaza uploads si se excede. |
+| **Cache sensible excluido** | `mobile/src/services/api.ts` | Endpoints /auth/ y /users ya no se cachean en dispositivo. |
+| **Cloudflared removido de git** | `.gitignore` | Binario de 38MB eliminado del tracking de git. |
+| **Secrets en .gitignore** | `.gitignore` | Agregados: cloudflared, mobile/android/, ota-server/data/, backend/uploads/ |
+
+### Código Limpio
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **process.env centralizado** | `config/env.ts`, `auth.controller.ts`, `incidents.controller.ts`, `csrf.ts` | MAX_LOGIN_ATTEMPTS, EXPO_ACCESS_TOKEN ahora pasan por env config. |
+| **COOKIE_OPTIONS eliminado** | `csrf.ts` | Variable sin usar removida. |
+| **console.log → logger** | `EditUserModal.tsx`, `notifications.ts` | 3 instancias de console reemplazadas por logger centralizado. |
+| **IncidentDetail eliminado** | `TicketDetailModal.tsx` | Interfaz vacía removida, usa Incident directamente. |
+| **Import Alert eliminado** | `mobile/app/incidente/[id].tsx` | Import sin usar removido. |
+| **Migraciones unificadas** | `docker-entrypoint.sh` | Unificada estrategia: usa Drizzle migrator en vez de psql directo. |
+| **Settings tabs limpiados** | `settings/page.tsx` | Eliminados tabs vacíos "Seguridad" y "Notificaciones". |
+| **External systems actualizado** | `external-systems/page.tsx` | Reducido a 6 módulos, "Sin configurar" → "Próximamente". |
+| **Error boundary arreglado** | `web/src/app/error.tsx` | Clases CSS inexistentes reemplazadas por Tailwind válidas. |
+
+### Infraestructura
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Vercel eliminado** | `render.yaml`, `.env`, `.env.local` | Deploy de dashboard en Vercel eliminado y CORS limpiado. |
+| **Netlify eliminado** | `render.yaml`, `.env`, `.env.local` | Deploy legacy en Netlify eliminado y CORS limpiado. |
+| **PWA bind mount** | `docker-compose.yml` | Volumen ota-data cambiado a bind mount ./ota-server/data/ para persistencia. |
+| **PWA API URL relativa** | `mobile/.env` | EXPO_PUBLIC_API_URL=/api — funciona en cualquier dominio sin cambios. |
+| **app.json limpio** | `mobile/app.json` | Eliminado relativeBaseUrl de Vercel legacy. |
+| **PWA build generado** | `ota-server/data/` | Build web de Expo generado y copiado al directorio persistente. |
+| **docker-compose backend eliminado** | `backend/docker-compose.yml` | Archivo duplicado obsoleto removido. |
+
+### Archivos Eliminados
+
+| Archivo | Razón |
+|---------|-------|
+| `pwa/` (5.7MB) | Build antiguo con URL Cloudflare muerta hardcodeada. |
+| `SESION-2026-07-16.md` | Tokens de Render y GitHub expuestos. |
+| `deploy-pwa.sh` | Script dependiente de URLs Cloudflare temporales. |
+| `backend/docker-compose.yml` | Duplicado obsoleto. |
+
+### Documentación
+
+| Cambio | Detalle |
+|--------|---------|
+| **README.md reescrito** | De 1008 a ~260 líneas. Eliminado contenido obsoleto, URLs muertas, secciones duplicadas. |
+| **CHANGELOG actualizado** | Referencias a Vercel/Netlify eliminadas. |
+
+### Esquemas Corregidos
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Telefono vacío** | `incidents.schema.ts` | Agregado `.or(z.literal(""))` para aceptar string vacío como default. |
+| **Email vacío** | `users.schema.ts` | Agregado `.or(z.literal(""))` para aceptar string vacío en update. |
+
+---
+
 ## 2026-07-16 — Migraciones corregidas
 
 > Se crearon las migraciones que faltaban para los índices de base de datos.
@@ -188,7 +255,6 @@
 | Servicio | Plataforma | Cambios |
 |----------|------------|---------|
 | Backend | Render | Bloqueo usuarios, notificaciones, push, bloqueado_por |
-| Web | Vercel | Campana, ayuda, columna bloqueado por, calificaciones |
 | Mobile | Expo (EAS) | Build APK pendiente por límite plan gratuito (reinicia 1 julio) |
 
 ---
@@ -228,7 +294,6 @@
 | Servicio | Plataforma | Estado |
 |----------|------------|--------|
 | Backend | Render | Auto-deploy desde main |
-| Web | Vercel | Auto-deploy desde main |
 | Mobile | Expo (OTA + APK) | OTA en preview y production. Build EAS completado. |
 
 ---
@@ -285,7 +350,6 @@
 | App | Plataforma | URL |
 |---|---|---|
 | Backend | Render | `https://hub-platform-api.onrender.com` |
-| Web | Vercel | `https://web-a-74c5ba6d.vercel.app` |
 | Mobile | Expo (APK) | Build más reciente: https://expo.dev/accounts/laz65585/projects/hub-ai-assistant/builds/4c260990-eb8e-4bce-a9f4-d2ca5b8c5053 |
 
 ---

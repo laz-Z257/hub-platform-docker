@@ -12,8 +12,6 @@ import type { CompanySettings } from "@hub/shared/types/api";
 const TABS = [
   { label: "Perfil de la Empresa", key: "empresa" },
   { label: "Apariencia", key: "apariencia" },
-  { label: "Seguridad", key: "seguridad" },
-  { label: "Notificaciones", key: "notificaciones" },
   { label: "Mantenimiento", key: "mantenimiento" },
 ] as const;
 

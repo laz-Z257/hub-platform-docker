@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ApiUser } from "@hub/shared/types/user";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 interface EditUserModalProps {
   user: ApiUser;
@@ -27,7 +28,7 @@ export default function EditUserModal({ user, onClose, onSaved }: EditUserModalP
       onSaved(updated);
       onClose();
     } catch (err) {
-      console.error("Save user:", err instanceof Error ? err.message : err);
+      logger.error("Save user error", { error: err instanceof Error ? err.message : err });
     } finally {
       setSaving(false);
     }

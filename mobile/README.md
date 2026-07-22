@@ -59,8 +59,18 @@ Los bundles se sirven via `ota-server` en `http://localhost:3002`.
 
 ```bash
 # mobile/.env
-EXPO_PUBLIC_API_URL=http://localhost:3001/api
+EXPO_PUBLIC_API_URL=/api
 ```
+
+## URLs destino del API
+
+| Tipo | URL | Dónde se define |
+|------|-----|-----------------|
+| **PWA (Docker local)** | `/api` (relativa, proxy nginx) | `mobile/.env` |
+| **APK nativo (EAS Build)** | `https://hub-platform-api.onrender.com` | Hardcodeada en build de EAS |
+| **Dev local** | `http://localhost:3001/api` | `mobile/.env` en desarrollo |
+
+**Para cambiar el destino de la APK:** editar el endpoint en el código fuente y recompilar con `eas build -p android --profile preview`.
 
 ## API Endpoints que consume
 

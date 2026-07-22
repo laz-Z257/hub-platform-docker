@@ -14,25 +14,6 @@ export function setCsrfToken(token: string | null) {
   csrfToken = token;
 }
 
-export function setAuthToken(token: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("auth_token", token);
-  }
-}
-
-export function clearAuthToken() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("auth_token");
-  }
-}
-
-export function getAuthToken(): string | null {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("auth_token");
-  }
-  return null;
-}
-
 function getCsrfToken(): string | null {
   if (csrfToken) return csrfToken;
   if (typeof document === "undefined") return null;
@@ -46,11 +27,6 @@ function requestHeaders(options: RequestInit): Record<string, string> {
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  const token = getAuthToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const csrf = getCsrfToken();
   if (csrf && options.method && options.method !== "GET") {
     headers["x-csrf-token"] = csrf;
@@ -62,18 +38,14 @@ function requestHeaders(options: RequestInit): Record<string, string> {
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = getAuthToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json" },
     credentials: "include",
   }).then(async (r) => {
     if (r.ok) {
       const body = await r.json().catch(() => ({}));
       if (body.csrfToken) setCsrfToken(body.csrfToken);
-      if (body.token) setAuthToken(body.token);
     }
     return r.ok;
   });
@@ -125,7 +97,6 @@ async function request<T>(
     }
 
     if (!refreshed || res.status === 401) {
-      clearAuthToken();
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
@@ -149,7 +120,6 @@ async function request<T>(
         : "";
     if (msg.includes("bloqueado")) {
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        alert("Su cuenta ha sido bloqueada. Contacte al administrador.");
         window.location.href = "/login";
       }
       throw new Error("Usuario bloqueado");

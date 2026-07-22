@@ -71,7 +71,7 @@ services:
     ports:
       - "3002:3002"
     volumes:
-      - ota-data:/usr/share/nginx/html
+      - ./ota-server/data:/usr/share/nginx/html
     restart: unless-stopped
     deploy:
       resources:
@@ -101,4 +101,3 @@ services:
 
 volumes:
   pgdata:
-  ota-data:

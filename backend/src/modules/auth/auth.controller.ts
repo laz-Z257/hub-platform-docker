@@ -8,7 +8,7 @@ import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
-const MAX_LOGIN_ATTEMPTS = parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10);
+const MAX_LOGIN_ATTEMPTS = env.MAX_LOGIN_ATTEMPTS;
 
 function userResponse(user: typeof users.$inferSelect) {
   return {

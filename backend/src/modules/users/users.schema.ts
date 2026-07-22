@@ -35,7 +35,7 @@ export const updateUserSchema = {
     rol: roles.optional(),
     nombre: z.string().min(1).max(100).optional(),
     documento: z.string().min(1).max(20).optional(),
-    email: z.string().email("Email inválido").optional(),
+    email: z.string().email("Email inválido").or(z.literal("")).optional(),
   }),
 };
 
