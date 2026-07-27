@@ -15,20 +15,13 @@ import AnalyticsMetrics from "@/components/AnalyticsMetrics";
 import AnalyticsFilters, { type FilterPreset } from "@/components/AnalyticsFilters";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { formatDateRange } from "@/lib/utils";
 import type { KpiResponse } from "@hub/shared/types/api";
 
 function ChartSkeleton() {
   return (
     <div className="animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" style={{ height: 280 }} />
   );
-}
-
-function formatDateRange(start: string, end: string): string {
-  const s = new Date(start + "T00:00:00");
-  const e = new Date(end + "T00:00:00");
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
-  return `${fmt(s)} – ${fmt(e)}`;
 }
 
 function getDefaultRange(preset: FilterPreset): { start: string; end: string } {

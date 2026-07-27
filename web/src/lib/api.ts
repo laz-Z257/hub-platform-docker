@@ -1,17 +1,28 @@
 import { z } from "zod";
 import { logger } from "./logger";
 
-const API_URL =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? process.env.NEXT_PUBLIC_API_URL || "/api"
-    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = "/api";
 
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 let csrfToken: string | null = null;
+let authToken: string | null = null;
+let currentScope: "admin" | "user" | null = null;
 
 export function setCsrfToken(token: string | null) {
   csrfToken = token;
+}
+
+export function setAuthToken(token: string) {
+  authToken = token;
+}
+
+export function clearAuthToken() {
+  authToken = null;
+}
+
+export function setAuthScope(scope: "admin" | "user" | null) {
+  currentScope = scope;
 }
 
 function getCsrfToken(): string | null {
@@ -27,6 +38,14 @@ function requestHeaders(options: RequestInit): Record<string, string> {
     ...((options.headers as Record<string, string>) || {}),
   };
 
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+
+  if (currentScope) {
+    headers["X-Auth-Scope"] = currentScope;
+  }
+
   const csrf = getCsrfToken();
   if (csrf && options.method && options.method !== "GET") {
     headers["x-csrf-token"] = csrf;
@@ -38,9 +57,12 @@ function requestHeaders(options: RequestInit): Record<string, string> {
 async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
+  const headers: Record<string, string> = {};
+  if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+  if (currentScope) headers["X-Auth-Scope"] = currentScope;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     credentials: "include",
   }).then(async (r) => {
     if (r.ok) {

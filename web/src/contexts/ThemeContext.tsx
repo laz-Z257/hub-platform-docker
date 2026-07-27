@@ -4,7 +4,9 @@ import {
   createContext,
   useContext,
   useState,
+  useCallback,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -36,14 +38,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("hub-theme", theme);
   }, [theme, mounted]);
 
-  const setTheme = (t: "light" | "dark") => setThemeState(t);
+  const setTheme = useCallback((t: "light" | "dark") => setThemeState(t), []);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
+  const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

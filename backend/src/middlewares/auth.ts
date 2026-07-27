@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
-import { verifyToken, JwtPayload } from "../lib/jwt";
+import { verifyToken, JwtPayload, extractToken } from "../lib/jwt";
 import { db } from "../db";
 import { users } from "../db/schema";
 
@@ -11,18 +11,6 @@ declare global {
       cookies: Record<string, string | undefined>;
     }
   }
-}
-
-function extractToken(req: Request): string | null {
-  const cookieToken = req.cookies?.token;
-  if (cookieToken) return cookieToken;
-
-  const header = req.headers.authorization;
-  if (header && header.startsWith("Bearer ")) {
-    return header.slice(7);
-  }
-
-  return null;
 }
 
 export async function authMiddleware(

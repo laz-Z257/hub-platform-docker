@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
-import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken } from "../../lib/jwt";
+import { setTokenCookies, clearAllTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
 import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
@@ -55,7 +55,7 @@ export async function register(
       documento: user.documento,
       rol: user.rol,
       tokenVersion: user.token_version,
-    });
+    }, "user");
 
     const csrfToken = generateCsrfToken();
     setCsrfCookie(res, csrfToken);
@@ -69,7 +69,7 @@ export async function register(
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { documento, contrasena } = req.body;
+    const { documento, contrasena, scope } = req.body;
 
     const [user] = await db
       .select()
@@ -115,6 +115,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       .set({ intentos_fallidos: 0 })
       .where(eq(users.id, user.id));
 
+    // Validar rol según scope
+    if (scope === "admin" && user.rol !== "admin" && user.rol !== "tecnico") {
+      res.status(403).json({ error: "No tienes permisos para acceder al panel administrativo" });
+      return;
+    }
+
     const payload = {
       userId: user.id,
       documento: user.documento,
@@ -122,7 +128,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       tokenVersion: user.token_version,
     };
 
-    const { token } = setTokenCookies(res, payload);
+    const { token } = setTokenCookies(res, payload, scope);
 
     const csrfToken = generateCsrfToken();
     setCsrfCookie(res, csrfToken);
@@ -165,7 +171,7 @@ export async function me(req: Request, res: Response): Promise<void> {
 
 export async function refresh(req: Request, res: Response): Promise<void> {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = extractRefreshToken(req);
 
     if (!refreshToken) {
       res.status(401).json({ error: "Refresh token no proporcionado" });
@@ -181,35 +187,33 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user || user.token_version !== payload.tokenVersion) {
-      clearTokenCookies(res);
+      clearAllTokenCookies(res);
       res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
       return;
     }
+
+    const scope = detectRefreshScope(req);
 
     setTokenCookies(res, {
       userId: payload.userId,
       documento: payload.documento,
       rol: payload.rol,
       tokenVersion: user.token_version,
-    });
+    }, scope);
 
     const csrfToken = generateCsrfToken();
     setCsrfCookie(res, csrfToken);
 
     res.json({ ok: true, csrfToken });
   } catch {
-    clearTokenCookies(res);
+    clearAllTokenCookies(res);
     res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
   }
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
   try {
-    const cookieToken = req.cookies?.token;
-    const headerToken = req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7)
-      : null;
-    const token = cookieToken || headerToken;
+    const token = extractToken(req);
 
     if (token) {
       const payload = verifyToken(token);
@@ -221,6 +225,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
   } catch {
     // Token invalid/expired — still clear cookies
   }
-  clearTokenCookies(res);
+  clearAllTokenCookies(res);
   res.json({ ok: true });
 }

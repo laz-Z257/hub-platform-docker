@@ -2,22 +2,10 @@
 
 import Link from "next/link";
 import { STATUS_DOTS } from "@/lib/styles";
+import { formatDateOnly, ESTADO_LABELS } from "@/lib/utils";
 
 function mapStatus(estado: string): string {
-  const map: Record<string, string> = {
-    pendiente: "Pendiente",
-    en_proceso: "En Proceso",
-    resuelto: "Resuelto",
-  };
-  return map[estado] || estado;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return ESTADO_LABELS[estado] || estado;
 }
 
 interface TicketsTableProps {
@@ -38,7 +26,7 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
     nombre: inc.nombre || "Anónimo",
     asunto: inc.asunto || (inc.descripcion ? (inc.descripcion.length > 45 ? inc.descripcion.slice(0, 45) + "..." : inc.descripcion) : "Sin descripción"),
     estado: inc.estado ? mapStatus(inc.estado) : "Pendiente",
-    fecha: inc.created_at ? formatDate(inc.created_at) : "—",
+    fecha: inc.created_at ? formatDateOnly(inc.created_at) : "—",
   }));
 
   return (

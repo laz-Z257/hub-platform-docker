@@ -3,37 +3,22 @@
 import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { Incident } from "@hub/shared/types/incident";
 import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
+import { formatDate, ESTADO_LABELS } from "@/lib/utils";
 
 interface TicketDetailModalProps {
   incident: Incident | null;
   onClose: () => void;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pendiente: "Pendiente",
-  en_proceso: "En Proceso",
-  resuelto: "Resuelto",
-};
-
 function formatTicketId(id: string): string {
   const short = id.replace(/-/g, "").slice(-8).toUpperCase();
   return `#TK-${short}`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export default function TicketDetailModal({ incident, onClose }: TicketDetailModalProps) {
   if (!incident) return null;
 
-  const status = STATUS_LABELS[incident.estado] || incident.estado;
+  const status = ESTADO_LABELS[incident.estado] || incident.estado;
   const priorityBadge = PRIORITY_BADGES[incident.urgencia] || "bg-gray-500 text-white";
   const statusBadge = STATUS_BADGES[incident.estado] || "bg-gray-500 text-white";
 

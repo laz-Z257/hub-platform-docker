@@ -6,6 +6,7 @@ import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
 import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
+import { formatDateRange } from "@/lib/utils";
 
 type IncidentExport = Incident;
 
@@ -37,10 +38,6 @@ function fmtDateTime(dateStr: string): string {
   return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDateRange(start: string, end: string): string {
-  return `${fmtDate(start)} – ${fmtDate(end)}`;
-}
-
 function headerStyle(fill: string) {
   return {
     font: { bold: true, color: { argb: "FFFFFFFF" }, size: 11 },
@@ -64,23 +61,69 @@ const cellBorder = {
   },
 };
 
+function getDefaultRange(preset: FilterPreset): { start: string; end: string } {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const day = today.getDate();
+  
+  // Formato local YYYY-MM-DD
+  const formatDate = (y: number, m: number, d: number) => {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  };
+  
+  const end = formatDate(year, month, day);
+  let start: string;
+
+  switch (preset) {
+    case "today":
+      start = end;
+      break;
+    case "week": {
+      const monday = new Date(today);
+      const dayOfWeek = monday.getDay();
+      const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      monday.setDate(monday.getDate() - diff);
+      start = formatDate(monday.getFullYear(), monday.getMonth(), monday.getDate());
+      break;
+    }
+    case "month": {
+      start = formatDate(year, month, 1);
+      break;
+    }
+    case "30d":
+    default: {
+      const thirtyAgo = new Date(today);
+      thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+      start = formatDate(thirtyAgo.getFullYear(), thirtyAgo.getMonth(), thirtyAgo.getDate());
+      break;
+    }
+  }
+
+  return { start, end };
+}
+
 async function handleExport(
   metrics: AnalyticsFiltersProps["metrics"],
   areaData: AreaDataPoint[],
   donutData: DonutDataPoint[],
-  appliedRange: { start: string; end: string } | null
+  appliedRange: { start: string; end: string } | null,
+  filter: FilterPreset
 ) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
 
   const baseDate = new Date();
   const generatedAt = baseDate.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  const rangeLabel = appliedRange ? `Rango: ${formatDateRange(appliedRange.start, appliedRange.end)}` : "Últimos 30 días";
-  const rangeSuffix = appliedRange ? `_${appliedRange.start}_${appliedRange.end}` : "";
+  
+  // Usar appliedRange si existe (rango personalizado), sino calcular según el preset
+  const effectiveRange = appliedRange || getDefaultRange(filter);
+  const rangeLabel = `Rango: ${formatDateRange(effectiveRange.start, effectiveRange.end)}`;
+  const rangeSuffix = `_${effectiveRange.start}_${effectiveRange.end}`;
 
   let incidents: IncidentExport[] = [];
   try {
-    const qs = appliedRange ? `?start=${appliedRange.start}&end=${appliedRange.end}` : "";
+    const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export${qs}`);
     incidents = incData.items || [];
   } catch { /* ignore */ }
@@ -349,7 +392,7 @@ export default memo(function AnalyticsFilters(props: AnalyticsFiltersProps) {
         </div>
 
         <button
-          onClick={() => handleExport(metrics, areaData, donutData, appliedRange)}
+          onClick={() => handleExport(metrics, areaData, donutData, appliedRange, filter)}
           className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(37,32,126,0.2)]"
         >
           <Download size={16} strokeWidth={2.5} />

@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const data = await api.post<{ token: string; user: AuthUser }>(
           "/auth/login",
-          { documento, contrasena }
+          { documento, contrasena, scope: "user" }
         );
 
         await setToken(data.token);

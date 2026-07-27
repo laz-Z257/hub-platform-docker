@@ -10,20 +10,10 @@ import ResolveTicketModal from "@/components/ResolveTicketModal";
 import Pagination from "@/components/Pagination";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { formatDateShort } from "@/lib/utils";
 import type { Incident } from "@hub/shared/types/incident";
 
 type IncidentItem = Incident;
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function formatDescription(desc: string): string {
   return desc.length > 50 ? desc.slice(0, 50) + "..." : desc;
@@ -283,8 +273,8 @@ export default function TicketsPage() {
             : inc.estado === "en_proceso"
               ? "En Proceso"
               : "Resuelto",
-        createdAt: formatDate(inc.created_at),
-        fechaCierre: inc.fecha_cierre ? formatDate(inc.fecha_cierre) : null,
+        createdAt: formatDateShort(inc.created_at),
+        fechaCierre: inc.fecha_cierre ? formatDateShort(inc.fecha_cierre) : null,
         agente: inc.agente,
       }));
     },

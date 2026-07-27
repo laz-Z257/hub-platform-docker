@@ -277,12 +277,20 @@ export default function ChatScreen() {
         };
         setMessages((prev) => [...prev, thanksMsg]);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "";
-        if (msg.includes("Ya has calificado")) {
+        const errorMsg = err instanceof Error ? err.message : "Error desconocido";
+        
+        if (errorMsg.includes("Ya has calificado")) {
           setRatedIncidents((prev) => new Set(prev).add(id));
+          setRatingIncidentId(null);
+        } else if (errorMsg.includes("Solo puedes calificar tickets resueltos")) {
+          setRatingIncidentId(null);
+          Alert.alert("Ticket no resuelto", "Este ticket aún no ha sido marcado como resuelto.");
+        } else if (errorMsg.includes("Datos inválidos")) {
+          Alert.alert("Error de validación", "La puntuación debe ser un número entre 1 y 5.");
+        } else {
+          setRatingIncidentId(null);
+          Alert.alert("Error", errorMsg || "No se pudo enviar la calificación.");
         }
-        setRatingIncidentId(null);
-        Alert.alert("Ya calificado", msg || "Este servicio ya fue calificado.");
       }
     },
     [ratingIncidentId, latestIncident]
@@ -340,7 +348,16 @@ export default function ChatScreen() {
             onRateService={async () => {
               const id = latestIncident?.id;
               if (id) {
-                setRatingIncidentId(id);
+                try {
+                  const incidentData = await api.get<{ id: string; estado: string }>(`/incidents/${id}`);
+                  if (incidentData.estado !== "resuelto") {
+                    Alert.alert("Ticket no resuelto", "Este ticket aún no ha sido marcado como resuelto por el equipo de soporte.");
+                    return;
+                  }
+                  setRatingIncidentId(id);
+                } catch {
+                  Alert.alert("Error", "No se pudo verificar el estado del ticket.");
+                }
               } else {
                 try {
                   const data = await api.get<{ items: { id: string; estado: string }[] }>("/incidents?limit=1&estado=resuelto");

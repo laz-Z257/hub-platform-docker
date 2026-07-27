@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Providers from "./providers";
 import "./globals.css";
@@ -6,8 +6,22 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "HUB AI Assistant - Dashboard",
-  description: "Panel administrativo HUB AI Assistant",
+  title: "HUB AI Assistant",
+  description: "Plataforma de soporte corporativo HUB AI",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "HUB AI" },
+  icons: {
+    icon: { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
+    apple: { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#25207E",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -17,6 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
       <body className={`${inter.className} min-h-screen bg-gray-bg antialiased`}>
         <Providers>{children}</Providers>
       </body>

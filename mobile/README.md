@@ -2,6 +2,46 @@
 
 App móvil Expo/React Native para reporte de incidentes y chat de soporte con IA.
 
+## PWA Completa (2026-07-24)
+
+✅ **Progressive Web App instalable y funcional**
+
+### Características PWA
+
+| Feature | Estado | Descripción |
+|---------|--------|-------------|
+| **manifest.json** | ✅ | Configuración PWA con nombre, iconos, colores |
+| **Service Worker** | ✅ | Caché offline de assets estáticos |
+| **Iconos** | ✅ | 192x192 y 512x512 en `/assets/` |
+| **Meta tags iOS** | ✅ | apple-mobile-web-app-capable, title, icon |
+| **Meta tags Android** | ✅ | theme-color, manifest |
+| **CORS seguro** | ✅ | Restringido a `http://localhost:3000` |
+| **Instalable** | ✅ | "Agregar a pantalla principal" |
+| **Offline** | ✅ | Service Worker cachea la app |
+
+### Archivos PWA
+
+```
+mobile/public/
+├── manifest.json    # Configuración PWA
+├── sw.js           # Service Worker con caché
+└── index.html      # Template con meta tags
+```
+
+### Acceder a la PWA
+
+```bash
+# 1. Iniciar contenedor
+docker compose up -d mobile
+
+# 2. Abrir en navegador
+# http://localhost:8081
+
+# 3. Instalar
+# Chrome/Edge: Ícono de instalar en barra de direcciones
+# Mobile: "Agregar a pantalla principal"
+```
+
 ## Stack
 
 | Componente | Tecnología |
@@ -12,7 +52,7 @@ App móvil Expo/React Native para reporte de incidentes y chat de soporte con IA
 | Iconos | lucide-react-native |
 | Animaciones | react-native-reanimated 4.3.1 |
 | Gestos | react-native-gesture-handler |
-| Auth storage | expo-secure-store (native) / localStorage (web) |
+| Auth storage | expo-secure-store (native) / cookies httpOnly (web) |
 | Estado | React Context (AuthContext) |
 
 ## Pantallas
@@ -32,7 +72,7 @@ App móvil Expo/React Native para reporte de incidentes y chat de soporte con IA
 cd mobile
 npm install
 npx expo start          # Iniciar servidor dev
-npx expo start --web    # Web
+npx expo start --web    # Web (PWA)
 ```
 
 ## Compilar APK
@@ -46,14 +86,6 @@ docker compose --profile build-only run mobile-builder
 cd android && ./gradlew assembleRelease
 # APK generado en: android/app/build/outputs/apk/release/app-release.apk
 ```
-
-## OTA Updates (actualización sin reinstalar)
-
-```bash
-docker compose --profile build-only run ota-builder
-```
-
-Los bundles se sirven via `ota-server` en `http://localhost:3002`.
 
 ## Variables de entorno
 
@@ -70,17 +102,17 @@ EXPO_PUBLIC_API_URL=/api
 | **APK nativo (EAS Build)** | `https://hub-platform-api.onrender.com` | Hardcodeada en build de EAS |
 | **Dev local** | `http://localhost:3001/api` | `mobile/.env` en desarrollo |
 
-**Para cambiar el destino de la APK:** editar el endpoint en el código fuente y recompilar con `eas build -p android --profile preview`.
+## Seguridad de Sesiones
 
-## API Endpoints que consume
+- **Login envía `scope: "user"`** → Backend crea cookies `user_token`
+- **Cookies httpOnly** con path `/` para que se envíen a `/api/*`
+- **CORS restringido** en nginx a `http://localhost:3000`
+- **No usa localStorage** en web (usa cookies como el dashboard)
 
-| Método | Endpoint | Uso |
-|--------|----------|-----|
-| POST | `/auth/login` | Login |
-| GET | `/auth/me` | Validar sesión |
-| POST | `/auth/logout` | Logout |
-| GET | `/chat/history?limit=30` | Historial del chat |
-| POST | `/chat/message` | Enviar mensaje al bot |
-| GET | `/incidents?limit=50` | Listar incidentes |
-| POST | `/incidents` | Crear incidente |
-| GET | `/incidents/{id}` | Detalle del incidente |
+## Cambios Recientes (2026-07-24)
+
+- ✅ PWA completa: manifest.json, service worker, meta tags
+- ✅ CORS restringido en nginx (antes era `*`)
+- ✅ Login envía `scope: "user"` para cookies aisladas
+- ✅ Iconos PWA copiados al build de nginx
+- ✅ Service Worker con caché offline (excluye `/api/`)

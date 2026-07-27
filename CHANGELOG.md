@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-07-24 — Fix sesiones concurrentes, PWA completa, seguridad cookies
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Sesiones aisladas dashboard/mobile** | `backend/src/lib/jwt.ts`, `backend/src/modules/auth/auth.controller.ts` | Cookies con scope aislado (`admin_token`, `user_token`) + header `X-Auth-Scope` para evitar conflictos de sesión. |
+| **Cookies path `/`** | `backend/src/lib/jwt.ts` | Cambiado path de cookies a `/` (antes era `/dashboard` o `/user`) para que el navegador las envíe a `/api/*`. |
+| **Prioridad cookies invertida** | `backend/src/lib/jwt.ts` | `extractToken()` ahora prioriza `admin_token` > `user_token` > `token` (antes era al revés). |
+| **CORS restringido en nginx mobile** | `mobile/nginx.conf` | Cambiado de `Access-Control-Allow-Origin *` a solo `http://localhost:3000`. |
+| **Mobile envía scope en login** | `mobile/src/contexts/AuthContext.tsx` | Login mobile ahora envía `scope: "user"` para crear cookies `user_token` en vez de genéricas. |
+| **Web envía X-Auth-Scope** | `web/src/lib/api.ts`, `web/src/contexts/AuthContext.tsx` | Dashboard envía header `X-Auth-Scope` en cada request para aislamiento total. |
+
+### PWA Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **manifest.json** | `mobile/public/manifest.json` | Configuración PWA: nombre, iconos 192/512, colores, display standalone. |
+| **Service Worker** | `mobile/public/sw.js` | Caché offline de assets estáticos. Requests a `/api/` no se cachean. |
+| **Meta tags iOS/Android** | `mobile/public/index.html` | apple-mobile-web-app-capable, theme-color, apple-touch-icon. |
+| **Iconos PWA en Docker** | `mobile/Dockerfile.web` | Copia `icon.png` e `icon-512.png` al build final de nginx. |
+| **Mobile activo en compose** | `docker-compose.yml` | Contenedor `hub-mobile` ahora corre por defecto en puerto 8081. |
+
+### Fixes
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **clearAllTokenCookies** | `backend/src/lib/jwt.ts` | Nueva función que limpia TODAS las cookies de todos los scopes (admin, user, genéricas). |
+| **detectRefreshScope** | `backend/src/lib/jwt.ts` | Detecta el scope de la cookie refresh para generar nuevas cookies en el mismo scope. |
+| **Refresh scope-aware** | `backend/src/modules/auth/auth.controller.ts` | `refresh()` ahora detecta el scope y genera cookies en el mismo path/nombre. |
+| **Export Excel con filtros de fecha** | `web/src/components/AnalyticsFilters.tsx` | Los filtros "Hoy", "Esta Semana", "Este Mes", "Últimos 30 Días" ahora aplican correctamente al exportar. Antes solo funcionaba "Rango" personalizado. |
+
+---
+
 ## 2026-07-21 — Limpieza, seguridad y configuración PWA
 
 ### Seguridad

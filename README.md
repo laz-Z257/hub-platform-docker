@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** Funcional | Backend en Render | Mobile APK + PWA | 2026-07-21
+> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-24
 
 ---
 
@@ -12,7 +12,7 @@ Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrat
 hub-platform-docker/
 ├── backend/          # API REST (Express + TypeScript + Drizzle ORM + PostgreSQL)
 ├── web/              # Dashboard Admin (Next.js 15 + React 19 + TailwindCSS)
-├── mobile/           # App Móvil (Expo SDK 56 + React Native + NativeWind)
+├── mobile/           # App Móvil PWA (Expo SDK 56 + React Native + NativeWind)
 ├── ota-server/       # Servidor nginx para PWA mobile + proxy API
 ├── shared/           # Tipos TypeScript compartidos (@hub/shared)
 ├── docker-compose.yml
@@ -27,23 +27,23 @@ hub-platform-docker/
 │              Backend API (Render)                 │
 │         hub-platform-api.onrender.com             │
 │         Express + TypeScript + PostgreSQL          │
+│    Sesiones Aisladas + Cookies Scope + CSRF       │
 └──────────┬────────────────────┬───────────────────┘
            │                    │
     ┌──────▼──────┐     ┌──────▼──────┐
     │  Dashboard  │     │   Mobile    │
-    │  (Vercel/   │     │  APK (EAS)  │
-    │   Docker)   │     │  + PWA      │
+    │  (Docker)   │     │  PWA (Docker)│
+    │  Puerto 3000│     │  Puerto 8081 │
     └─────────────┘     └─────────────┘
 ```
 
 | Componente | Tecnología | Puerto | Descripción |
 |------------|-----------|--------|-------------|
 | **postgres** | PostgreSQL 16 | 5432 | Base de datos relacional |
-| **api** | Express.js + TypeScript | 3001 | Backend REST API |
+| **api** | Express.js + TypeScript | 3001 | Backend REST API con sesiones aisladas |
 | **web** | Next.js 15 (React 19) | 3000 | Dashboard administrativo |
-| **ota-server** | nginx Alpine | 3002 | PWA mobile + proxy API |
-| **mobile-builder** | Node + Java 17 + Android SDK | - | Compilador APK (bajo demanda) |
-| **ota-builder** | Expo/React Native | - | Generador bundles OTA (bajo demanda) |
+| **mobile** | Expo SDK 56 + PWA | 8081 | App móvil PWA instalable |
+| **ota-server** | nginx Alpine | 3002 | Proxy API + PWA (opcional) |
 
 ---
 
@@ -222,6 +222,18 @@ backend/src/
 
 ## Mobile
 
+### PWA Completa (Progressive Web App)
+
+La aplicación móvil es una **PWA instalable** que funciona tanto en navegadores como en dispositivos móviles.
+
+**Características:**
+- ✅ **Instalable** - Se puede agregar a la pantalla de inicio
+- ✅ **Offline** - Service Worker cachea assets estáticos
+- ✅ **Responsive** - Adaptada para móviles y tablets
+- ✅ **Meta tags** - iOS y Android configurados
+- ✅ **Iconos** - 192x192 y 512x512
+- ✅ **CORS seguro** - Restringido a dominios permitidos
+
 ### Pantallas
 
 | Ruta | Descripción |
@@ -233,6 +245,20 @@ backend/src/
 | `/historial` | Lista de incidentes con pull-to-refresh |
 | `/incidente/[id]` | Detalle con comentarios y rating |
 | `/ajustes` | Configuración y logout |
+
+### Acceder a la PWA
+
+```bash
+# 1. Iniciar el contenedor mobile
+docker compose up -d mobile
+
+# 2. Acceder desde navegador
+# http://localhost:8081
+
+# 3. Instalar como app
+# Chrome/Edge: Clic en ícono de instalar en barra de direcciones
+# Mobile: "Agregar a pantalla principal"
+```
 
 ### Compilar APK
 
@@ -246,25 +272,7 @@ cd mobile
 eas build -p android --profile preview
 ```
 
-### Desplegar PWA
-
-```bash
-# 1. Configurar API URL
-echo "EXPO_PUBLIC_API_URL=https://tu-dominio.com/api" > mobile/.env
-
-# 2. Generar build
-cd mobile && npx expo export --platform web --clear
-
-# 3. Copiar al contenedor nginx
-docker compose cp mobile/dist/. ota-server:/usr/share/nginx/html/
-docker compose restart ota-server
-
-# 4. Acceder en http://localhost:3002
-# Para acceso externo usar cloudflared:
-./cloudflared tunnel --url http://localhost:3002
-```
-
-Ver [PWA-DEPLOY.md](./PWA-DEPLOY.md) para guía detallada y [DISTRIBUCION-APK.md](./DISTRIBUCION-APK.md) para distribución.
+Ver [DISTRIBUCION-APK.md](./DISTRIBUCION-APK.md) para distribución.
 
 ---
 
@@ -298,12 +306,26 @@ NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100
 ### mobile/.env
 
 ```bash
-# Desarrollo local
+# PWA (Docker local) - URL relativa (proxy nginx)
+EXPO_PUBLIC_API_URL=/api
+
+# Desarrollo local (sin proxy)
 EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
 # Producción (Render)
 EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 ```
+
+### Seguridad de Sesiones
+
+El sistema implementa **sesiones aisladas** entre dashboard y mobile:
+
+- **Dashboard** usa cookies `admin_token` con header `X-Auth-Scope: admin`
+- **Mobile** usa cookies `user_token` con `scope: "user"` en login
+- **Cookies** tienen path `/` para que el navegador las envíe a `/api/*`
+- **Prioridad** de extracción: `admin_token` > `user_token` > `token`
+
+Esto evita conflictos cuando se usan ambas aplicaciones simultáneamente.
 
 ---
 
@@ -352,11 +374,32 @@ cd web && npm test
 | Archivo | Contenido |
 |---------|-----------|
 | `README.md` | Este archivo |
-| `CHANGELOG.md` | Historial de cambios |
-| `PENDIENTES.md` | Tareas pendientes |
+| `CHANGELOG.md` | Historial de cambios (2026-07-24: PWA, sesiones, export) |
+| `PENDIENTES.md` | 6 resueltos, 62 pendientes |
 | `AUDIT-COMPLETA.md` | Auditoría de seguridad (46 hallazgos) |
 | `PWA-DEPLOY.md` | Guía deploy PWA |
 | `DISTRIBUCION-APK.md` | Guía distribución APK |
+
+---
+
+## Cambios Recientes (2026-07-24)
+
+### ✅ Implementado
+
+| Feature | Descripción |
+|---------|-------------|
+| **PWA Completa** | manifest.json, service worker, meta tags iOS/Android, iconos |
+| **Sesiones Aisladas** | Dashboard y mobile no comparten cookies |
+| **Export con Filtros** | Excel respeta filtros de fecha (Hoy, Semana, Mes, 30d) |
+| **CORS Seguro** | Nginx mobile restringido a localhost:3000 |
+| **Cookies Scope** | Header X-Auth-Scope para aislamiento total |
+
+### 📊 Estado de Calidad
+
+- **68 hallazgos totales** → 6 resueltos, 62 pendientes
+- **Tests:** 105 pasando en backend
+- **TypeScript:** Compila sin errores en backend y web
+- **Docker:** Todos los servicios corriendo y saludables
 
 ---
 
