@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-27 — Fix isReady state en mobile
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **isReady state restaurado** | `mobile/app/_layout.tsx` | Agregado `if (!isReady) return null;` para prevenir flash de contenido antes de ocultar splash screen |
+
+---
+
 ## 2026-07-27 — 10 mejoras de calidad y seguridad
 
 ### Backend

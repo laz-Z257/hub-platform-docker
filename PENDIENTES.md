@@ -300,7 +300,7 @@ npx expo export --platform web
 | **F-15** | Teléfono hardcodeado en HelpModal | Ahora lee desde variables de entorno |
 | **F-13** | `suppressHydrationWarning` en `<html>` | ACEPTADO: necesario para dark mode |
 | **F-11** | Sidebar width 250px hardcodeado | Variable CSS `--sidebar-width` en globals.css |
-| **M-13** | `isReady` state sin usar | Eliminado de _layout.tsx |
+| **M-13** | `isReady` state sin usar | Restaurado con propósito: controla renderizado post-splash screen |
 | **I-9** | SHA pinning en Dockerfiles | PARCIAL: principales OK, builder/ota pendientes |
 | **I-30** | Healthcheck para ota-server | NO APLICA: servicio deshabilitado |
 | **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |

@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
@@ -13,12 +13,19 @@ import "../global.css";
 try { SplashScreen.preventAutoHideAsync(); } catch {}
 
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     const prepare = async () => {
       await SplashScreen.hideAsync().catch(() => {});
+      setIsReady(true);
     };
     prepare();
   }, []);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView className="flex-1">
