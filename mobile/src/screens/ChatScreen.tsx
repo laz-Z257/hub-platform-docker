@@ -346,28 +346,38 @@ export default function ChatScreen() {
             isResolvedNotification={isResolved}
             alreadyRated={isRated}
             onRateService={async () => {
+              logger.info("[Rating] Botón presionado", { latestIncidentId: latestIncident?.id });
               const id = latestIncident?.id;
               if (id) {
                 try {
+                  logger.info("[Rating] Consultando estado del incidente", { id });
                   const incidentData = await api.get<{ id: string; estado: string }>(`/incidents/${id}`);
+                  logger.info("[Rating] Estado del incidente", { estado: incidentData.estado });
                   if (incidentData.estado !== "resuelto") {
+                    logger.info("[Rating] Incidente no está resuelto");
                     Alert.alert("Ticket no resuelto", "Este ticket aún no ha sido marcado como resuelto por el equipo de soporte.");
                     return;
                   }
+                  logger.info("[Rating] Abriendo modal de rating");
                   setRatingIncidentId(id);
-                } catch {
+                } catch (err) {
+                  logger.error("[Rating] Error consultando incidente", { error: (err as Error).message });
                   Alert.alert("Error", "No se pudo verificar el estado del ticket.");
                 }
               } else {
+                logger.info("[Rating] No hay latestIncident, buscando resueltos");
                 try {
                   const data = await api.get<{ items: { id: string; estado: string }[] }>("/incidents?limit=1&estado=resuelto");
                   const resolved = data.items?.[0];
                   if (resolved) {
+                    logger.info("[Rating] Encontrado incidente resuelto", { id: resolved.id });
                     setRatingIncidentId(resolved.id);
                   } else {
+                    logger.info("[Rating] No hay tickets resueltos");
                     Alert.alert("Sin tickets resueltos", "No hay tickets resueltos para calificar.");
                   }
-                } catch {
+                } catch (err) {
+                  logger.error("[Rating] Error buscando incidentes", { error: (err as Error).message });
                   Alert.alert("Error", "No se pudo obtener el ticket para calificar.");
                 }
               }

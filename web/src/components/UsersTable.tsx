@@ -75,12 +75,6 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
       {open && (
         <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[999] py-1">
           <button
-            onClick={() => { setOpen(false); onEdit(user); }}
-            className="w-full text-left px-4 py-2 text-[13px] font-inter text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-          >
-            Editar
-          </button>
-          <button
             onClick={() => { setOpen(false); onResetPassword(user); }}
             className="w-full text-left px-4 py-2 text-[13px] font-inter text-orange-700 dark:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
           >

@@ -12,16 +12,16 @@ export async function registerToken(
     const { token } = req.body;
 
     const [existing] = await db
-      .select({ id: pushTokens.id })
+      .select({ id: pushTokens.id, user_id: pushTokens.user_id })
       .from(pushTokens)
       .where(eq(pushTokens.token, token))
       .limit(1);
 
     if (existing) {
-      await db
-        .update(pushTokens)
-        .set({ user_id: req.user!.userId })
-        .where(eq(pushTokens.id, existing.id));
+      if (existing.user_id !== req.user!.userId) {
+        res.status(409).json({ error: "El token ya está registrado por otro usuario" });
+        return;
+      }
     } else {
       await db.insert(pushTokens).values({
         user_id: req.user!.userId,

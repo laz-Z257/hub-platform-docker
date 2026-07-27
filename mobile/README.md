@@ -109,9 +109,17 @@ EXPO_PUBLIC_API_URL=/api
 - **CORS restringido** en nginx a `http://localhost:3000`
 - **No usa localStorage** en web (usa cookies como el dashboard)
 
-## Cambios Recientes (2026-07-24)
+## Cambios Recientes (2026-07-27)
 
-- ✅ PWA completa: manifest.json, service worker, meta tags
+### Calidad
+- ✅ Logger unificado (reemplazados console.log/error con logger)
+- ✅ Sanitización de input en chat (previene XSS, límite 500 chars)
+- ✅ Constantes de color centralizadas en `src/constants/colors.ts`
+- ✅ Estilos consistentes usando constantes COLORS
+- ✅ Colores divergentes corregidos (en_proceso unificado)
+
+### PWA Completa (2026-07-24)
+- ✅ manifest.json, service worker, meta tags
 - ✅ CORS restringido en nginx (antes era `*`)
 - ✅ Login envía `scope: "user"` para cookies aisladas
 - ✅ Iconos PWA copiados al build de nginx

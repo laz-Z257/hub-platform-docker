@@ -10,6 +10,8 @@ import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
 import { requestId } from "./middlewares/requestId";
 import { metricsMiddleware, getMetrics } from "./middlewares/metrics";
+import { authMiddleware } from "./middlewares/auth";
+import { adminOnly } from "./middlewares/admin";
 import { logger } from "./lib/logger";
 import { env } from "./config/env";
 
@@ -110,7 +112,7 @@ app.get("/api/health/db", async (_req, res) => {
 });
 
 // Metrics
-app.get("/api/metrics", (_req, res) => {
+app.get("/api/metrics", authMiddleware, adminOnly, (_req, res) => {
   try {
     res.json(getMetrics());
   } catch (error) {
@@ -119,8 +121,17 @@ app.get("/api/metrics", (_req, res) => {
   }
 });
 
-// Serve uploads
-app.use("/uploads", express.static("uploads"));
+// Serve uploads (protected)
+app.use("/uploads", (req, res, next) => {
+  const adminToken = req.cookies.admin_token;
+  const userToken = req.cookies.user_token;
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  
+  if (!adminToken && !userToken && !token) {
+    return res.status(401).json({ error: "No autorizado" });
+  }
+  next();
+}, express.static("uploads"));
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -157,6 +168,27 @@ app.use(
     if (err.message.includes("Unauthorized") || err.message.includes("invalid token")) {
       logger.warn(`Auth error: ${err.message}`, { requestId: req.requestId });
       res.status(401).json({ error: "No autorizado", requestId: req.requestId });
+      return;
+    }
+
+    // JWT errors específicos
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+      logger.warn(`JWT error: ${err.message}`, { requestId: req.requestId });
+      res.status(401).json({ error: "Token inválido o expirado", requestId: req.requestId });
+      return;
+    }
+
+    // Multer file upload errors
+    if (err.name === "MulterError") {
+      logger.warn(`Upload error: ${err.message}`, { requestId: req.requestId });
+      res.status(400).json({ error: `Error al subir archivo: ${err.message}`, requestId: req.requestId });
+      return;
+    }
+
+    // Database errors
+    if (err.message.includes("unique constraint") || err.message.includes("duplicate key")) {
+      logger.warn(`Database constraint error: ${err.message}`, { requestId: req.requestId });
+      res.status(409).json({ error: "El registro ya existe", requestId: req.requestId });
       return;
     }
 

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
+import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
 
 interface IncidentDetail {
   id: string;
@@ -25,24 +26,6 @@ interface IncidentDetail {
   updated_at: string;
   comments: { id: string; autor: string; texto: string; fecha: string }[];
 }
-
-const URGENCIA_COLORS: Record<string, string> = {
-  alta: "#EF4444",
-  media: "#F59E0B",
-  baja: "#22C55E",
-};
-
-const ESTADO_LABELS: Record<string, string> = {
-  pendiente: "Pendiente",
-  en_proceso: "En Proceso",
-  resuelto: "Resuelto",
-};
-
-const ESTADO_COLORS: Record<string, string> = {
-  pendiente: "#3B82F6",
-  en_proceso: "#7C3AED",
-  resuelto: "#22C55E",
-};
 
 function formatTicketId(id: string): string {
   const short = id.replace(/-/g, "").slice(-8).toUpperCase();

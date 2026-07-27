@@ -1,9 +1,20 @@
 import React, { useState } from "react";
 import { View, TextInput, TouchableOpacity } from "react-native";
 import { ArrowRight } from "lucide-react-native";
+import { COLORS } from "../constants/colors";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
+}
+
+function sanitizeInput(text: string): string {
+  return text
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .trim();
 }
 
 export default function ChatInput({ onSend }: ChatInputProps) {
@@ -11,8 +22,11 @@ export default function ChatInput({ onSend }: ChatInputProps) {
 
   const handleSend = () => {
     if (!text.trim()) return;
-    onSend(text.trim());
-    setText("");
+    const sanitized = sanitizeInput(text);
+    if (sanitized.length > 0 && sanitized.length <= 500) {
+      onSend(sanitized);
+      setText("");
+    }
   };
 
   return (
@@ -20,23 +34,24 @@ export default function ChatInput({ onSend }: ChatInputProps) {
       style={{
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: COLORS.white,
         borderTopWidth: 1,
-        borderTopColor: "#E5E7EB",
+        borderTopColor: COLORS.border,
         paddingHorizontal: 12,
         paddingVertical: 10,
       }}
     >
       <TextInput
         value={text}
-        onChangeText={setText}
+        onChangeText={(newText) => setText(newText.slice(0, 500))}
         placeholder="Escribe tu mensaje..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={COLORS.textLight}
         multiline
+        maxLength={500}
         style={{
           flex: 1,
           height: 48,
-          backgroundColor: "#F5F5F5",
+          backgroundColor: COLORS.background,
           borderRadius: 24,
           paddingHorizontal: 18,
           fontSize: 15,
@@ -55,7 +70,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
           width: 48,
           height: 48,
           borderRadius: 24,
-          backgroundColor: text.trim() ? "#201A7A" : "#D1D5DB",
+          backgroundColor: text.trim() ? COLORS.primary : "#D1D5DB",
           alignItems: "center",
           justifyContent: "center",
           marginLeft: 8,

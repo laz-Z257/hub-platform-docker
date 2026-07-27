@@ -224,6 +224,19 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       }
     }
 
+    if (documento !== undefined) {
+      const [duplicate] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.documento, documento), ne(users.id, id)))
+        .limit(1);
+
+      if (duplicate) {
+        res.status(409).json({ error: "El documento ya está registrado por otro usuario" });
+        return;
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (rol !== undefined) updateData.rol = rol;
     if (nombre !== undefined) updateData.nombre = nombre;

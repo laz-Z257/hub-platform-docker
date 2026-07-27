@@ -10,6 +10,11 @@ import { env } from "../../config/env";
 
 const MAX_LOGIN_ATTEMPTS = env.MAX_LOGIN_ATTEMPTS;
 
+/**
+ * Formatea la respuesta del usuario para el cliente
+ * @param user - Usuario de la base de datos
+ * @returns Objeto con datos públicos del usuario (sin contraseña)
+ */
 function userResponse(user: typeof users.$inferSelect) {
   return {
     id: user.id,
@@ -19,6 +24,16 @@ function userResponse(user: typeof users.$inferSelect) {
   };
 }
 
+/**
+ * Registra un nuevo usuario en el sistema
+ * - Valida que el documento no exista
+ * - Hashea la contraseña con bcrypt (10 rondas)
+ * - Genera email automático basado en documento
+ * - Asigna rol "user" por defecto
+ * 
+ * @throws 409 - Si el documento ya está registrado
+ * @throws 500 - Error interno del servidor
+ */
 export async function register(
   req: Request,
   res: Response
@@ -67,6 +82,19 @@ export async function register(
   }
 }
 
+/**
+ * Autentica un usuario y genera tokens JWT
+ * - Valida documento y contraseña
+ * - Bloquea usuario después de MAX_LOGIN_ATTEMPTS intentos fallidos
+ * - Resetea contador de intentos al login exitoso
+ * - Valida permisos según scope (admin/user)
+ * - Genera cookies httpOnly con scope aislado
+ * - Genera token CSRF
+ * 
+ * @throws 401 - Credenciales incorrectas
+ * @throws 403 - Usuario bloqueado o sin permisos
+ * @throws 500 - Error interno del servidor
+ */
 export async function login(req: Request, res: Response): Promise<void> {
   try {
     const { documento, contrasena, scope } = req.body;
@@ -140,6 +168,14 @@ export async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Obtiene el usuario autenticado actual
+ * - Verifica token JWT del header/cookies
+ * - Genera nuevo token CSRF
+ * 
+ * @throws 401 - Sesión inválida o token expirado
+ * @throws 500 - Error interno del servidor
+ */
 export async function me(req: Request, res: Response): Promise<void> {
   try {
     const [user] = await db
@@ -169,6 +205,16 @@ export async function me(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Renueva el token JWT usando refresh token
+ * - Extrae refresh token de cookies
+ * - Verifica versión del token (invalidación)
+ * - Genera nuevos tokens en el mismo scope
+ * - Limpia todas las cookies si el refresh es inválido
+ * 
+ * @throws 401 - Refresh token inválido o versión mismatch
+ * @throws 500 - Error interno del servidor
+ */
 export async function refresh(req: Request, res: Response): Promise<void> {
   try {
     const refreshToken = extractRefreshToken(req);
@@ -211,6 +257,13 @@ export async function refresh(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Cierra la sesión del usuario
+ * - Incrementa token_version para invalidar todos los tokens activos
+ * - Limpia todas las cookies de autenticación
+ * 
+ * Nota: Si el token es inválido, igual limpia las cookies
+ */
 export async function logout(req: Request, res: Response): Promise<void> {
   try {
     const token = extractToken(req);

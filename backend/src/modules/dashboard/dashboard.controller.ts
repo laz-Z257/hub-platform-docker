@@ -166,26 +166,37 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
 
     const last7Days = [];
     const now = getColombiaNow();
+    
+    // Optimización: Una sola query en vez de 7 queries separadas
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    
+    const dailyCounts = await db
+      .select({
+        date: sql<string>`DATE(${incidents.created_at})`.mapWith(String),
+        count: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(incidents)
+      .where(gte(incidents.created_at, sevenDaysAgo))
+      .groupBy(sql`DATE(${incidents.created_at})`)
+      .orderBy(sql`DATE(${incidents.created_at})`);
+    
+    // Crear mapa de resultados
+    const countMap = new Map(dailyCounts.map(d => [d.date, d.count]));
+    
+    // Generar array de últimos 7 días
     for (let i = 6; i >= 0; i--) {
       const day = new Date(now);
       day.setDate(day.getDate() - i);
       day.setHours(0, 0, 0, 0);
-      const nextDay = new Date(day);
-      nextDay.setDate(nextDay.getDate() + 1);
-
-      const [count] = await db
-        .select({ total: sql<number>`count(*)`.mapWith(Number) })
-        .from(incidents)
-        .where(
-          and(
-            gte(incidents.created_at, day),
-            lte(incidents.created_at, nextDay)
-          )
-        );
-
+      
+      const dateStr = day.toISOString().split('T')[0];
+      const count = countMap.get(dateStr) || 0;
+      
       last7Days.push({
         fecha: day.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }),
-        incidentes: count.total,
+        incidentes: count,
       });
     }
 

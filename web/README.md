@@ -62,10 +62,14 @@ docker compose up -d --build web      # Rebuildear
 
 Servido en `http://localhost:3000`.
 
-## Cambios Recientes (2026-07-24)
+## Cambios Recientes (2026-07-27)
 
-- ✅ Fix exportación Excel: filtros de fecha ahora funcionan correctamente
-- ✅ Sesiones aisladas: `setAuthScope()` antes de cada request
+### UI
+- ✅ Botón "Editar" removido del menú de acciones en gestión de usuarios
+
+### Sesiones Aisladas (2026-07-24)
+- ✅ `setAuthScope()` antes de cada request
 - ✅ Header `X-Auth-Scope` en todas las peticiones API
+- ✅ Fix exportación Excel: filtros de fecha ahora funcionan correctamente
 - ✅ Función `getDefaultRange()` con fechas locales (no UTC)
 - ✅ `handleExport()` recibe el `filter` actual y calcula el rango correcto

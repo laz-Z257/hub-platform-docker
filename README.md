@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-24
+> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-27
 
 ---
 
@@ -374,29 +374,30 @@ cd web && npm test
 | Archivo | Contenido |
 |---------|-----------|
 | `README.md` | Este archivo |
-| `CHANGELOG.md` | Historial de cambios (2026-07-24: PWA, sesiones, export) |
-| `PENDIENTES.md` | 6 resueltos, 62 pendientes |
-| `AUDIT-COMPLETA.md` | Auditoría de seguridad (46 hallazgos) |
-| `PWA-DEPLOY.md` | Guía deploy PWA |
+| `CHANGELOG.md` | Historial de cambios |
+| `PENDIENTES.md` | 11 resueltos, 57 pendientes |
 | `DISTRIBUCION-APK.md` | Guía distribución APK |
 
 ---
 
-## Cambios Recientes (2026-07-24)
+## Cambios Recientes (2026-07-27)
 
 ### ✅ Implementado
 
 | Feature | Descripción |
 |---------|-------------|
-| **PWA Completa** | manifest.json, service worker, meta tags iOS/Android, iconos |
-| **Sesiones Aisladas** | Dashboard y mobile no comparten cookies |
-| **Export con Filtros** | Excel respeta filtros de fecha (Hoy, Semana, Mes, 30d) |
-| **CORS Seguro** | Nginx mobile restringido a localhost:3000 |
-| **Cookies Scope** | Header X-Auth-Scope para aislamiento total |
+| **Fix Ratings Mobile** | Verifica estado del ticket antes de calificar |
+| **Seguridad Backend** | /uploads y /metrics protegidos con auth |
+| **Password Policy** | Login exige mínimo 6 chars (igual que register) |
+| **Push Token Security** | Verifica owner antes de reasignar |
+| **Performance** | ultima_actividad throttle cada 5 min |
+| **updateUser** | Verifica documento duplicado (409) |
+| **Mobile PWA** | Logger unificado, sanitización input, constantes de color |
+| **Dashboard** | Botón "Editar" removido en gestión de usuarios |
 
 ### 📊 Estado de Calidad
 
-- **68 hallazgos totales** → 6 resueltos, 62 pendientes
+- **68 hallazgos totales** → 11 resueltos, 57 pendientes
 - **Tests:** 105 pasando en backend
 - **TypeScript:** Compila sin errores en backend y web
 - **Docker:** Todos los servicios corriendo y saludables

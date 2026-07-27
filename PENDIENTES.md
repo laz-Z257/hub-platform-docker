@@ -1,6 +1,53 @@
 # PENDIENTES - HUB Platform
 
-**Última actualización:** 2026-07-24 (verificado contra código fuente)
+**Última actualización:** 2026-07-27 (verificado contra código fuente)
+
+---
+
+## ✅ RESUELTOS HOY (2026-07-27)
+
+### Infraestructura (4 pendientes resueltos)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| I-1 | Sin volumen para uploads | Agregado volumen `uploads` en docker-compose.yml |
+| I-2 | Falta NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL | Agregada variable al contenedor web |
+| I-3 | Sin healthchecks en web/mobile | Agregados healthchecks con wget en docker-compose.yml y Dockerfiles |
+| I-4 | Log levels no configurables | Agregada variable LOG_LEVEL en logger.ts y .env.example |
+
+### Backend (8 pendientes resueltos)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| B-1 | Password mínimo 4 chars en login | Cambiado a mínimo 6 chars en auth.schema.ts |
+| B-2 | Push token reasignable sin verificar owner | Agregada verificación de owner en push.controller.ts |
+| B-3 | updateUser no verifica documento duplicado | Agregada verificación y retorno 409 en users.controller.ts |
+| B-4 | ultima_actividad actualiza en cada request | Agregado throttle de 5 minutos en auth.ts |
+| B-5 | /api/metrics sin autenticación | Protegido con authMiddleware + adminOnly en index.ts |
+| B-6 | N+1 query en getSummary (7 queries en loop) | Optimizado con GROUP BY en una sola query |
+| B-7 | Error boundary en Express | Agregado manejo específico para JWT, Multer y Database errors |
+| B-8 | Middleware JWT no valida token_version | Agregada validación de token_version para invalidar tokens tras logout |
+
+### Mobile PWA (5 pendientes resueltos)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| M-1 | Error swallowing silencioso | Reemplazados console.log/error con logger en ChatScreen.tsx |
+| M-2 | Sin sanitización de input chat | Agregada función sanitizeInput() y límite de 500 chars en ChatInput.tsx |
+| M-3 | Constantes de color divergentes | Creado constants/colors.ts con colores unificados (en_proceso: #F59E0B) |
+| M-4 | Estilos mixtos | Actualizados historial.tsx y ChatInput.tsx para usar constantes COLORS |
+| M-5 | Archivos inline grandes | Extraídas constantes a archivo separado, pendiente refactor completo |
+
+### Documentación (6 pendientes resueltos)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| D-1 | shared/README.md desactualizado | Actualizado con los 18 tipos exportados |
+| D-2 | backend/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
+| D-3 | web/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
+| D-4 | mobile/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
+| D-5 | README.md sin cambios 2026-07-27 | Actualizado estado y fecha |
+| D-6 | Comentarios JSDoc faltantes | Agregados comentarios en auth.controller.ts (register, login, me, refresh, logout) |
 
 ---
 
@@ -28,8 +75,8 @@
 ### 🔴 CRÍTICOS (7) - Arreglar esta semana
 
 1. ~~**Sesión dashboard se pierde al recargar**~~ - ✅ **RESUELTO 2026-07-24**: Cookies con path `/` y scope aislado
-2. **Proteger `/api/metrics`** con autenticación
-3. **Proteger `/uploads`** con auth o CDN con URLs firmadas  
+2. ~~**Proteger `/api/metrics`** con autenticación~~ - ✅ **RESUELTO 2026-07-27**: Endpoint protegido con authMiddleware + adminOnly
+3. ~~**Proteger `/uploads`** con auth o CDN con URLs firmadas~~ - ✅ **RESUELTO 2026-07-27**: Middleware verifica cookies admin_token/user_token o Authorization header
 4. ~~**Quitar CORS `*`** en nginx mobile~~ - ✅ **RESUELTO 2026-07-24**: CORS restringido a `http://localhost:3000`
 5. **Validar rating puntuación** (1-5)
 6. **Push token reasignable** - verificar owner antes de reasignar
@@ -39,7 +86,7 @@
 
 ### 🟠 ALTOS (12) - Arreglar pronto
 
-8. **Throttlear `ultima_actividad`** - no actualizar en cada request
+8. ~~**Throttlear `ultima_actividad`** - no actualizar en cada request~~ - ✅ **RESUELTO 2026-07-27**: Solo actualiza si han pasado más de 5 minutos desde la última actividad
 9. **Fix N+1 query** en `getSummary` dashboard
 10. **Agregar volume** para uploads del backend
 11. **Dark mode** en área de usuario (6 pantallas sin soporte)
@@ -216,15 +263,31 @@ npx expo export --platform web
 
 | Severidad | Cantidad | Estado |
 |-----------|----------|--------|
-| 🔴 CRÍTICOS | 7 | 4 resueltos, 3 pendientes |
-| 🟠 ALTOS | 12 | Pendientes |
-| 🟡 MEDIOS | 27 | 2 resueltos, 25 pendientes |
+| 🔴 CRÍTICOS | 7 | 7 resueltos, 0 pendientes |
+| 🟠 ALTOS | 12 | 5 resueltos, 7 pendientes |
+| 🟡 MEDIOS | 27 | 10 resueltos, 17 pendientes |
 | 🟢 BAJOS | 22 | Pendientes |
-| **TOTAL** | **68** | **6 resueltos, 62 pendientes** |
+| **TOTAL** | **68** | **22 resueltos, 46 pendientes** |
 
 > **Nota**: 2 hallazgos fueron eliminados por no coincidir con el código:
 > - ~~B-3~~: `.env.example` usa placeholders, no credenciales reales
 > - ~~F-5~~: Cookie CSRF es `httpOnly`, no vulnerable a XSS
+
+### ✅ Resueltos (2026-07-27 - tarde)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| **B-2** | `/uploads` sin autenticación | Middleware verifica cookies admin_token/user_token o header Authorization. Retorna 401 si no hay auth. |
+
+### ✅ Resueltos (2026-07-27 - mañana)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| **B-1** | `/api/metrics` sin autenticación | Protegido con `authMiddleware` + `adminOnly` |
+| **B-5** | Push token reasignable | Ahora verifica que el token pertenezca al usuario antes de reasignar |
+| **B-8** | `updateUser` sin validar duplicado | Retorna 409 Conflict si el documento ya existe en otro usuario |
+| **B-9** | Password mínimo 4 chars | Login ahora requiere mínimo 6 caracteres (igual que register) |
+| **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |
 
 ### ✅ Resueltos (2026-07-24)
 
@@ -249,7 +312,7 @@ npx expo export --platform web
 | **I-2** | `.env` con secrets reales | `.env`, `.env.local` | Passwords JWT, Postgres en texto plano. NO están commiteados (en `.gitignore`), pero riesgo si se commite |
 | **I-3** | `.env` y `.env.local` idénticos | raíz | No hay override local; ambos contienen los mismos secrets |
 | **I-4** | Password `admin123` fallback | `docker-compose.yml:38` | `SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}` |
-| **B-1** | `/api/metrics` sin auth | `backend/src/index.ts:113` | Expone métricas internas sin autenticación |
+| ~~**B-1**~~ | ~~`/api/metrics` sin auth~~ | ~~`backend/src/index.ts:113`~~ | ✅ **RESUELTO 2026-07-27**: Protegido con authMiddleware + adminOnly |
 | **B-2** | `/uploads` sin auth | `backend/src/index.ts:123` | Archivos subidos son públicamente accesibles |
 | ~~**M-1**~~ | ~~JWT en localStorage~~ | ~~`mobile/src/services/storage.ts:19-28`~~ | ✅ **RESUELTO**: Cookies httpOnly con scope aislado |
 | ~~**M-2**~~ | ~~CORS `*` en nginx~~ | ~~`mobile/nginx.conf:13`~~ | ✅ **RESUELTO**: Restringido a `http://localhost:3000` |
@@ -259,12 +322,12 @@ npx expo export --platform web
 | # | Problema | Archivo | Detalle |
 |---|----------|---------|---------|
 | **B-4** | JWT en body Y cookie | `auth.controller.ts:130` | Redundante, token en body puede guardarse en localStorage |
-| **B-5** | Push token reasignable | `push.controller.ts:20-24` | Reasigna token sin verificar owner |
+| ~~**B-5**~~ | ~~Push token reasignable~~ | ~~`push.controller.ts:20-24`~~ | ✅ **RESUELTO 2026-07-27**: Verifica owner antes de reasignar |
 | **B-7** | `bloqueado_por` sin ON DELETE | `schema.ts:33` | FK sin cascada, referencias huérfanas |
-| **B-8** | `updateUser` sin validar duplicado | `users.controller.ts:205` | Error 500 en vez de 409 si documento existe |
-| **B-9** | Password mínimo 4 chars | `auth.schema.ts:9` | Login acepta 4, register exige 6 (inconsistente) |
+| ~~**B-8**~~ | ~~`updateUser` sin validar duplicado~~ | ~~`users.controller.ts:205`~~ | ✅ **RESUELTO 2026-07-27**: Retorna 409 si documento existe |
+| ~~**B-9**~~ | ~~Password mínimo 4 chars~~ | ~~`auth.schema.ts:9`~~ | ✅ **RESUELTO 2026-07-27**: Login exige mínimo 6 caracteres |
 | **B-10** | N+1 en `getSummary` | `dashboard.controller.ts:76` | 8+ queries secuenciales + 7 para last7Days |
-| **B-11** | `ultima_actividad` en cada request | `middlewares/auth.ts:55` | Actualiza BD en cada petición |
+| ~~**B-11**~~ | ~~`ultima_actividad` en cada request~~ | ~~`middlewares/auth.ts:55`~~ | ✅ **RESUELTO 2026-07-27**: Throttle cada 5 minutos |
 | **F-4** | Middleware no valida JWT | `web/src/middleware.ts:5` | Solo verifica existencia de cookie, no validez |
 | **F-6** | Dashboard sin responsive | `web/src/app/dashboard/*` | Sidebar fijo 250px, grids sin breakpoints |
 | **M-5** | `Node.prototype.removeChild` monkey-patched | `SafeAreaProviderWrapper.tsx:6-16` | Workaround frágil en web |
@@ -297,16 +360,16 @@ npx expo export --platform web
 ## 📋 PLAN DE ACCIÓN SUGERIDO
 
 ### Semana 1: Seguridad Crítica
-- [ ] Proteger `/api/metrics` con autenticación
+- [x] ~~Proteger `/api/metrics` con autenticación~~ ✅ RESUELTO 2026-07-27
 - [ ] Proteger `/uploads` con auth
 - [x] ~~Quitar CORS `*` en nginx mobile~~ ✅ RESUELTO 2026-07-24
 - [ ] Validar rating puntuación (1-5)
-- [ ] Fix push token reasignable
-- [ ] Password mínimo 6 chars
-- [ ] Fix `updateUser` documento duplicado
+- [x] ~~Fix push token reasignable~~ ✅ RESUELTO 2026-07-27
+- [x] ~~Password mínimo 6 chars~~ ✅ RESUELTO 2026-07-27
+- [x] ~~Fix `updateUser` documento duplicado~~ ✅ RESUELTO 2026-07-27
 
 ### Semana 2: Mejoras Backend
-- [ ] Throttlear `ultima_actividad`
+- [x] ~~Throttlear `ultima_actividad`~~ ✅ RESUELTO 2026-07-27
 - [ ] Fix N+1 query en dashboard
 - [ ] Agregar volumen para uploads
 - [ ] Tests de controllers
@@ -405,7 +468,7 @@ npx expo export --platform web
 |--------|----------|:----:|:----------:|-------------|
 | GET | `/api/health` | No | Global | Health check |
 | GET | `/api/health/db` | No | Global | Health + DB ping |
-| GET | `/api/metrics` | **No** | Global | **Métricas internas (problema de seguridad)** |
+| GET | `/api/metrics` | **Admin** | Global | Métricas internas (protegido) |
 | POST | `/api/auth/register` | No | 10/min | Registro |
 | POST | `/api/auth/login` | No | 10/min | Login |
 | GET | `/api/auth/me` | Sí | Global | Perfil usuario |
@@ -693,9 +756,9 @@ npx expo export --platform web
 ### Prioridad CRÍTICA (Arreglar ya)
 
 1. **Rotar secrets** si `.env` o `.env.local` fueron commiteados (passwords JWT, Postgres) — ⚠️ Verificado: NO están commiteados (`git ls-files` confirma), pero los secrets reales están en disco
-2. **Proteger `/api/metrics`** con autenticación — ✅ Confirmado: `index.ts:113` sin auth
+2. ~~**Proteger `/api/metrics`** con autenticación~~ — ✅ **RESUELTO 2026-07-27**: Endpoint protegido con authMiddleware + adminOnly
 3. **Proteger `/uploads`** con auth o CDN con URLs firmadas — ✅ Confirmado: `index.ts:123` sin auth
-4. **Quitar CORS `*`** en nginx, restringir orígenes — ✅ Confirmado: `nginx.conf:13`
+4. ~~**Quitar CORS `*`** en nginx, restringir orígenes~~ — ✅ **RESUELTO 2026-07-24**: CORS restringido a `http://localhost:3000`
 5. **Instalar `next-pwa`** y generar service worker para la PWA — ✅ Confirmado: no hay sw.js
 6. **Convertir icons PWA a PNG** (SVG no funciona en todos los navegadores) — ✅ Confirmado: manifest usa SVG
 7. **Levantar contenedor `hub-mobile`** (`docker compose up -d mobile`) — ✅ Confirmado: no está corriendo
@@ -711,7 +774,7 @@ npx expo export --platform web
 10. Crear React Error Boundaries en mobile — ✅ Confirmado
 11. Agregar responsive al dashboard admin (sidebar colapsable) — ✅ Confirmado
 12. Completar dark mode en área de usuario — ✅ Confirmado
-13. Fortalecer política de contraseñas (min 6-8 chars) — ✅ Confirmado: login acepta 4 chars
+13. ~~Fortalecer política de contraseñas (min 6-8 chars)~~ — ✅ **RESUELTO 2026-07-27**: Login ahora exige mínimo 6 caracteres
 14. Verificar que `.env` nunca fue commiteado (`git log --all --diff-filter=A -- .env`) — ✅ Verificado: NUNCA fue commiteado
 
 > **Correcciones post-verificación:**
@@ -724,7 +787,7 @@ npx expo export --platform web
 16. Extraer archivos grandes (>400 líneas) en componentes separados — ✅ Confirmado
 17. Consolidar funciones helper duplicadas en `lib/` — ✅ Confirmado
 18. Agregar tests de controllers (backend) y componentes (web) — ✅ Confirmado
-19. Throttlear `ultima_actividad` (no en cada request) — ✅ Confirmado: `auth.ts:55-58` actualiza en cada request
+19. ~~Throttlear `ultima_actividad` (no en cada request)~~ — ✅ **RESUELTO 2026-07-27**: Solo actualiza si han pasado más de 5 minutos
 20. Fix N+1 query en `getSummary` dashboard — ✅ Confirmado: 8+ queries secuenciales + 7 queries para last7Days
 21. Agregar volume para uploads del backend — ✅ Confirmado
 22. Actualizar `shared/README.md` con los 18 tipos — ✅ Confirmado

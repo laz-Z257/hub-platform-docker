@@ -6,7 +6,7 @@ export const loginSchema = z.object({
     .min(1, "El documento es requerido")
     .max(20)
     .regex(/^\d+$/, "El documento debe contener solo números"),
-  contrasena: z.string().min(4, "Mínimo 4 caracteres"),
+  contrasena: z.string().min(6, "Mínimo 6 caracteres"),
   scope: z.enum(["admin", "user"]).optional(),
 });
 

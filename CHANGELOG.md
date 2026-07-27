@@ -1,5 +1,84 @@
 # Changelog
 
+## 2026-07-27 — Seguridad y error handling mejorado
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Validación token_version** | `backend/src/middlewares/auth.ts` | Middleware ahora valida token_version para invalidar tokens tras logout |
+| **Error boundary mejorado** | `backend/src/index.ts` | Agregado manejo específico para JWT, Multer y Database errors |
+
+---
+
+## 2026-07-27 — Optimización N+1 query en dashboard
+
+### Performance
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **N+1 query en getSummary** | `backend/src/modules/dashboard/dashboard.controller.ts` | Optimizado loop de 7 queries a 1 query con GROUP BY |
+
+---
+
+## 2026-07-27 — Infraestructura, JSDoc y log levels
+
+### Infraestructura
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Volumen para uploads** | `docker-compose.yml` | Agregado volumen persistente `uploads` para el backend |
+| **NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL** | `docker-compose.yml` | Variable pasada al contenedor web |
+| **Healthchecks web/mobile** | `docker-compose.yml`, `web/Dockerfile`, `mobile/Dockerfile.web` | Healthchecks con wget cada 30s |
+| **Log levels configurables** | `backend/src/lib/logger.ts`, `.env.example` | Variable LOG_LEVEL (debug/info/warn/error), default info en producción |
+
+### Documentación
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **JSDoc en auth** | `backend/src/modules/auth/auth.controller.ts` | Comentarios en register, login, me, refresh, logout |
+| **shared/README.md** | `shared/README.md` | Actualizado con los 18 tipos exportados |
+
+---
+
+## 2026-07-27 — Fix seguridad: proteger /uploads
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Proteger `/uploads` con auth** | `backend/src/index.ts` | Agregado middleware que verifica cookies `admin_token`/`user_token` o header `Authorization`. Retorna 401 si no hay autenticación. |
+
+---
+
+## 2026-07-27 — Mobile PWA: 5 mejoras de calidad
+
+### Mobile PWA
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Logger unificado** | `mobile/src/screens/ChatScreen.tsx` | Reemplazados console.log/console.error con logger para mejor tracking |
+| **Sanitización input chat** | `mobile/src/components/ChatInput.tsx` | Agregada función sanitizeInput() para prevenir XSS + límite 500 chars |
+| **Constantes de color** | `mobile/src/constants/colors.ts` (nuevo) | Archivo centralizado con colores unificados. en_proceso ahora es #F59E0B |
+| **Estilos consistentes** | `mobile/app/historial.tsx`, `ChatInput.tsx` | Usan constantes COLORS en vez de valores hardcodeados |
+| **Colores unificados** | `mobile/app/incidente/[id].tsx` | Usa constantes compartidas, elimina duplicados |
+
+---
+
+## 2026-07-27 — 5 mejoras de seguridad backend
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **`/api/metrics` protegido con auth** | `backend/src/index.ts` | Endpoint ahora requiere `authMiddleware` + `adminOnly`. Ya no es público. |
+| **Push token verifica owner** | `backend/src/modules/push/push.controller.ts` | Si el token ya existe y pertenece a otro usuario, retorna 409 Conflict en vez de reasignarlo. |
+| **`updateUser` verifica documento duplicado** | `backend/src/modules/users/users.controller.ts` | Retorna 409 Conflict si el documento ya existe en otro usuario (antes causaba error 500). |
+| **Password mínimo 6 chars en login** | `backend/src/modules/auth/auth.schema.ts` | Login ahora exige mínimo 6 caracteres (igual que register). Antes aceptaba 4. |
+| **`ultima_actividad` throttle cada 5 min** | `backend/src/middlewares/auth.ts` | Solo actualiza `ultima_actividad` si han pasado más de 5 minutos. Reduce writes innecesarios a la BD. |
+
+---
+
 ## 2026-07-24 — Fix sesiones concurrentes, PWA completa, seguridad cookies
 
 ### Seguridad

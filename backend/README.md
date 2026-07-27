@@ -76,9 +76,17 @@ npm run db:seed       # Poblar DB con datos iniciales
 | GET | /api/puntos-venta | ✅ | Listar puntos de venta |
 | GET | /api/ratings | ✅ | Estadísticas de calificaciones |
 
-## Cambios Recientes (2026-07-24)
+## Cambios Recientes (2026-07-27)
 
-- ✅ Sesiones aisladas dashboard/mobile
+### Seguridad
+- ✅ Password mínimo 6 chars en login (antes 4)
+- ✅ Push token verifica owner antes de reasignar
+- ✅ `updateUser` verifica documento duplicado (retorna 409)
+- ✅ `ultima_actividad` throttle cada 5 min (reduce writes)
+- ✅ `/api/metrics` protegido con auth + adminOnly
+- ✅ `/uploads` protegido con middleware de auth (verifica cookies)
+
+### Sesiones Aisladas (2026-07-24)
 - ✅ Cookies con path `/` (antes era `/dashboard` o `/user`)
 - ✅ Header `X-Auth-Scope` para aislamiento total
 - ✅ `clearAllTokenCookies()` para logout completo

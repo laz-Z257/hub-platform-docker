@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { MessageSquare, History, AlertCircle } from "lucide-react-native";
 import { api } from "../src/services/api";
 import BottomTab from "../src/components/BottomTab";
+import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../src/constants/colors";
 
 interface Incident {
   id: string;
@@ -22,24 +23,6 @@ interface Incident {
   estado: "pendiente" | "en_proceso" | "resuelto";
   created_at: string;
 }
-
-const URGENCIA_COLORS: Record<string, string> = {
-  alta: "#EF4444",
-  media: "#F59E0B",
-  baja: "#22C55E",
-};
-
-const ESTADO_LABELS: Record<string, string> = {
-  pendiente: "Pendiente",
-  en_proceso: "En Proceso",
-  resuelto: "Resuelto",
-};
-
-const ESTADO_COLORS: Record<string, string> = {
-  pendiente: "#3B82F6",
-  en_proceso: "#FBBF24",
-  resuelto: "#22C55E",
-};
 
 export default function HistorialScreen() {
   const insets = useSafeAreaInsets();
@@ -73,16 +56,16 @@ export default function HistorialScreen() {
   }, [fetchIncidents]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Header */}
       <View
         style={{
           paddingTop: insets.top,
           paddingHorizontal: 20,
           paddingBottom: 16,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: COLORS.white,
           borderBottomWidth: 1,
-          borderBottomColor: "#E5E7EB",
+          borderBottomColor: COLORS.border,
         }}
       >
         <View
@@ -112,7 +95,7 @@ export default function HistorialScreen() {
         <Text
           style={{
             fontSize: 14,
-            color: "#6B7280",
+            color: COLORS.textMedium,
             fontFamily: "Inter_400Regular",
             marginTop: 4,
           }}
@@ -149,10 +132,10 @@ export default function HistorialScreen() {
               activeOpacity={0.7}
               onPress={() => router.push(`/incidente/${item.id}`)}
               style={{
-                backgroundColor: "#FFFFFF",
+                backgroundColor: COLORS.white,
                 borderRadius: 14,
                 borderWidth: 1,
-                borderColor: "#E5E7EB",
+                borderColor: COLORS.border,
                 padding: 16,
               }}
             >
@@ -168,7 +151,7 @@ export default function HistorialScreen() {
                   style={{
                     fontSize: 16,
                     fontWeight: "600",
-                    color: "#1F2937",
+                    color: COLORS.textDark,
                     fontFamily: "Inter_700Bold",
                     flex: 1,
                   }}
@@ -200,7 +183,7 @@ export default function HistorialScreen() {
               <Text
                 style={{
                   fontSize: 14,
-                  color: "#6B7280",
+                  color: COLORS.textMedium,
                   fontFamily: "Inter_400Regular",
                   marginBottom: 10,
                 }}
@@ -245,7 +228,7 @@ export default function HistorialScreen() {
                 <Text
                   style={{
                     fontSize: 12,
-                    color: "#9CA3AF",
+                    color: COLORS.textLight,
                     fontFamily: "Inter_400Regular",
                   }}
                 >
@@ -265,12 +248,12 @@ export default function HistorialScreen() {
             >
               {error ? (
                 <>
-                  <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
+                  <AlertCircle size={40} color={COLORS.error} strokeWidth={1.5} />
                   <Text
                     style={{
                       marginTop: 12,
                       fontSize: 15,
-                      color: "#EF4444",
+                      color: COLORS.error,
                       fontFamily: "Inter_400Regular",
                       textAlign: "center",
                       paddingHorizontal: 20,
@@ -286,7 +269,7 @@ export default function HistorialScreen() {
                     style={{
                       marginTop: 12,
                       fontSize: 15,
-                      color: "#9CA3AF",
+                      color: COLORS.textLight,
                       fontFamily: "Inter_400Regular",
                     }}
                   >

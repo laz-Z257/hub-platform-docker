@@ -30,23 +30,45 @@ export async function authMiddleware(
     req.user = payload;
 
     const [user] = await db
-      .select({ estado: users.estado })
+      .select({ 
+        estado: users.estado, 
+        ultima_actividad: users.ultima_actividad,
+        token_version: users.token_version 
+      })
       .from(users)
       .where(eq(users.id, payload.userId))
       .limit(1);
 
-    if (user?.estado === "bloqueado") {
+    if (!user) {
+      res.status(401).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    if (user.estado === "bloqueado") {
       res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
       return;
     }
 
-    await db
-      .update(users)
-      .set({ ultima_actividad: new Date() })
-      .where(eq(users.id, payload.userId));
+    // Validar versión del token (invalidación tras logout)
+    if (user.token_version !== payload.tokenVersion) {
+      res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
+      return;
+    }
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (!user.ultima_actividad || user.ultima_actividad < fiveMinutesAgo) {
+      await db
+        .update(users)
+        .set({ ultima_actividad: new Date() })
+        .where(eq(users.id, payload.userId));
+    }
 
     next();
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "TokenExpiredError") {
+      res.status(401).json({ error: "Token expirado" });
+      return;
+    }
     res.status(401).json({ error: "Token inválido o expirado" });
   }
 }

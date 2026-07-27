@@ -1,10 +1,35 @@
 type LogLevel = "info" | "warn" | "error" | "debug";
 
+const LOG_LEVELS: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+};
+
+/**
+ * Nivel mínimo de log configurado desde variable de entorno
+ * - debug: Muestra todos los logs
+ * - info: Muestra info, warn, error
+ * - warn: Muestra warn, error
+ * - error: Solo muestra errores
+ * 
+ * @default "info" en producción, "debug" en desarrollo
+ */
+const MIN_LOG_LEVEL: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 
+  (process.env.NODE_ENV === "production" ? "info" : "debug");
+
+function shouldLog(level: LogLevel): boolean {
+  return LOG_LEVELS[level] >= LOG_LEVELS[MIN_LOG_LEVEL];
+}
+
 function formatTimestamp() {
   return new Date().toISOString();
 }
 
 function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+  if (!shouldLog(level)) return;
+
   const entry: Record<string, unknown> = {
     timestamp: formatTimestamp(),
     level,
@@ -22,7 +47,7 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
       console.warn(output);
       break;
     case "debug":
-      if (process.env.NODE_ENV !== "production") console.debug(output);
+      console.debug(output);
       break;
     default:
       console.log(output);
