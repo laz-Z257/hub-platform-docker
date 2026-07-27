@@ -51,6 +51,59 @@
 
 ---
 
+## 🚨 ALTA PRIORIDAD - PARA MAÑANA (2026-07-28)
+
+### Rotar secrets del .env - Requiere planificación
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Problema** | Secrets actuales en `.env` pueden estar comprometidos si se commitearon accidentalmente |
+| **Secrets a rotar** | `JWT_SECRET`, `JWT_REFRESH_SECRET`, `POSTGRES_PASSWORD`, `SEED_ADMIN_PASSWORD` |
+| **Tiempo estimado** | 30-60 minutos + ventana de mantenimiento |
+| **Riesgo** | 🔴 ALTO - Requiere downtime coordinado |
+
+#### ⚠️ Consecuencias inevitables:
+
+| Secret | Consecuencia |
+|--------|--------------|
+| `JWT_SECRET` | ❌ Todas las sesiones activas se invalidan (usuarios pierden login) |
+| `JWT_REFRESH_SECRET` | ❌ Todos los refresh tokens se invalidan |
+| `POSTGRES_PASSWORD` | ❌ La BD no arranca si no se actualiza correctamente |
+| `SEED_ADMIN_PASSWORD` | ❌ El admin se resetea en el próximo seed |
+
+#### 📋 Pasos necesarios:
+
+1. **Preparación (15 min)**
+   - [ ] Backup de base de datos: `docker exec hub-postgres pg_dump -U hub_admin hub_platform > backup.sql`
+   - [ ] Generar nuevos secrets con `openssl rand -hex 32`
+   - [ ] Avisar a usuarios que perderán sesión
+
+2. **Ejecución (15-30 min)**
+   - [ ] Detener servicios: `docker compose down`
+   - [ ] Actualizar `.env` con nuevos secrets
+   - [ ] Actualizar `POSTGRES_PASSWORD` en BD (si aplica)
+   - [ ] Reiniciar servicios: `docker compose up -d`
+   - [ ] Verificar que todos los servicios arrancan
+
+3. **Verificación (15 min)**
+   - [ ] Probar login en dashboard
+   - [ ] Probar login en mobile
+   - [ ] Verificar que API responde correctamente
+   - [ ] Verificar que BD está accesible
+
+4. **Rollback (si algo falla)**
+   - [ ] Restaurar backup de `.env`
+   - [ ] Restaurar backup de BD si es necesario
+   - [ ] Reiniciar servicios
+
+#### 📢 Comunicación:
+
+- Avisar a usuarios con anticipación
+- Programar en horario de bajo tráfico
+- Tener plan de rollback listo
+
+---
+
 ## ⚠️ IMPORTANTE: Desarrollo Local vs Producción
 
 ### ✅ Para Desarrollo Local (Docker)
