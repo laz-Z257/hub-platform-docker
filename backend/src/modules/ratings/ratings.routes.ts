@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createRating, getRating, getRatingStats, getMyRatedIncidents } from "./ratings.controller";
+import { createRating, getRating, getRatingStats, getMyRatedIncidents, getPublicRatingStats } from "./ratings.controller";
 import { createRatingSchema, ratingParamsSchema } from "./ratings.schema";
 import { validate } from "../../middlewares/validate";
 import { authMiddleware } from "../../middlewares/auth";
@@ -7,6 +7,10 @@ import { adminOnly } from "../../middlewares/admin";
 
 const router = Router();
 
+// Ruta pública (sin autenticación)
+router.get("/stats", getPublicRatingStats);
+
+// Rutas protegidas (requieren autenticación)
 router.use(authMiddleware);
 
 router.post("/:id", validate({ body: createRatingSchema, params: ratingParamsSchema }), createRating);

@@ -47,7 +47,7 @@ export default function Sidebar({ onLogout }: { onLogout: () => void }) {
   const displayName = user?.nombre || "Usuario";
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-[250px] bg-white dark:bg-[#0f172a] border-r border-gray-200 dark:border-gray-700 flex flex-col z-40">
+    <aside className="fixed top-0 left-0 bottom-0 w-[var(--sidebar-width)] bg-white dark:bg-[#0f172a] border-r border-gray-200 dark:border-gray-700 flex flex-col z-40">
       <div className="flex items-center px-5 py-5 pb-6 gap-2.5">
         <Image
           src={logoImg}

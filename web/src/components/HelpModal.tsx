@@ -6,8 +6,8 @@ import { useState } from "react";
 const HELP_INFO = {
   version: "1.0.0",
   contacto: {
-    whatsapp: "https://wa.me/573000000000",
-    telefono: "+57 300 000 0000",
+    whatsapp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "https://wa.me/573000000000",
+    telefono: process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+57 300 000 0000",
   },
   faq: [
     { pregunta: "¿Cómo crear un usuario?", respuesta: "Ve a Gestión de Usuarios y haz clic en 'Añadir Usuario'. Completa los campos requeridos y guarda." },

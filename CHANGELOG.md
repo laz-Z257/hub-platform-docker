@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-07-27 — 10 mejoras de calidad y seguridad
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Renombrar `/export` a `/export-data`** | `backend/src/modules/incidents/incidents.routes.ts`, `web/src/components/AnalyticsFilters.tsx`, `web/src/app/dashboard/tickets/page.tsx` | Ruta más descriptiva |
+| **Endpoint público `/api/ratings/stats`** | `backend/src/modules/ratings/ratings.controller.ts`, `ratings.routes.ts` | Estadísticas básicas sin autenticación |
+| **Límite/paginación en chat history** | `backend/src/modules/chat/chat.controller.ts` | Límite máximo 200, paginación con offset |
+| **Seed duplicado eliminado** | `backend/src/db/constants.ts` (nuevo), `seed.ts`, `puntos-venta.controller.ts` | Lista centralizada en constants.ts |
+
+### Web Dashboard
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Teléfono HelpModal configurable** | `web/src/components/HelpModal.tsx`, `.env.example`, `docker-compose.yml` | Variables `NEXT_PUBLIC_SUPPORT_WHATSAPP` y `NEXT_PUBLIC_SUPPORT_PHONE` |
+| **Sidebar width variable** | `web/src/app/globals.css`, `Sidebar.tsx`, `Topbar.tsx`, `dashboard/layout.tsx` | Variable CSS `--sidebar-width` |
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **isReady state eliminado** | `mobile/app/_layout.tsx` | Código muerto removido |
+
+---
+
 ## 2026-07-27 — Seguridad y error handling mejorado
 
 ### Seguridad

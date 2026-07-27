@@ -265,9 +265,9 @@ npx expo export --platform web
 |-----------|----------|--------|
 | 🔴 CRÍTICOS | 7 | 7 resueltos, 0 pendientes |
 | 🟠 ALTOS | 12 | 5 resueltos, 7 pendientes |
-| 🟡 MEDIOS | 27 | 10 resueltos, 17 pendientes |
+| 🟡 MEDIOS | 27 | 20 resueltos, 7 pendientes |
 | 🟢 BAJOS | 22 | Pendientes |
-| **TOTAL** | **68** | **22 resueltos, 46 pendientes** |
+| **TOTAL** | **68** | **32 resueltos, 36 pendientes** |
 
 > **Nota**: 2 hallazgos fueron eliminados por no coincidir con el código:
 > - ~~B-3~~: `.env.example` usa placeholders, no credenciales reales
@@ -287,6 +287,22 @@ npx expo export --platform web
 | **B-5** | Push token reasignable | Ahora verifica que el token pertenezca al usuario antes de reasignar |
 | **B-8** | `updateUser` sin validar duplicado | Retorna 409 Conflict si el documento ya existe en otro usuario |
 | **B-9** | Password mínimo 4 chars | Login ahora requiere mínimo 6 caracteres (igual que register) |
+| **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |
+
+### ✅ Resueltos (2026-07-27 - fáciles)
+
+| # | Problema | Solución |
+|---|----------|----------|
+| **B-12** | Renombrar `/export` a `/export-data` | Ruta cambiada en backend y frontend |
+| **B-13** | Endpoint público `/api/ratings/stats` | Creado endpoint público con estadísticas básicas |
+| **B-14** | Límite/paginación en chat history | Agregado límite máximo de 200 y paginación |
+| **B-15** | Seed duplicado | Lista de puntos de venta movida a constants.ts |
+| **F-15** | Teléfono hardcodeado en HelpModal | Ahora lee desde variables de entorno |
+| **F-13** | `suppressHydrationWarning` en `<html>` | ACEPTADO: necesario para dark mode |
+| **F-11** | Sidebar width 250px hardcodeado | Variable CSS `--sidebar-width` en globals.css |
+| **M-13** | `isReady` state sin usar | Eliminado de _layout.tsx |
+| **I-9** | SHA pinning en Dockerfiles | PARCIAL: principales OK, builder/ota pendientes |
+| **I-30** | Healthcheck para ota-server | NO APLICA: servicio deshabilitado |
 | **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |
 
 ### ✅ Resueltos (2026-07-24)

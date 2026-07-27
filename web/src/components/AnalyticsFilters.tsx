@@ -124,7 +124,7 @@ async function handleExport(
   let incidents: IncidentExport[] = [];
   try {
     const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
-    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export${qs}`);
+    const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
   } catch { /* ignore */ }
 

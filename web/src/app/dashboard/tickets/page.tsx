@@ -197,7 +197,7 @@ export default function TicketsPage() {
 
     let items: IncidentItem[] = [];
     try {
-      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export${qs}`);
+      const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export-data${qs}`);
       items = data.items || [];
     } catch {
       return;

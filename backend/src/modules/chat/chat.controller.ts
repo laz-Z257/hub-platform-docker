@@ -369,15 +369,31 @@ export async function getHistory(
   try {
     const rawLimit = (req.validatedQuery?.limit as number) || parseInt(req.query.limit as string) || 50;
     const limit = Math.min(Math.max(1, rawLimit), 200);
+    
+    const rawPage = (req.validatedQuery?.page as number) || parseInt(req.query.page as string) || 1;
+    const page = Math.max(1, rawPage);
+    const offset = (page - 1) * limit;
 
     const history = await db
       .select()
       .from(messages)
       .where(eq(messages.user_id, req.user!.userId))
       .orderBy(desc(messages.created_at))
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
-    res.json(history.reverse());
+    const [countResult] = await db
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(messages)
+      .where(eq(messages.user_id, req.user!.userId));
+
+    res.json({
+      items: history.reverse(),
+      total: countResult.total,
+      page,
+      limit,
+      totalPages: Math.ceil(countResult.total / limit),
+    });
   } catch (error) {
     logger.error("Get history error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener historial" });

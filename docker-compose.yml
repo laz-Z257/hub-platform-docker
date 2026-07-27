@@ -59,6 +59,8 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://api:3001/api
       NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL: ${NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL:-}
+      NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
+      NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
     depends_on:
       - api
     restart: unless-stopped

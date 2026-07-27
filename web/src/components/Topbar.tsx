@@ -35,7 +35,7 @@ export default function Topbar({ userName }: { userName?: string }) {
   }, [router]);
 
   return (
-    <header className="fixed top-0 left-[250px] right-0 h-[72px] bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-6 z-30">
+    <header className="fixed top-0 left-[var(--sidebar-width)] right-0 h-[72px] bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-6 z-30">
 
       <div className="ml-auto flex items-center gap-5">
         <button

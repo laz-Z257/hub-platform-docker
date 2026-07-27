@@ -158,3 +158,47 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
     res.status(500).json({ error: "Error al obtener estadísticas de calificaciones" });
   }
 }
+
+export async function getPublicRatingStats(_req: Request, res: Response): Promise<void> {
+  try {
+    const rows = await db
+      .select({
+        puntuacion: ratings.puntuacion,
+        created_at: ratings.created_at,
+        punto_venta: incidents.punto_venta,
+      })
+      .from(ratings)
+      .innerJoin(incidents, eq(ratings.incident_id, incidents.id))
+      .orderBy(desc(ratings.created_at));
+
+    const total = rows.length;
+    const sum = rows.reduce((acc, r) => acc + r.puntuacion, 0);
+    const promedio = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
+
+    const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of rows) {
+      distribucion[r.puntuacion] = (distribucion[r.puntuacion] || 0) + 1;
+    }
+
+    const promedioPorPv: Record<string, { suma: number; count: number }> = {};
+    for (const r of rows) {
+      const pv = r.punto_venta || "Sin especificar";
+      if (!promedioPorPv[pv]) promedioPorPv[pv] = { suma: 0, count: 0 };
+      promedioPorPv[pv].suma += r.puntuacion;
+      promedioPorPv[pv].count++;
+    }
+    const promedioPv = Object.entries(promedioPorPv)
+      .map(([pv, d]) => ({ punto_venta: pv, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
+      .sort((a, b) => b.promedio - a.promedio);
+
+    res.json({
+      promedio,
+      total,
+      distribucion,
+      promedioPv,
+    });
+  } catch (error) {
+    logger.error("Get public rating stats error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al obtener estadísticas públicas" });
+  }
+}

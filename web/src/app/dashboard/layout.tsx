@@ -31,7 +31,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen">
       <Sidebar onLogout={logout} />
-      <div className="flex-1 ml-[250px] flex flex-col">
+      <div className="flex-1 ml-[var(--sidebar-width)] flex flex-col">
         <Topbar userName={user.nombre} />
         <main className="flex-1 pt-[72px]">{children}</main>
       </div>
