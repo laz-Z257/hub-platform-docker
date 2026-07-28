@@ -36,8 +36,14 @@
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
+    "@react-native/jest-preset": "^0.85.3",
+    "@testing-library/react-native": "^12.9.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
     "babel-preset-expo": "^56.0.14",
+    "jest": "^29.7.0",
+    "react-test-renderer": "^19.0.0",
+    "ts-jest": "^29.4.12",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -47,6 +53,9 @@
     "start:web": "expo start --web",
     "build:web": "expo export --platform web",
     "web": "npx serve dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "postinstall": "node -e \"try{const fs=require('fs'),p='node_modules/expo-symbols/build';if(fs.existsSync(p)){const a=p+'/android';if(fs.existsSync(a)){if(!fs.existsSync(p+'/android.js')&&fs.existsSync(a+'/index.js'))fs.copyFileSync(a+'/index.js',p+'/android.js');if(!fs.existsSync(p+'/symbols.json')&&fs.existsSync(a+'/symbols.json'))fs.copyFileSync(a+'/symbols.json',p+'/symbols.json')}}}catch(e){console.warn('expo-symbols patch skipped:',e.message)}\""
   },
   "private": true

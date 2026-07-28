@@ -15,7 +15,7 @@ import { AuthUser, Incident, PaginatedResponse } from "@hub/shared";
 | Tipo | Descripción |
 |------|-------------|
 | `AuthUser` | Usuario autenticado (id, documento, nombre, rol) |
-| `LoginInput` | Input para login (documento, contrasena) |
+| `LoginInput` | Input para login (documento, contrasena, scope?) |
 | `RegisterInput` | Input para registro (documento, nombre, contrasena) |
 | `AuthResponse` | Respuesta de auth (token, user) |
 
@@ -23,14 +23,14 @@ import { AuthUser, Incident, PaginatedResponse } from "@hub/shared";
 
 | Tipo | Descripción |
 |------|-------------|
-| `ApiUser` | Usuario completo con estado, ultima_actividad, bloqueado_por |
+| `ApiUser` | Usuario completo con estado, ultima_actividad, bloqueado_por, bloqueado_por_documento? |
 
 ### incident.ts (6 tipos)
 
 | Tipo | Descripción |
 |------|-------------|
-| `IncidentUrgency` | "baja" \| "media" \| "alta" |
-| `IncidentStatus` | "pendiente" \| "en_proceso" \| "resuelto" |
+| `IncidentUrgency` | `"baja"` \| `"media"` \| `"alta"` |
+| `IncidentStatus` | `"pendiente"` \| `"en_proceso"` \| `"resuelto"` |
 | `Incident` | Incidente completo con comentarios opcionales |
 | `IncidentComment` | Comentario de incidente (autor, texto, fecha) |
 | `CreateIncidentInput` | Input para crear incidente |
@@ -52,5 +52,27 @@ import { AuthUser, Incident, PaginatedResponse } from "@hub/shared";
 | `Rating` | Calificación básica (puntuación, comentario) |
 | `RatingWithDetails` | Calificación con datos del usuario y ticket |
 | `PromedioPv` | Promedio de calificación por punto de venta |
-| `CreateRatingInput` | Input para crear calificación |
+| `CreateRatingInput` | Input para crear calificación (puntuación 1-5, comentario?) |
 | `RatingStats` | Estadísticas completas de calificaciones |
+
+## Estructura
+
+```
+shared/
+├── index.ts          # Exporta todos los tipos
+├── package.json      # @hub/shared
+├── tsconfig.json     # Configuración TypeScript
+└── types/
+    ├── index.ts      # Re-exporta todos los módulos
+    ├── auth.ts       # Tipos de autenticación
+    ├── user.ts       # Tipos de usuario
+    ├── incident.ts   # Tipos de incidentes
+    ├── api.ts        # Tipos de API responses
+    └── rating.ts     # Tipos de calificaciones
+```
+
+## Notas
+
+- Este paquete no se compila por separado, se importa directamente desde los otros módulos
+- Backend, web y mobile lo referencian como `"@hub/shared": "file:../shared"`
+- Los tipos se usan para asegurar consistencia entre frontend y backend

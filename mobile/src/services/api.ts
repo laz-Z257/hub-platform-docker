@@ -64,6 +64,9 @@ async function tryRefresh(): Promise<boolean> {
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     credentials: "include",
+    headers: {
+      "X-Auth-Scope": "user",
+    },
   }).then(async (r) => {
     if (r.ok) {
       const body = await r.json().catch(() => ({}));
@@ -96,6 +99,7 @@ async function request<T>(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Auth-Scope": "user",
     ...((options.headers as Record<string, string>) || {}),
   };
 

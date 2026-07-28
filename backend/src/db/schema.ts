@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -8,6 +9,7 @@ import {
   integer,
   pgEnum,
   index,
+  check,
 } from "drizzle-orm/pg-core";
 
 export const rolEnum = pgEnum("rol", ["user", "asesor", "admin", "tecnico"]);
@@ -119,6 +121,7 @@ export const ratings = pgTable(
   (table) => [
     index("ratings_incident_id_idx").on(table.incident_id),
     index("ratings_user_id_idx").on(table.user_id),
+    check("ratings_puntuacion_check", sql`${table.puntuacion} >= 1 AND ${table.puntuacion} <= 5`),
   ]
 );
 

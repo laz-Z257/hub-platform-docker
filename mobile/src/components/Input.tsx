@@ -55,8 +55,7 @@ export default function Input({
           autoCorrect={false}
           keyboardType={keyboardType}
           autoComplete="new-password"
-          name="password-field"
-          id="password-input"
+          testID="password-field"
           editable={true}
         />
         {isPassword && (

@@ -6,7 +6,7 @@ if (Platform.OS === "web") {
   const original = Node.prototype.removeChild;
   Node.prototype.removeChild = function <T extends Node>(child: T): T {
     try {
-      return original.call(this, child);
+      return original.call(this, child) as T;
     } catch (e) {
       if (e instanceof DOMException && e.name === "NotFoundError") {
         return child;

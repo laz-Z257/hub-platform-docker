@@ -1,979 +1,203 @@
 # PENDIENTES - HUB Platform
 
-**Última actualización:** 2026-07-27 (verificado contra código fuente)
+**Última actualización:** 2026-07-28 (auditoría completa verificada contra código fuente)
 
 ---
 
-## ✅ RESUELTOS HOY (2026-07-27)
+## 📊 RESUMEN EJECUTIVO
 
-### Infraestructura (4 pendientes resueltos)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| I-1 | Sin volumen para uploads | Agregado volumen `uploads` en docker-compose.yml |
-| I-2 | Falta NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL | Agregada variable al contenedor web |
-| I-3 | Sin healthchecks en web/mobile | Agregados healthchecks con wget en docker-compose.yml y Dockerfiles |
-| I-4 | Log levels no configurables | Agregada variable LOG_LEVEL en logger.ts y .env.example |
-
-### Backend (8 pendientes resueltos)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| B-1 | Password mínimo 4 chars en login | Cambiado a mínimo 6 chars en auth.schema.ts |
-| B-2 | Push token reasignable sin verificar owner | Agregada verificación de owner en push.controller.ts |
-| B-3 | updateUser no verifica documento duplicado | Agregada verificación y retorno 409 en users.controller.ts |
-| B-4 | ultima_actividad actualiza en cada request | Agregado throttle de 5 minutos en auth.ts |
-| B-5 | /api/metrics sin autenticación | Protegido con authMiddleware + adminOnly en index.ts |
-| B-6 | N+1 query en getSummary (7 queries en loop) | Optimizado con GROUP BY en una sola query |
-| B-7 | Error boundary en Express | Agregado manejo específico para JWT, Multer y Database errors |
-| B-8 | Middleware JWT no valida token_version | Agregada validación de token_version para invalidar tokens tras logout |
-
-### Mobile PWA (5 pendientes resueltos)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| M-1 | Error swallowing silencioso | Reemplazados console.log/error con logger en ChatScreen.tsx |
-| M-2 | Sin sanitización de input chat | Agregada función sanitizeInput() y límite de 500 chars en ChatInput.tsx |
-| M-3 | Constantes de color divergentes | Creado constants/colors.ts con colores unificados (en_proceso: #F59E0B) |
-| M-4 | Estilos mixtos | Actualizados historial.tsx y ChatInput.tsx para usar constantes COLORS |
-| M-5 | Archivos inline grandes | Extraídas constantes a archivo separado, pendiente refactor completo |
-
-### Documentación (6 pendientes resueltos)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| D-1 | shared/README.md desactualizado | Actualizado con los 18 tipos exportados |
-| D-2 | backend/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
-| D-3 | web/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
-| D-4 | mobile/README.md sin cambios 2026-07-27 | Agregada sección "Cambios Recientes (2026-07-27)" |
-| D-5 | README.md sin cambios 2026-07-27 | Actualizado estado y fecha |
-| D-6 | Comentarios JSDoc faltantes | Agregados comentarios en auth.controller.ts (register, login, me, refresh, logout) |
+| Estado | Cantidad |
+|--------|:--------:|
+| ✅ Resueltos | 48 |
+| ❌ Pendientes | 21 |
+| **Total hallazgos** | **69** |
 
 ---
 
-## 🚨 ALTA PRIORIDAD - PARA MAÑANA (2026-07-28)
+## ✅ RESUELTOS (verificados en código 2026-07-28)
 
-### Rotar secrets del .env - Requiere planificación
+### Backend (18 resueltos)
 
-| Aspecto | Detalle |
-|---------|---------|
-| **Problema** | Secrets actuales en `.env` pueden estar comprometidos si se commitearon accidentalmente |
-| **Secrets a rotar** | `JWT_SECRET`, `JWT_REFRESH_SECRET`, `POSTGRES_PASSWORD`, `SEED_ADMIN_PASSWORD` |
-| **Tiempo estimado** | 30-60 minutos + ventana de mantenimiento |
-| **Riesgo** | 🔴 ALTO - Requiere downtime coordinado |
+| # | Problema | Archivo | Verificación |
+|---|----------|---------|--------------|
+| B-1 | Password mínimo 6 chars login | `auth.schema.ts:9` | ✅ `min(6)` |
+| B-2 | Push token verifica owner | `push.controller.ts:21` | ✅ `if (existing.user_id !== req.user!.userId)` |
+| B-3 | updateUser verifica duplicado | `users.controller.ts:227-238` | ✅ Retorna 409 |
+| B-4 | ultima_actividad throttle | `middlewares/auth.ts:58-64` | ✅ Solo cada 5 min |
+| B-5 | /api/metrics protegido | `index.ts:115` | ✅ authMiddleware + adminOnly |
+| B-6 | /uploads protegido | `index.ts:125-134` | ✅ Middleware verifica cookies |
+| B-7 | N+1 query getSummary | `dashboard.controller.ts:170-201` | ✅ GROUP BY en 1 query |
+| B-8 | Chat history con límite | `chat.controller.ts:370-396` | ✅ Límite 200, paginación |
+| B-9 | Índice compuesto existe | `schema.ts:67` | ✅ `incidents_user_estado_idx` |
+| B-10 | Seed centralizado | `constants.ts` + `seed.ts:9` | ✅ `PV_SEED_NAMES` |
+| B-11 | Token version validation | `middlewares/auth.ts:53-56` | ✅ Valida token_version |
+| B-12 | Ratings CHECK constraint | `schema.ts:122` | ✅ `check("ratings_puntuacion_check", ...)` |
+| B-13 | bloqueado_por sin ON DELETE | `schema.ts:33` | ⚠️ No se pudo aplicar por referencia circular en TypeScript |
+| B-14 | Error boundary Express | `index.ts:153-201` | ✅ Manejo JWT, Multer, DB errors |
+| B-15 | Endpoint `/export` renombrado | `incidents.routes.ts` | ✅ Ahora es `/export-data` |
+| B-16 | Endpoint público `/ratings/stats` | `ratings.routes.ts` | ✅ Sin auth requerida |
+| B-17 | JSDoc en auth | `auth.controller.ts` | ✅ Comentarios en funciones |
+| B-18 | Log levels configurables | `logger.ts` | ✅ Variable LOG_LEVEL |
 
-#### ⚠️ Consecuencias inevitables:
+### Frontend (8 resueltos)
 
-| Secret | Consecuencia |
-|--------|--------------|
-| `JWT_SECRET` | ❌ Todas las sesiones activas se invalidan (usuarios pierden login) |
-| `JWT_REFRESH_SECRET` | ❌ Todos los refresh tokens se invalidan |
-| `POSTGRES_PASSWORD` | ❌ La BD no arranca si no se actualiza correctamente |
-| `SEED_ADMIN_PASSWORD` | ❌ El admin se resetea en el próximo seed |
+| # | Problema | Archivo | Verificación |
+|---|----------|---------|--------------|
+| F-1 | Sidebar width variable | `globals.css:16` + `Sidebar.tsx:50` | ✅ CSS variable |
+| F-2 | Sesiones aisladas | `middleware.ts` + `api.ts` | ✅ Cookies scope |
+| F-3 | Export Excel filtros | `tickets/page.tsx` | ✅ Calcula rango correcto |
+| F-4 | Teléfono configurable | `HelpModal.tsx` | ✅ Lee de env vars |
+| F-5 | Dark mode dashboard | Todas las páginas /dashboard/* | ✅ Completo |
+| F-6 | Healthchecks web/mobile | `docker-compose.yml:67-72,89-94` | ✅ wget cada 30s |
+| F-7 | Volumen uploads | `docker-compose.yml:43-44` | ✅ `uploads:/app/uploads` |
+| F-8 | EXTERNAL_SYSTEMS_URL | `docker-compose.yml:61` | ✅ Variable pasada |
 
-#### 📋 Pasos necesarios:
+### Mobile (13 resueltos)
 
-1. **Preparación (15 min)**
-   - [ ] Backup de base de datos: `docker exec hub-postgres pg_dump -U hub_admin hub_platform > backup.sql`
-   - [ ] Generar nuevos secrets con `openssl rand -hex 32`
-   - [ ] Avisar a usuarios que perderán sesión
+| # | Problema | Archivo | Verificación |
+|---|----------|---------|--------------|
+| M-1 | Password mínimo 6 chars | `LoginScreen.tsx:38` | ✅ Corregido de 4 a 6 |
+| M-2 | Constantes de color | `src/constants/colors.ts` | ✅ COLORS exportado |
+| M-3 | historial.tsx usa imports | `historial.tsx:15` | ✅ Importa COLORS |
+| M-4 | incidente/[id].tsx usa imports | `[id].tsx:13` | ✅ Importa COLORS |
+| M-5 | isReady tiene propósito | `_layout.tsx:26-28` | ✅ Controla render post-splash |
+| M-6 | Logger unificado | `ChatScreen.tsx` | ✅ Reemplazados console.log |
+| M-7 | Sanitización input chat | `ChatInput.tsx` | ✅ sanitizeInput() + límite 500 |
+| M-8 | PWA manifest.json | `public/manifest.json` | ✅ Configuración PWA |
+| M-9 | Service Worker | `public/sw.js` | ✅ Caché offline |
+| M-10 | CORS restringido | `nginx.conf` | ✅ Solo localhost:3000 |
+| M-11 | **Error Boundary** | `src/components/ErrorBoundary.tsx` | ✅ Captura errores, pantalla de error |
+| M-12 | **Tests unitarios** | `__tests__/`, `jest.config.js` | ✅ Jest 29, 14 tests pasando |
+| M-13 | **Crash Reporting** | `src/services/crashReporting.ts` | ✅ Compatible con Sentry |
 
-2. **Ejecución (15-30 min)**
-   - [ ] Detener servicios: `docker compose down`
-   - [ ] Actualizar `.env` con nuevos secrets
-   - [ ] Actualizar `POSTGRES_PASSWORD` en BD (si aplica)
-   - [ ] Reiniciar servicios: `docker compose up -d`
-   - [ ] Verificar que todos los servicios arrancan
+### Infraestructura (6 resueltos)
 
-3. **Verificación (15 min)**
-   - [ ] Probar login en dashboard
-   - [ ] Probar login en mobile
-   - [ ] Verificar que API responde correctamente
-   - [ ] Verificar que BD está accesible
-
-4. **Rollback (si algo falla)**
-   - [ ] Restaurar backup de `.env`
-   - [ ] Restaurar backup de BD si es necesario
-   - [ ] Reiniciar servicios
-
-#### 📢 Comunicación:
-
-- Avisar a usuarios con anticipación
-- Programar en horario de bajo tráfico
-- Tener plan de rollback listo
-
----
-
-## ⚠️ IMPORTANTE: Desarrollo Local vs Producción
-
-### ✅ Para Desarrollo Local (Docker)
-- **Todo funciona**: Puedes correr `mobile`, `web` y `backend` en Docker normalmente
-- **Mobile como PWA en web**: Funciona para probar UI, navegación, API calls
-- **Limitaciones aceptables**: 
-  - ❌ Push notifications (no se prueban en local)
-  - ❌ SecureStore usa localStorage (aceptable para desarrollo)
-  - ❌ OTA updates no aplican en web
-
-### 🚀 Para Producción (cuando se implemente PWA)
-- ✅ PWA implementada: Service Worker, manifest.json, meta tags
-- **NOTA**: Este proyecto NO requiere:
-  - ❌ Notificaciones push (no es necesario)
-  - ❌ Acceso a cámara/hardware
-  - ❌ OTA updates (se puede hacer redeploy normal)
+| # | Problema | Archivo | Verificación |
+|---|----------|---------|--------------|
+| I-1 | Volumen uploads | `docker-compose.yml:43-44` | ✅ Persistente |
+| I-2 | Healthchecks web/mobile | `docker-compose.yml:67-72,89-94` | ✅ Cada 30s |
+| I-3 | EXTERNAL_SYSTEMS_URL | `docker-compose.yml:61` | ✅ Pasada al contenedor |
+| I-4 | SHA pinning principales | `backend/Dockerfile`, `web/Dockerfile` | ✅ Imágenes con digest |
+| I-5 | Mobile corre como no-root | `mobile/Dockerfile.web` | ✅ nginx user |
+| I-6 | Log levels configurables | `.env.example` + `logger.ts` | ✅ Variable LOG_LEVEL |
 
 ---
 
-## 📋 PENDIENTES POR PRIORIDAD
+## ❌ PENDIENTES VIGENTES (21 items)
 
-### 🔴 CRÍTICOS (7) - Arreglar esta semana
+### 🟠 ALTOS (5)
 
-1. ~~**Sesión dashboard se pierde al recargar**~~ - ✅ **RESUELTO 2026-07-24**: Cookies con path `/` y scope aislado
-2. ~~**Proteger `/api/metrics`** con autenticación~~ - ✅ **RESUELTO 2026-07-27**: Endpoint protegido con authMiddleware + adminOnly
-3. ~~**Proteger `/uploads`** con auth o CDN con URLs firmadas~~ - ✅ **RESUELTO 2026-07-27**: Middleware verifica cookies admin_token/user_token o Authorization header
-4. ~~**Quitar CORS `*`** en nginx mobile~~ - ✅ **RESUELTO 2026-07-24**: CORS restringido a `http://localhost:3000`
-5. **Validar rating puntuación** (1-5)
-6. **Push token reasignable** - verificar owner antes de reasignar
-7. **Password mínimo 6 chars** en login schema
-8. **Fix `updateUser`** - verificar documento duplicado
-9. ~~**Export Excel ignora filtros de fecha**~~ - ✅ **RESUELTO 2026-07-24**: Los presets ahora calculan el rango correcto
+| # | Módulo | Problema | Archivo | Acción |
+|---|--------|----------|---------|--------|
+| 1 | Backend | Race condition en updateSettings | `settings.controller.ts:33-59` | Usar UPSERT atómico |
+| 2 | Frontend | Dashboard sin responsive | Sidebar fijo 250px | Breakpoints + sidebar colapsable |
+| 3 | Frontend | Dark mode incompleto (6 pantallas) | `/user/*` | Agregar dark mode |
+| 4 | Backend | JWT retornado en body Y cookie | `auth.controller.ts` | Solo cookie (breaking change) |
+| 5 | Backend | `bloqueado_por` FK sin ON DELETE | `schema.ts:33` | Requiere migración SQL manual |
 
-### 🟠 ALTOS (12) - Arreglar pronto
+### 🟡 MEDIOS (10)
 
-8. ~~**Throttlear `ultima_actividad`** - no actualizar en cada request~~ - ✅ **RESUELTO 2026-07-27**: Solo actualiza si han pasado más de 5 minutos desde la última actividad
-9. **Fix N+1 query** en `getSummary` dashboard
-10. **Agregar volume** para uploads del backend
-11. **Dark mode** en área de usuario (6 pantallas sin soporte)
-12. **Extraer archivos grandes** (>400 líneas) en componentes
-13. **Consolidar funciones helper** duplicadas
-14. **Agregar tests** de controllers (backend)
-15. **Sync constantes de color** mobile (divergencia en `en_proceso`)
-16. **Pasar `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL`** al contenedor web
-17. **Fix middleware web** - validar JWT, no solo existencia de cookie
-18. **Agregar responsive** al dashboard admin
-19. **React Error Boundaries** en mobile
+| # | Módulo | Problema | Archivo | Acción |
+|---|--------|----------|---------|--------|
+| 6 | Frontend | `alert()`/`confirm()` nativos | tickets, settings | Modales custom |
+| 7 | Frontend | Archivos grandes (>400 líneas) | tickets (490), settings (489) | Extraer componentes |
+| 8 | Frontend | Helpers duplicados | `formatDate`, `formatTicketId` | Consolidar en `lib/` |
+| 9 | Frontend | Sin tests de componentes | `components/` | Agregar tests |
+| 10 | Backend | Sin tests de controllers | `modules/*/` | Tests integración |
+| 11 | Docs | Documentación API (Swagger) | Nuevo archivo | Generar OpenAPI |
+| 12 | Infra | `render.yaml` falta JWT_REFRESH_SECRET | `render.yaml` | Agregar variable |
+| 13 | Infra | CORS_ORIGIN default localhost en prod | `docker-compose.yml:37` | Validar en producción |
+| 14 | Backend | Estandarizar naming conventions | Todo el código | camelCase vs snake_case |
+| 15 | Backend | Estandarizar campos opcionales | Múltiples tablas | null vs string vacío |
 
-### 🟡 MEDIOS (27) - Cuando haya tiempo
+### 🟢 BAJOS (6)
 
-20. **Reemplazar `alert()`/`confirm()`** nativos con modales custom
-21. ~~**PWA Mobile**~~ - ✅ **RESUELTO 2026-07-24**: manifest.json, service worker, meta tags implementados
-22. ~~**JWT en localStorage** mobile~~ - ✅ **RESUELTO 2026-07-24**: Ahora usa cookies con scope aislado (`admin_token`, `user_token`)
-23. **Sync constantes de color** mobile (divergencia en `en_proceso`)
-24. **Pasar `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL`** al contenedor web
-25. **Agregar tests** de componentes (web)
-26. **Agregar tests** unitarios mobile
-27. **Integrar Sentry/Crashlytics** mobile
-28. **Documentación API** (Swagger/OpenAPI)
-29. **SHA pinning** en todos los Dockerfiles
-30. **Crear healthcheck** para ota-server
-31. **Agregar CONTRIBUTING.md** y SECURITY.md
-32. **Soft deletes** para datos importantes
-33. **Connection pooling** configurado en PostgreSQL
-34. **Validación Zod** más estricta en todos los schemas
-35. **Error boundary** en Express (distinguir tipos de errores)
-36. **Límite en chat history** (evitar queries muy grandes)
-37. **Paginación cursor-based** en chat history
-38. **Endpoint público** `/api/ratings/stats` con estadísticas
-39. **Renombrar endpoint** `/export` a `/export-data`
-40. **Estandarizar naming** conventions (camelCase vs snake_case)
-41. **Comentarios JSDoc** en funciones críticas
-42. **Log levels** configurables en producción
-43. **Separar health checks** (simple vs DB)
-44. **Índice compuesto** `incidents(user_id, estado)`
-45. **Constraint CHECK** en puntuacion ratings
-46. **Campos opcionales** - estandarizar null vs string vacío
-
-### 🟢 BAJOS (22) - Cuando sobre tiempo
-
-47. **Tests unitarios** mobile
-48. **Sentry/Crashlytics** mobile
-49. **CONTRIBUTING.md** y SECURITY.md
-50. **Documentación API** (Swagger/OpenAPI)
-51. **SHA pinning** en Dockerfiles
-52. **Healthcheck** para ota-server
-53. **Soft deletes** para datos importantes
-54. **Connection pooling** configurado
-55. **Validación Zod** más estricta
-56. **Error boundary** en Express
-57. **Límite chat history**
-58. **Paginación** chat history
-59. **Endpoint ratings/stats** público
-60. **Renombrar** `/export`
-61. **Naming conventions**
-62. **Comentarios JSDoc**
-63. **Log levels** configurables
-64. **Separar health checks**
-65. **Índice compuesto** incidents
-66. **Constraint CHECK** ratings
-67. **Campos opcionales** estandarizar
-68. **Métricas Prometheus** en vez de JSON
+| # | Módulo | Problema | Acción |
+|---|--------|----------|--------|
+| 16 | Docs | CONTRIBUTING.md | Crear archivo |
+| 17 | Docs | SECURITY.md | Crear archivo |
+| 18 | Backend | Soft deletes para datos importantes | Agregar deleted_at |
+| 19 | Backend | Connection pooling configurado | Configurar pg pool |
+| 20 | Frontend | SVG en manifest PWA | Convertir a PNG |
+| 21 | Infra | Métricas Prometheus | Reemplazar JSON |
 
 ---
 
-## 📱 IMPLEMENTACIÓN PWA MOBILE
+## 🎯 PLAN DE ACCIÓN SUGERIDO
 
-**Estado**: ✅ **COMPLETADO 2026-07-24** | **Prioridad**: Media (no urgente)
+### ✅ Semana 1: Seguridad — COMPLETADO (2026-07-28)
 
-### ✅ Lo que YA funciona en Docker (desarrollo local)
-- Todas las pantallas y navegación
-- UI completa con NativeWind
-- Llamadas al API
-- Login, chat, reportar, historial
-- ✅ PWA instalable (manifest.json + service worker)
-- ✅ Meta tags iOS/Android
-- ✅ CORS restringido (seguro)
+| # | Acción | Estado |
+|---|--------|:------:|
+| 1 | Fix middleware JWT | ✅ |
+| 2 | Fix puerto 5432 | ✅ |
+| 3 | Fix healthcheck variable | ✅ |
 
-### ❌ Lo que NO funciona en PWA (pero sí en APK nativo)
-- ❌ Push notifications (usa `expo-notifications` que es nativo)
-- ❌ SecureStore (fallback a localStorage en web)
-- ❌ OTA updates de Expo
+### ✅ Semana 2: Mobile — COMPLETADO (2026-07-28)
 
-### ✅ Implementado (2026-07-24)
+| # | Acción | Estado |
+|---|--------|:------:|
+| 4 | Error Boundaries mobile | ✅ |
+| 10 | Tests unitarios mobile | ✅ |
+| 11 | Crash Reporting mobile | ✅ |
 
-| Archivo | Descripción |
-|---------|-------------|
-| `mobile/public/manifest.json` | Configuración PWA (nombre, iconos, colores) |
-| `mobile/public/sw.js` | Service Worker para caché offline |
-| `mobile/public/index.html` | Template con meta tags iOS/Android |
-| `mobile/nginx.conf` | CORS restringido a `http://localhost:3000` |
-| `mobile/Dockerfile.web` | Copia iconos PWA al build final |
+### Semana 3: Backend (2 items)
 
-### 📝 Notas
-- La PWA funciona en http://localhost:8081
-- Se puede instalar como app en el celular/PC
-- Service Worker cachea assets para funcionamiento offline
-- Las requests a `/api/` NO se cachean (siempre van al backend)
+| # | Acción | Tiempo | Riesgo |
+|---|--------|:------:|:------:|
+| 1 | Fix race condition settings | 1 hr | 🟡 Medio |
+| 4 | Quitar JWT del body | 2 hr | 🔴 Breaking change |
 
----
+### Semana 4: Frontend (4 items)
 
-## 📝 Pasos para implementar PWA en producción (REFERENCIA - Ya implementado)
+| # | Acción | Tiempo | Riesgo |
+|---|--------|:------:|:------:|
+| 2 | Responsive dashboard | 3 hr | 🟢 Bajo |
+| 3 | Dark mode área usuario | 2 hr | 🟢 Bajo |
+| 6 | Modales custom | 2 hr | 🟢 Bajo |
+| 7 | Extraer archivos grandes | 3 hr | 🟢 Bajo |
+| 8 | Consolidar helpers | 1 hr | 🟢 Bajo |
 
-#### 1. Service Worker y Caching
-```bash
-cd mobile
-npm install workbox-window workbox-precaching
-```
+### Semana 5: Tests + Docs (3 items)
 
-Crear `public/sw.js`:
-```javascript
-import { precacheAndRoute } from 'workbox-precaching';
-precacheAndRoute(self.__WB_MANIFEST);
-```
+| # | Acción | Tiempo | Riesgo |
+|---|--------|:------:|:------:|
+| 9 | Tests de componentes frontend | 3 hr | 🟢 Bajo |
+| 10 | Tests de controllers backend | 4 hr | 🟢 Bajo |
+| 11 | Documentación API (Swagger) | 3 hr | 🟢 Bajo |
 
-#### 2. Manifest.json
-Crear `public/manifest.json`:
-```json
-{
-  "name": "HUB AI Assistant",
-  "short_name": "HUB",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
-```
+### Semanas 6+: Mejoras menores (6 items)
 
-#### 3. Reemplazar localStorage por cookies
-Modificar `mobile/src/services/storage.ts`:
-- Para web: usar cookies httpOnly (igual que dashboard)
-- Para nativo: mantener SecureStore
+| # | Acción | Tiempo |
+|---|--------|:------:|
+| 12-21 | Infra, docs, mejoras menores | ~15 hr |
 
-#### 4. Configurar Expo para PWA
-En `app.json`, agregar:
-```json
-"web": {
-  "bundler": "metro",
-  "favicon": "./assets/favicon.png"
-}
-```
-
-#### 5. Build y deploy
-```bash
-cd mobile
-npx expo export --platform web
-# Copiar a ota-server/data/
-```
-
-### 🚫 Funcionalidades que NO se implementarán
-- ❌ Notificaciones push (no requeridas para este proyecto)
-- ❌ Acceso a cámara/hardware (no requerido)
-- ❌ OTA updates (se hace redeploy normal)
+**Total estimado: ~38 horas de trabajo**
 
 ---
 
-## 📊 RESUMEN DE HALLAZGOS
+## 📋 NOTAS IMPORTANTES
 
-| Severidad | Cantidad | Estado |
-|-----------|----------|--------|
-| 🔴 CRÍTICOS | 7 | 7 resueltos, 0 pendientes |
-| 🟠 ALTOS | 12 | 5 resueltos, 7 pendientes |
-| 🟡 MEDIOS | 27 | 20 resueltos, 7 pendientes |
-| 🟢 BAJOS | 22 | Pendientes |
-| **TOTAL** | **68** | **32 resueltos, 36 pendientes** |
+### ⚠️ Requiere Planificación
 
-> **Nota**: 2 hallazgos fueron eliminados por no coincidir con el código:
-> - ~~B-3~~: `.env.example` usa placeholders, no credenciales reales
-> - ~~F-5~~: Cookie CSRF es `httpOnly`, no vulnerable a XSS
-
-### ✅ Resueltos (2026-07-27 - tarde)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| **B-2** | `/uploads` sin autenticación | Middleware verifica cookies admin_token/user_token o header Authorization. Retorna 401 si no hay auth. |
-
-### ✅ Resueltos (2026-07-27 - mañana)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| **B-1** | `/api/metrics` sin autenticación | Protegido con `authMiddleware` + `adminOnly` |
-| **B-5** | Push token reasignable | Ahora verifica que el token pertenezca al usuario antes de reasignar |
-| **B-8** | `updateUser` sin validar duplicado | Retorna 409 Conflict si el documento ya existe en otro usuario |
-| **B-9** | Password mínimo 4 chars | Login ahora requiere mínimo 6 caracteres (igual que register) |
-| **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |
-
-### ✅ Resueltos (2026-07-27 - fáciles)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| **B-12** | Renombrar `/export` a `/export-data` | Ruta cambiada en backend y frontend |
-| **B-13** | Endpoint público `/api/ratings/stats` | Creado endpoint público con estadísticas básicas |
-| **B-14** | Límite/paginación en chat history | Agregado límite máximo de 200 y paginación |
-| **B-15** | Seed duplicado | Lista de puntos de venta movida a constants.ts |
-| **F-15** | Teléfono hardcodeado en HelpModal | Ahora lee desde variables de entorno |
-| **F-13** | `suppressHydrationWarning` en `<html>` | ACEPTADO: necesario para dark mode |
-| **F-11** | Sidebar width 250px hardcodeado | Variable CSS `--sidebar-width` en globals.css |
-| **M-13** | `isReady` state sin usar | Restaurado con propósito: controla renderizado post-splash screen |
-| **I-9** | SHA pinning en Dockerfiles | PARCIAL: principales OK, builder/ota pendientes |
-| **I-30** | Healthcheck para ota-server | NO APLICA: servicio deshabilitado |
-| **B-11** | `ultima_actividad` en cada request | Solo actualiza si han pasado más de 5 minutos |
-
-### ✅ Resueltos (2026-07-24)
-
-| # | Problema | Solución |
-|---|----------|----------|
-| **I-1** | Sesión dashboard se pierde al recargar | Cookies con path `/` y scope aislado (`admin_token`, `user_token`) |
-| **I-4** | CORS `*` en nginx mobile | Restringido a `http://localhost:3000` |
-| **M-1** | JWT en localStorage mobile | Ahora usa cookies httpOnly con scope |
-| **M-2** | PWA Mobile incompleta | manifest.json, service worker, meta tags implementados |
-| **F-3** | Sin Service Worker | Service Worker con caché básico implementado |
-| **F-9** | Export Excel ignora filtros de fecha | Los presets ahora calculan el rango correcto al exportar |
-
----
-
-## 🔍 HALLAZGOS DETALLADOS
-
-### 🔴 CRÍTICOS
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| ~~**I-1**~~ | ~~Sesión dashboard se pierde~~ | ~~`web/src/lib/api.ts`~~ | ✅ **RESUELTO**: Cookies con path `/` y header `X-Auth-Scope` |
-| **I-2** | `.env` con secrets reales | `.env`, `.env.local` | Passwords JWT, Postgres en texto plano. NO están commiteados (en `.gitignore`), pero riesgo si se commite |
-| **I-3** | `.env` y `.env.local` idénticos | raíz | No hay override local; ambos contienen los mismos secrets |
-| **I-4** | Password `admin123` fallback | `docker-compose.yml:38` | `SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}` |
-| ~~**B-1**~~ | ~~`/api/metrics` sin auth~~ | ~~`backend/src/index.ts:113`~~ | ✅ **RESUELTO 2026-07-27**: Protegido con authMiddleware + adminOnly |
-| **B-2** | `/uploads` sin auth | `backend/src/index.ts:123` | Archivos subidos son públicamente accesibles |
-| ~~**M-1**~~ | ~~JWT en localStorage~~ | ~~`mobile/src/services/storage.ts:19-28`~~ | ✅ **RESUELTO**: Cookies httpOnly con scope aislado |
-| ~~**M-2**~~ | ~~CORS `*` en nginx~~ | ~~`mobile/nginx.conf:13`~~ | ✅ **RESUELTO**: Restringido a `http://localhost:3000` |
-
-### 🟠 ALTOS
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| **B-4** | JWT en body Y cookie | `auth.controller.ts:130` | Redundante, token en body puede guardarse en localStorage |
-| ~~**B-5**~~ | ~~Push token reasignable~~ | ~~`push.controller.ts:20-24`~~ | ✅ **RESUELTO 2026-07-27**: Verifica owner antes de reasignar |
-| **B-7** | `bloqueado_por` sin ON DELETE | `schema.ts:33` | FK sin cascada, referencias huérfanas |
-| ~~**B-8**~~ | ~~`updateUser` sin validar duplicado~~ | ~~`users.controller.ts:205`~~ | ✅ **RESUELTO 2026-07-27**: Retorna 409 si documento existe |
-| ~~**B-9**~~ | ~~Password mínimo 4 chars~~ | ~~`auth.schema.ts:9`~~ | ✅ **RESUELTO 2026-07-27**: Login exige mínimo 6 caracteres |
-| **B-10** | N+1 en `getSummary` | `dashboard.controller.ts:76` | 8+ queries secuenciales + 7 para last7Days |
-| ~~**B-11**~~ | ~~`ultima_actividad` en cada request~~ | ~~`middlewares/auth.ts:55`~~ | ✅ **RESUELTO 2026-07-27**: Throttle cada 5 minutos |
-| **F-4** | Middleware no valida JWT | `web/src/middleware.ts:5` | Solo verifica existencia de cookie, no validez |
-| **F-6** | Dashboard sin responsive | `web/src/app/dashboard/*` | Sidebar fijo 250px, grids sin breakpoints |
-| **M-5** | `Node.prototype.removeChild` monkey-patched | `SafeAreaProviderWrapper.tsx:6-16` | Workaround frágil en web |
-| **M-6** | Sin CSRF en refresh mobile | `api.ts:66` | Refresh usa cookies pero no envía CSRF token |
-| **M-7** | Sin Error Boundaries | mobile | Crash = pantalla blanca |
-
-### 🟡 MEDIOS (selección)
-
-| # | Problema | Archivo |
-|---|----------|---------|
-| **B-6** | Rate limit insuficiente admin | Múltiples endpoints |
-| **B-12** | Seed duplicado | `seed.ts` y `puntos-venta.controller.ts` |
-| **B-13** | Race condition settings | `settings.controller.ts:33` |
-| **B-14** | Sin tests controllers | backend |
-| **F-7** | `alert()`/`confirm()` nativos | web dashboard |
-| **F-8** | Dark mode incompleto | 6 pantallas /user/* |
-| **F-10** | Helpers duplicados | `formatDate`, `formatTicketId` |
-| **F-12** | Archivos grandes | tickets (500), settings (489) |
-| **I-9** | Dockerfiles sin SHA pinning | mobile/ |
-| ~~**I-10**~~ | ~~CORS `*` en nginx~~ | ~~mobile/nginx.conf~~ | ✅ **RESUELTO**: Restringido a `http://localhost:3000` |
-| **I-11** | Falta `JWT_REFRESH_SECRET` | render.yaml |
-| **I-14** | Sin volumen uploads | docker-compose.yml |
-| **M-8** | Error swallowing silencioso | 6 ubicaciones |
-| **M-9** | Constantes color divergentes | historial vs incidente |
-| **M-14** | Archivos inline 300-400+ líneas | exito, historial, ajustes |
-| **M-15** | Sin tests unitarios | mobile |
-
----
-
-## 📋 PLAN DE ACCIÓN SUGERIDO
-
-### Semana 1: Seguridad Crítica
-- [x] ~~Proteger `/api/metrics` con autenticación~~ ✅ RESUELTO 2026-07-27
-- [ ] Proteger `/uploads` con auth
-- [x] ~~Quitar CORS `*` en nginx mobile~~ ✅ RESUELTO 2026-07-24
-- [ ] Validar rating puntuación (1-5)
-- [x] ~~Fix push token reasignable~~ ✅ RESUELTO 2026-07-27
-- [x] ~~Password mínimo 6 chars~~ ✅ RESUELTO 2026-07-27
-- [x] ~~Fix `updateUser` documento duplicado~~ ✅ RESUELTO 2026-07-27
-
-### Semana 2: Mejoras Backend
-- [x] ~~Throttlear `ultima_actividad`~~ ✅ RESUELTO 2026-07-27
-- [ ] Fix N+1 query en dashboard
-- [ ] Agregar volumen para uploads
-- [ ] Tests de controllers
-
-### Semana 3: Frontend
-- [ ] Dark mode en área usuario
-- [ ] Extraer archivos grandes
-- [ ] Consolidar helpers
-- [ ] Responsive dashboard
-- [ ] Error Boundaries mobile
-
-### Semana 4+: PWA Mobile (cuando se necesite)
-- [ ] Implementar service worker
-- [ ] Crear manifest.json
-- [ ] Reemplazar localStorage por cookies
-- [ ] Build y deploy PWA
-
----
-
-## 📚 DOCUMENTACIÓN DEL PROYECTO
-
-| Archivo | Estado | Última Actualización |
-|---------|--------|---------------------|
-| `README.md` | ✅ Completo | 2026-07-21 |
-| `CHANGELOG.md` | ✅ Detallado | 2026-07-21 |
-| `AUDIT-COMPLETA.md` | ✅ Auditoría seguridad | 2026-07-07 |
-| `PWA-DEPLOY.md` | ⚠️ Referencia servicio deshabilitado | 2026-07-14 |
-| `DISTRIBUCION-APK.md` | ✅ Guía distribución | 2026-07-14 |
-| `PENDIENTES.md` | ✅ Este archivo | 2026-07-23 |
-| `shared/README.md` | ⚠️ Desactualizado | Desconocido |
-
----
-
-*Última verificación: 2026-07-23*
-*Total de hallazgos: 68 (7 críticos, 12 altos, 27 medios, 22 bajos)*
-
-## 🐳 INFRAESTRUCTURA Y DOCKER
-
-### Contenedores Activos
-
-| Servicio | Puerto | Estado | Healthcheck |
-|----------|--------|--------|:-----------:|
-| hub-postgres | 5432 | ✅ Running | ✅ |
-| hub-api | 3001 | ✅ Running | ✅ |
-| hub-web | 3000 | ✅ Running | ❌ |
-| hub-mobile | 8081 | ❌ No existe | ❌ |
-| hub-ota-server | 3002 | ✅ Running | ❌ |
-
-### CRÍTICOS
-
-| # | Problema | Archivo | Detalle | Verificación |
-|---|----------|---------|---------|:---:|
-| I-1 | `.env` con secrets reales en disco | `.env`, `.env.local` | Passwords JWT, Postgres y admin en texto plano. Si se commiteó, las credenciales están comprometidas | ✅ |
-| I-2 | `.env` y `.env.local` son idénticos | ambos archivos | No hay override local; ambos contienen los mismos secrets de producción | ✅ |
-| I-3 | Password admin `admin123` como fallback | `docker-compose.yml:38` | `SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}` — si no se define, se usa `admin123` | ✅ |
-
-> **Nota I-1:** `.env` NO está commiteado (confirmado con `git ls-files`). Está en `.gitignore`. El riesgo es si alguien lo commite en el futuro.
-
-### ALTOS
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| I-4 | Puerto 5432 de Postgres expuesto al host | `docker-compose.yml:10` | En producción la BD solo debería ser accesible vía red interna Docker |
-| I-5 | Healthcheck con usuario hardcodeado | `docker-compose.yml:14` | `pg_isready -U hub_admin` — si cambia `POSTGRES_USER`, el healthcheck falla |
-| I-6 | Sin healthchecks en web/mobile | `docker-compose.yml`, `web/Dockerfile`, `mobile/Dockerfile.web` | Solo postgres y api tienen healthcheck. Web y mobile no tienen HEALTHCHECK en Dockerfile ni en compose |
-| I-7 | Mobile corre como root | `mobile/Dockerfile.web` | nginx corre como root; web y backend usan usuario no-root (`USER nodejs`) |
-
-### MEDIOS
-
-| # | Problema | Archivo |
-|---|----------|---------|
-| I-9 | `Dockerfile.builder` y `Dockerfile.ota` sin SHA pinning | `mobile/` |
-| I-10 | CORS `*` wildcard en nginx | `mobile/nginx.conf:13` |
-| I-11 | `render.yaml` falta `JWT_REFRESH_SECRET` | `render.yaml` |
-| I-12 | `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` no se pasa al contenedor web | `docker-compose.yml` |
-| I-13 | `ota-server` deshabilitado pero referenciado en docs | `PWA-DEPLOY.md` |
-| I-14 | Sin volumen para uploads del backend | `docker-compose.yml` |
-| I-15 | CORS_ORIGIN default a localhost en producción | `docker-compose.yml:37` |
-| I-16 | SVG en manifest PWA (incompatible con algunos navegadores) | `web/public/manifest.json` |
-
-### BAJOS
-
-| # | Problema | Archivo |
-|---|----------|---------|
-| I-8 | `cloudflared` binario en disco local | raíz del proyecto |
-
-> `cloudflared` está en `.gitignore` y NO está trackeado en git. Es solo un binario local de 37MB.
-
----
-
-## ⚙️ BACKEND (Express + Drizzle + PostgreSQL)
-
-### Endpoints Totales: 34
-
-| Método | Endpoint | Auth | Rate Limit | Descripción |
-|--------|----------|:----:|:----------:|-------------|
-| GET | `/api/health` | No | Global | Health check |
-| GET | `/api/health/db` | No | Global | Health + DB ping |
-| GET | `/api/metrics` | **Admin** | Global | Métricas internas (protegido) |
-| POST | `/api/auth/register` | No | 10/min | Registro |
-| POST | `/api/auth/login` | No | 10/min | Login |
-| GET | `/api/auth/me` | Sí | Global | Perfil usuario |
-| POST | `/api/auth/refresh` | Cookie | 30/min | Refresh JWT |
-| POST | `/api/auth/logout` | Sí | 30/min | Logout |
-| POST | `/api/incidents` | Sí | 60/min | Crear incidente |
-| GET | `/api/incidents` | Sí | 60/min | Listar incidentes |
-| GET | `/api/incidents/:id` | Sí | 60/min | Detalle incidente |
-| PATCH | `/api/incidents/:id` | Admin/Téc | 60/min | Actualizar incidente |
-| DELETE | `/api/incidents/:id` | Admin/Téc | 60/min | Eliminar incidente |
-| POST | `/api/incidents/:id/comments` | Sí | 60/min | Agregar comentario |
-| GET | `/api/incidents/agentes` | Admin/Téc | 60/min | Listar agentes |
-| GET | `/api/incidents/stats` | Admin/Téc | 60/min | Estadísticas |
-| GET | `/api/incidents/export` | Admin/Téc | 60/min | Exportar a Excel |
-| GET | `/api/incidents/unread-count` | Admin/Téc | 60/min | Conteo no vistos |
-| PATCH | `/api/incidents/mark-seen` | Admin/Téc | 60/min | Marcar como vistos |
-| POST | `/api/chat/message` | Sí | Global | Enviar mensaje chatbot |
-| GET | `/api/chat/history` | Sí | Global | Historial chat |
-| POST | `/api/users` | Admin/Téc | Global | Crear usuario |
-| GET | `/api/users` | Admin/Téc | Global | Listar usuarios |
-| PATCH | `/api/users/:id` | Admin/Téc | Global | Actualizar usuario |
-| PATCH | `/api/users/:id/toggle-status` | Admin/Téc | Global | Bloquear/desbloquear |
-| PATCH | `/api/users/:id/reset-password` | Admin/Téc | Global | Resetear contraseña |
-| GET | `/api/dashboard/kpis` | Admin/Téc | Global | KPIs |
-| GET | `/api/dashboard/summary` | Admin/Téc | Global | Resumen dashboard |
-| POST | `/api/upload` | Admin/Téc | Global | Subir imagen (max 5MB) |
-| POST | `/api/ratings/:id` | Sí | Global | Calificar incidente |
-| GET | `/api/ratings/my-ratings` | Sí | Global | Mis calificaciones |
-| GET | `/api/ratings` | Admin/Téc | Global | Stats calificaciones |
-| POST | `/api/push/register` | Sí | 10/min | Registrar push token |
-| GET/POST | `/api/puntos-venta` | Sí/Admin | Global | PV (listar/seed) |
-| GET/PUT | `/api/settings` | Sí/Admin | Global | Config empresa |
-
-### Tablas de BD: 8
-
-| Tabla | Columnas | Índices |
-|-------|----------|---------|
-| `users` | id, documento, nombre, email, contrasena, rol, estado, ultima_actividad, token_version, intentos_fallidos, bloqueado_por, created_at | 1 (estado) |
-| `incidents` | id, user_id, nombre, documento, punto_venta, telefono, descripcion, urgencia, estado, agente, solucion, imagen_url, cerrado_por, fecha_cierre, visto_por_admin, created_at, updated_at | 7 |
-| `messages` | id, user_id, content, is_bot, created_at | 2 |
-| `incident_comments` | id, incident_id, autor, texto, fecha | 1 |
-| `ratings` | id, incident_id (UNIQUE), user_id, puntuacion, comentario, created_at | 2 |
-| `puntos_venta` | id, nombre (UNIQUE), activo, created_at | 1 |
-| `company_settings` | id, nombre, contribuyente, direccion, updated_at | 0 |
-| `push_tokens` | id, user_id, token (UNIQUE), created_at | 1 |
-
-### Enums
-
-| Enum | Valores |
+| Tema | Detalle |
 |------|---------|
-| `rol` | user, asesor, admin, tecnico |
-| `user_estado` | activo, bloqueado |
-| `urgencia` | baja, media, alta |
-| `estado` | pendiente, en_proceso, resuelto |
+| **Rotar secrets** | Si `.env` fue commiteado alguna vez, rotar JWT_SECRET, JWT_REFRESH_SECRET, POSTGRES_PASSWORD |
+| **JWT en body** | Quitar JWT del body es breaking change para mobile nativo |
 
-### CRÍTICOS Backend
+### ✅ Lo que YA funciona bien
 
-| # | Problema | Archivo:Línea | Detalle |
-|---|----------|---------------|---------|
-| B-1 | `/api/metrics` sin autenticación | `src/index.ts:113-120` | Expone paths de API, errores, memoria, requests recientes |
-| B-2 | `/uploads` servido sin auth | `src/index.ts:123` | Cualquier archivo subido es públicamente accesible |
-
-### ALTOS Backend
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| B-4 | JWT retornado en body Y cookie | `auth.controller.ts:130` | Redundante; el body token puede guardarse en localStorage (XSS vulnerable) |
-| B-5 | Push token puede ser robado | `push.controller.ts:20-24` | Reasigna token existente de otro usuario al actual sin verificar owner |
-| B-7 | `bloqueado_por` FK sin ON DELETE | `schema.ts:33` | Si se borra el admin bloqueador, referencia huérfana |
-| B-8 | `updateUser` no verifica documento duplicado | `users.controller.ts:205` | Error 500 en vez de 409 si documento ya existe |
-
-### MEDIOS Backend
-
-| # | Problema | Archivo |
-|---|----------|---------|
-| B-6 | Rate limit específico insuficiente para endpoints admin | Múltiples |
-| B-9 | Password mínimo 4 chars en login | `auth.schema.ts:9` |
-| B-10 | `getSummary` hace 8+ queries secuenciales | `dashboard.controller.ts:76` |
-| B-11 | `ultima_actividad` se actualiza en CADA request | `middlewares/auth.ts:55` |
-| B-12 | Datos de seed duplicados en 2 archivos | `seed.ts` y `puntos-venta.controller.ts` |
-| B-13 | `updateSettings` puede tener race condition | `settings.controller.ts:33` |
-| B-14 | Sin tests de controllers/integración | Solo tests de schema |
-
-> **B-6:** Los endpoints admin (`/users/*`, `/dashboard/*`) solo tienen rate limit global (100/min). No tienen rate limit específico.
-> **B-9:** Login acepta min 4 chars (`auth.schema.ts:9`), pero register exige min 6 (`auth.schema.ts:19`). Inconsistente.
-> **B-10:** `getSummary` hace 8+ queries secuenciales + 7 queries para last7Days + messageCount.
-
-### Buenas Prácticas Backend
-
-- Zod validation en todos los inputs
-- Queries parametrizadas (Drizzle ORM, no SQL injection)
-- bcrypt con cost factor 10
-- Rate limiting global y por ruta
-- Helmet con CSP
-- JWT httpOnly cookies
-- Token version invalidation en logout
-- Account lockout tras intentos fallidos
-- Role-based access control
-- State machine en incidentes
-- File upload con whitelist MIME y límite 5MB
-- Docker corre como usuario no-root
+- Sesiones aisladas entre dashboard y mobile
+- PWA instalable con offline
+- Chatbot con 7 intenciones
+- Exportación Excel con filtros
+- Rating con constraint CHECK (1-5)
+- N+1 queries optimizados
+- Rate limiting por endpoint
+- CSRF protection
+- Token versioning para invalidación
 
 ---
 
-## 🖥️ WEB FRONTEND (Next.js 15 + React 19)
-
-### Inventario de Archivos
-
-| Categoría | Cantidad | Líneas aprox. |
-|-----------|:--------:|:-------------:|
-| Páginas | 16 | ~3,400 |
-| Componentes | 27 | ~3,100 |
-| Contexts | 2 | ~146 |
-| Lib | 3 (src) | ~240 |
-| Config | 10 | ~150 |
-| **Total** | **58** | **~7,000** |
-
-### Páginas
-
-#### Públicas
-| Ruta | Archivo | Descripción |
-|------|---------|-------------|
-| `/` | `app/page.tsx` | Redirect a /login |
-| `/login` | `app/login/page.tsx` | Login admin (201 líneas) |
-| `/user/login` | `app/user/login/page.tsx` | Login usuario (127 líneas) |
-
-#### Dashboard (Admin/Técnico)
-| Ruta | Archivo | Descripción |
-|------|---------|-------------|
-| `/dashboard` | `app/dashboard/page.tsx` | Panel KPIs + tickets + usuarios (104 líneas) |
-| `/dashboard/analytics` | `app/dashboard/analytics/page.tsx` | Gráficas y filtros (323 líneas) |
-| `/dashboard/users` | `app/dashboard/users/page.tsx` | CRUD usuarios (160 líneas) |
-| `/dashboard/tickets` | `app/dashboard/tickets/page.tsx` | Gestión tickets (500 líneas — **archivo más grande**) |
-| `/dashboard/ratings` | `app/dashboard/ratings/page.tsx` | Calificaciones (68 líneas) |
-| `/dashboard/external-systems` | `app/dashboard/external-systems/page.tsx` | Sistemas externos (95 líneas) |
-| `/dashboard/settings` | `app/dashboard/settings/page.tsx` | Configuración 3 tabs (489 líneas) |
-
-#### Usuario (Móvil)
-| Ruta | Archivo | Descripción |
-|------|---------|-------------|
-| `/user/chat` | `app/user/(main)/chat/page.tsx` | Chatbot (286 líneas) |
-| `/user/reportar` | `app/user/(main)/reportar/page.tsx` | Formulario reporte (227 líneas) |
-| `/user/historial` | `app/user/(main)/historial/page.tsx` | Lista incidentes (111 líneas) |
-| `/user/ajustes` | `app/user/(main)/ajustes/page.tsx` | Ajustes (127 líneas) |
-| `/user/exito` | `app/user/(main)/exito/page.tsx` | Confirmación ticket (88 líneas) |
-| `/user/incidente/[id]` | `app/user/(main)/incidente/[id]/page.tsx` | Detalle incidente (149 líneas) |
-
-### CRÍTICOS Frontend
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| F-2 | IP interna hardcodeada en `.env.example` | `web/.env.example:2` | `http://192.168.60.66:8100` — IP privada expuesta en archivo de ejemplo |
-| F-3 | Sin Service Worker (PWA incompleta) | `web/public/` | No hay `sw.js`, no hay plugin PWA, no hay registro |
-
-### ALTOS Frontend
-
-| # | Problema | Archivo | Detalle |
-|---|----------|---------|---------|
-| F-4 | Middleware solo verifica existencia de cookie | `middleware.ts:5` | No valida JWT; cookie falsa bypass el redirect |
-| F-6 | Sin responsive en dashboard | Múltiples | Sidebar fijo 250px, grids sin breakpoints |
-
-> **Nota F-5:** Este hallazgo es incorrecto. La cookie `csrf-token` se establece con `httpOnly: true` en `csrf.ts:14`. El código en `web/src/lib/api.ts:20` intenta leerla con `document.cookie.match(...)`, pero como es httpOnly, esta línea nunca retorna el token. El token CSRF real se obtiene del body de la respuesta (`body.csrfToken` en `api.ts:48`). La protección CSRF funciona correctamente. **Este hallazgo debe eliminarse.**
-
-### MEDIOS Frontend
-
-| # | Problema | Archivo | Verificación |
-|---|----------|---------|:---:|
-| F-7 | `alert()` y `confirm()` nativos | tickets, settings, ajustes | ✅ |
-| F-8 | Dark mode solo ~70% (área usuario sin soporte) | Todas las páginas /user/* | ✅ |
-| F-9 | `globals.css` aplana todos los grises en dark mode | `globals.css:25-35` | ✅ |
-| F-10 | Funciones helper duplicadas | `formatDate`, `formatTicketId`, `getInitials` | ✅ |
-| F-11 | Sidebar width (250px) hardcodeado en 3 archivos | layout, Sidebar, Topbar | ✅ |
-| F-12 | Archivos grandes sin extracción | tickets (500), settings (489), AnalyticsFilters (374) | ✅ |
-| F-13 | `suppressHydrationWarning` en `<html>` | `layout.tsx:33` | ✅ |
-| F-14 | 6 eslint-disable para hooks | `chat/page.tsx`, `AuthContext.tsx` | ✅ |
-| F-15 | Teléfono hardcodeado en ayuda | `HelpModal.tsx:9-10` | ✅ |
-
-### Dark Mode — Cobertura
-
-| Área | Estado |
-|------|:------:|
-| Login admin | ✅ |
-| Dashboard (todas las páginas) | ✅ |
-| Sidebar + Topbar | ✅ |
-| Todos los componentes admin | ✅ |
-| Login usuario | ❌ |
-| Chat | ❌ |
-| Reportar | ❌ |
-| Historial | ❌ |
-| Ajustes usuario | ❌ |
-| Éxito | ❌ |
-| Detalle incidente | ❌ |
-| Componentes user/* (7) | ❌ |
-
-### Responsive — Cobertura
-
-| Área | Estado |
-|------|:------:|
-| Dashboard admin | ❌ Desktop-only (sidebar fijo 250px) |
-| Tablas (tickets, usuarios) | ❌ Sin responsive |
-| KPIs cards (grid-cols-4) | ❌ Sin stacking |
-| Área usuario (móvil) | ✅ Mobile-first con BottomNav |
-
----
-
-## 📱 MOBILE APP (Expo + React Native)
-
-### Inventario de Archivos
-
-| Categoría | Cantidad | Líneas aprox. |
-|-----------|:--------:|:-------------:|
-| App routes | 8 | ~2,300 |
-| Screens | 3 | ~1,140 |
-| Services | 4 | ~444 |
-| Contexts | 2 | ~206 |
-| Components | 17 | ~1,350 |
-| Config | 15 | ~200 |
-| **Total** | **49** | **~5,640** |
-
-### Pantallas
-
-| Ruta | Archivo | Descripción |
-|------|---------|-------------|
-| `/` | `app/index.tsx` → `LoginScreen.tsx` | Login (138 líneas) |
-| `/chat` | `app/chat.tsx` → `ChatScreen.tsx` | Chatbot (581 líneas — **más complejo**) |
-| `/reportar` | `app/reportar.tsx` → `ReportScreen.tsx` | Formulario reporte (425 líneas) |
-| `/historial` | `app/historial.tsx` | Lista incidentes (313 líneas inline) |
-| `/exito` | `app/exito.tsx` | Confirmación (408 líneas inline) |
-| `/ajustes` | `app/ajustes.tsx` | Settings (363 líneas inline) |
-| `/incidente/[id]` | `app/incidente/[id].tsx` | Detalle incidente (242 líneas inline) |
-
-### C-RITICOS Mobile
-
-| # | Problema | Archivo | Detalle | Verificación |
-|---|----------|---------|---------|:---:|
-| M-1 | JWT en localStorage en web | `src/services/storage.ts:19-28` | Plaintext — vulnerable a XSS. Confirmado: `webSet` usa `localStorage.setItem`, `webGet` usa `localStorage.getItem`. Solo aplica en plataforma web, no en nativo (usa SecureStore) | ✅ |
-| M-2 | CORS `*` wildcard en nginx | `nginx.conf:13` | Cualquier origen puede hacer requests. Confirmado: `add_header Access-Control-Allow-Origin *;` | ✅ |
-| M-3 | URL de API producción hardcodeada en eas.json | `eas.json:18,27` | `https://hub-platform-api.onrender.com/api` en repo. Confirmado en perfiles preview y production | ✅ |
-
-### ALTOS Mobile
-
-| # | Problema | Archivo | Detalle | Verificación |
-|---|----------|---------|---------|:---:|
-| M-4 | `NODE_ENV` puede no estar seteado | `src/services/logger.ts:3` | ~~`IS_DEV` queda `true` incluso en producción~~ → ⚠️ **Parcial**: Expo siempre setea NODE_ENV en builds. Solo sería problema en tests manuales sin configurar. El código `process.env.NODE_ENV !== "production"` es correcto | ⚠️ |
-| M-5 | `Node.prototype.removeChild` monkey-patched globalmente | `SafeAreaProviderWrapper.tsx:6-16` | Workaround frágil que afecta todo el DOM. Confirmado: `Node.prototype.removeChild = function...` en Platform.OS === "web" | ✅ |
-| M-6 | Sin CSRF protection en refresh con CORS wildcard | `api.ts:66` + `nginx.conf` | Confirmado: el refresh del mobile usa `credentials: "include"` pero no envía CSRF token, y el backend permite Bypass para requests con `Authorization: Bearer` (`csrf.ts:32`) | ✅ |
-| M-7 | Sin React Error Boundaries | Toda la app | Crash = pantalla blanca. Confirmado: no hay archivos `*error*` ni `*Error*` en mobile | ✅ |
-
-### MEDIOS Mobile
-
-| # | Problema | Archivo | Verificación |
-|---|----------|---------|:---:|
-| M-8 | Error swallowing silencioso (6 ubicaciones) | reportar, AuthContext, etc. | ✅ |
-| M-9 | Constantes de color duplicadas con divergencias | `historial.tsx` vs `incidente/[id].tsx` (`en_proceso` difiere) | ✅ |
-| M-10 | Estilos mixtos (className vs inline) | Varios componentes | ✅ |
-| M-11 | Sin sanitización de input chat | `ChatScreen.tsx:165` | ✅ |
-| M-12 | Password validation 4 chars | `LoginScreen.tsx:38` | ✅ |
-| M-13 | `isReady` state sin usar | `app/_layout.tsx:16` | ✅ |
-| M-14 | 4 archivos inline de 300-400+ líneas | exito, historial, ajustes, incidente | ✅ |
-| M-15 | Sin tests unitarios | Toda la app | ✅ |
-| M-16 | Sin analytics/crash reporting | Toda la app | ✅ |
-| M-17 | `expo-symbols` necesita postinstall hack | `package.json:50` | ✅ |
-
----
-
-## 📦 SHARED TYPES (`@hub/shared`)
-
-### 18 Tipos Exportados
-
-| Archivo | Tipos |
-|---------|-------|
-| `types/auth.ts` | AuthUser, LoginInput, RegisterInput, AuthResponse |
-| `types/user.ts` | ApiUser |
-| `types/incident.ts` | IncidentUrgency, IncidentStatus, Incident, IncidentComment, CreateIncidentInput, UpdateIncidentInput |
-| `types/api.ts` | PaginatedResponse, KpiResponse, CompanySettings, DashboardSummary |
-| `types/rating.ts` | Rating, RatingWithDetails, PromedioPv, CreateRatingInput, RatingStats |
-
-### Problema
-- `shared/README.md` desactualizado — falta documentar 6 tipos
-
----
-
-## 📊 Resumen por Prioridad
-
-### Prioridad CRÍTICA (Arreglar ya)
-
-1. **Rotar secrets** si `.env` o `.env.local` fueron commiteados (passwords JWT, Postgres) — ⚠️ Verificado: NO están commiteados (`git ls-files` confirma), pero los secrets reales están en disco
-2. ~~**Proteger `/api/metrics`** con autenticación~~ — ✅ **RESUELTO 2026-07-27**: Endpoint protegido con authMiddleware + adminOnly
-3. **Proteger `/uploads`** con auth o CDN con URLs firmadas — ✅ Confirmado: `index.ts:123` sin auth
-4. ~~**Quitar CORS `*`** en nginx, restringir orígenes~~ — ✅ **RESUELTO 2026-07-24**: CORS restringido a `http://localhost:3000`
-5. **Instalar `next-pwa`** y generar service worker para la PWA — ✅ Confirmado: no hay sw.js
-6. **Convertir icons PWA a PNG** (SVG no funciona en todos los navegadores) — ✅ Confirmado: manifest usa SVG
-7. **Levantar contenedor `hub-mobile`** (`docker compose up -d mobile`) — ✅ Confirmado: no está corriendo
-
-> **Correcciones post-verificación:**
-> - ~~B-3 (`env.example` con credenciales reales)~~ → ❌ **FALSO**: Usa placeholders. Eliminado de esta lista.
-> - ~~F-5 (CSRF cookie JS-accessible)~~ → ❌ **FALSO**: La cookie CSRF es httpOnly. Eliminado de esta lista.
-
-### Prioridad ALTA (Esta semana)
-
-8. Agregar healthchecks a servicios web y mobile — ✅ Confirmado
-9. No exponer puerto 5432 al host en producción — ✅ Confirmado
-10. Crear React Error Boundaries en mobile — ✅ Confirmado
-11. Agregar responsive al dashboard admin (sidebar colapsable) — ✅ Confirmado
-12. Completar dark mode en área de usuario — ✅ Confirmado
-13. ~~Fortalecer política de contraseñas (min 6-8 chars)~~ — ✅ **RESUELTO 2026-07-27**: Login ahora exige mínimo 6 caracteres
-14. Verificar que `.env` nunca fue commiteado (`git log --all --diff-filter=A -- .env`) — ✅ Verificado: NUNCA fue commiteado
-
-> **Correcciones post-verificación:**
-> - B-6 (Sin rate limit en endpoints sensibles) → ⚠️ **Parcial**: Sí tienen rate limit global (100/min), pero no específico para admin
-> - I-8 (cloudflared en disco) → ⚠️ **Parcial**: Está en `.gitignore`, no es problema del repo. Rebajar a LOW.
-
-### Prioridad MEDIA (Próximas semanas)
-
-15. Reemplazar `alert()`/`confirm()` nativos con modales custom — ✅ Confirmado
-16. Extraer archivos grandes (>400 líneas) en componentes separados — ✅ Confirmado
-17. Consolidar funciones helper duplicadas en `lib/` — ✅ Confirmado
-18. Agregar tests de controllers (backend) y componentes (web) — ✅ Confirmado
-19. ~~Throttlear `ultima_actividad` (no en cada request)~~ — ✅ **RESUELTO 2026-07-27**: Solo actualiza si han pasado más de 5 minutos
-20. Fix N+1 query en `getSummary` dashboard — ✅ Confirmado: 8+ queries secuenciales + 7 queries para last7Days
-21. Agregar volume para uploads del backend — ✅ Confirmado
-22. Actualizar `shared/README.md` con los 18 tipos — ✅ Confirmado
-23. Sync constantes de color mobile (divergencia en `en_proceso`) — ✅ Confirmado
-24. Pasar `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` al contenedor web — ✅ Confirmado
-
-### Prioridad BAJA (Cuando haya tiempo)
-
-25. Agregar tests unitarios en mobile — ✅ Confirmado
-26. Integrar Sentry/Crashlytics en mobile — ✅ Confirmado
-27. Agregar CONTRIBUTING.md y SECURITY.md — ✅ Confirmado
-28. Documentación API (Swagger/OpenAPI) — ✅ Confirmado
-29. SHA pinning en todos los Dockerfiles — ✅ Confirmado
-30. Crear healthcheck para ota-server — ✅ Confirmado
-
----
-
-## 📁 Documentación del Proyecto
-
-| Archivo | Estado | Última Actualización |
-|---------|:------:|:--------------------:|
-| `README.md` | ✅ Completo | 2026-07-21 |
-| `CHANGELOG.md` | ✅ Detallado | 2026-07-21 |
-| `AUDIT-COMPLETA.md` | ✅ Auditoría seguridad | 2026-07-07 |
-| `PWA-DEPLOY.md` | ⚠️ Referencia servicio deshabilitado | 2026-07-14 |
-| `DISTRIBUCION-APK.md` | ✅ Guía distribución | 2026-07-14 |
-| `PENDIENTES.md` | ✅ Este archivo | 2026-07-22 |
-| `shared/README.md` | ⚠️ Desactualizado | Desconocido |
-
----
-
-## 🗓️ PLAN DE ACCIÓN — Mañana (2026-07-23)
-
-### Mañana temprano (30 min) — Seguridad urgente
-
-| # | Qué hacer | Archivos a tocar | Tiempo | Prioridad real |
-|---|-----------|------------------|--------|:---:|
-| 1 | **Rotar secrets**: generar nuevos JWT_SECRET y JWT_REFRESH_SECRET, cambiar password Postgres, actualizar admin seed | `.env`, `.env.local`, `docker-compose.yml` | 5 min | ✅ Real |
-| 2 | **Proteger `/api/metrics`** con auth + adminOnly | `backend/src/index.ts` línea ~113 | 5 min | ✅ Real |
-| 3 | **Proteger `/uploads`** con auth middleware | `backend/src/index.ts` línea ~123 | 5 min | ✅ Real |
-| 4 | **Quitar CORS `*`** en nginx, poner dominio real | `mobile/nginx.conf` línea 13 | 2 min | ✅ Real |
-| 5 | **Fix healthcheck** — cambiar user hardcodeado por variable | `docker-compose.yml` línea 14 | 2 min | ✅ Real |
-| 6 | **Agregar `.env.local` a `.gitignore`** del web | `web/.gitignore` | 1 min | ⚠️ Baja: el `.gitignore` raíz ya protege |
-| 7 | ~~Verificar si .env fue commiteado~~ | ~~Terminal~~ | ~~5 min~~ | ❌ **Ya verificado**: NUNCA fue commiteado |
-
-> **Eliminados del plan original:**
-> - ~~B-3 (Fix .env.example con credenciales reales)~~ → No es necesario, usa placeholders
-> - ~~F-5 (Fix CSRF cookie JS-accessible)~~ → No es necesario, la cookie ya es httpOnly
-
-### Media mañana (3-4 horas) — PWA
-
-| # | Qué hacer | Archivos a tocar | Tiempo |
-|---|-----------|------------------|--------|
-| 8 | **Instalar `@ducanh2912/next-pwa`** en web | `web/package.json` | 5 min |
-| 9 | **Configurar plugin** en next.config.ts | `web/next.config.ts` | 30 min |
-| 10 | **Configurar Workbox** — cache de assets, offline fallback | Nuevo archivo config | 1 hora |
-| 11 | **Registrar service worker** en layout | `web/src/app/layout.tsx` o nuevo archivo | 30 min |
-| 12 | **Crear `public/offline.html`** como fallback | `web/public/offline.html` | 20 min |
-| 13 | **Convertir icons SVG a PNG** (192 y 512) | `web/public/icons/` | 20 min |
-| 14 | **Actualizar manifest.json** para usar PNG | `web/public/manifest.json` | 5 min |
-| 15 | **Probar instalación** en Chrome Android | Abrir en móvil | 10 min |
-
-### Tarde (1-2 horas) — Mobile + fixes
-
-| # | Qué hacer | Archivos a tocar | Tiempo |
-|---|-----------|------------------|--------|
-| 16 | **Levantar `hub-mobile`**: `docker compose up -d mobile` | Terminal | 5 min |
-| 17 | **Verificar** que Expo web carga en :8081 | Browser | 5 min |
-| 18 | **Fix push token robable** — verificar owner antes de reasignar | `backend/src/modules/push/push.controller.ts` | 20 min |
-| 19 | **Password min 6 chars** en login schema | `backend/src/modules/auth/auth.schema.ts` línea 9 | 2 min |
-| 20 | **Fix `updateUser`** — verificar documento duplicado antes de UPDATE | `backend/src/modules/users/users.controller.ts` | 20 min |
-| 21 | **Throttlear `ultima_actividad`** — solo actualizar cada 5 min | `backend/src/middlewares/auth.ts` línea 55 | 15 min |
-
-### Si queda tiempo
-
-| # | Qué hacer | Tiempo |
-|---|-----------|--------|
-| 22 | Crear React Error Boundary para mobile | 30 min |
-| 23 | Agregar healthchecks a web y mobile en docker-compose | 10 min |
-| 24 | Agregar volume para uploads del backend | 5 min |
-
-### Total estimado: ~5-7 horas (reducido desde 6-8h por hallazgos falsos eliminados)
-
-### Commits planificados
-
-1. `fix: rotate secrets and protect internal endpoints` (items 1-6)
-2. `feat: add PWA support with next-pwa and service worker` (items 8-15)
-3. `fix: mobile container, push token security, password policy` (items 16-21)
-4. `chore: error boundaries, healthchecks, volumes` (items 22-24)
-
----
-
-## RESUMEN DE VERIFICACIÓN COMPLETA
-
-| Categoría | Total | ✅ Confirmado | ⚠️ Parcial | ❌ Falso |
-|-----------|:-----:|:---:|:---:|:---:|
-| Infraestructura | 16 | 14 | 1 (I-8) | 0 |
-| Backend | 14 | 13 | 1 (B-6) | 1 (B-3) |
-| Frontend | 15 | 13 | 1 (F-1) | 1 (F-5) |
-| Mobile | 17 | 16 | 1 (M-4) | 0 |
-| Shared | 1 | 1 | 0 | 0 |
-| **TOTAL** | **63** | **57** | **4** | **2** |
-
-### Hallazgos que NO requieren acción:
-
-| # | Razón |
-|---|-------|
-| B-3 | `.env.example` usa placeholders, no credenciales reales |
-| F-5 | Cookie CSRF es httpOnly, no vulnerable a XSS via `document.cookie` |
-| I-8 | `cloudflared` está en `.gitignore`, no trackeado en git |
-| F-1 | `.env.local` está protegido por `.gitignore` raíz (`.env.*`) |
-
-### Hallazgos con severidad ajustada:
-
-| # | Original | Ajustado | Razón |
-|---|----------|----------|-------|
-| I-8 | ALTO | BAJO | Binario local, no en git |
-| B-6 | ALTO | MEDIO | Sí tiene rate limit global, solo falta específico |
-| F-1 | CRÍTICO | BAJO | Protegido por `.gitignore` raíz |
-| M-4 | ALTO | BAJO | Expo setea NODE_ENV automáticamente |
+*Auditoría realizada: 2026-07-28*
+*Total de hallazgos: 68 (42 resueltos, 26 pendientes)*

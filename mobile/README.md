@@ -58,13 +58,38 @@ docker compose up -d mobile
 ## Pantallas
 
 | Ruta | Pantalla | Auth | Descripción |
-|------|----------|------|-------------|
-| `/` | LoginScreen | No | Login con documento + contraseña |
+|------|----------|:----:|-------------|
+| `/` | LoginScreen | No | Login con documento + contraseña (mín 6 chars) |
 | `/chat` | ChatScreen | Sí | Chatbot IA con menú interactivo |
 | `/reportar` | ReportScreen | Sí | Formulario de reporte de incidentes |
 | `/historial` | HistorialScreen | Sí | Lista de tickets con pull-to-refresh |
 | `/exito` | SuccessScreen | Sí | Confirmación post-reporte |
 | `/incidente/[id]` | DetailScreen | Sí | Detalle del incidente con comentarios |
+| `/ajustes` | SettingsScreen | Sí | Configuración y logout |
+
+## Estructura de Archivos
+
+```
+mobile/
+├── app/                    # Rutas (expo-router)
+│   ├── _layout.tsx        # Root layout con providers
+│   ├── index.tsx          # Login (redirect)
+│   ├── chat.tsx           # ChatScreen
+│   ├── reportar.tsx       # ReportScreen
+│   ├── historial.tsx      # HistorialScreen
+│   ├── exito.tsx          # SuccessScreen
+│   ├── incidente/[id].tsx # DetailScreen
+│   └── ajustes.tsx        # SettingsScreen
+├── src/
+│   ├── components/        # Componentes reutilizables
+│   ├── constants/
+│   │   └── colors.ts      # Colores centralizados (COLORS, URGENCIA_COLORS, etc.)
+│   ├── contexts/          # AuthContext, ConnectivityContext
+│   ├── screens/           # LoginScreen (usado por index.tsx)
+│   ├── services/          # api.ts, storage.ts, logger.ts
+│   └── types/             # Tipos TypeScript
+└── public/                # PWA (manifest.json, sw.js, index.html)
+```
 
 ## Desarrollo en vivo
 
@@ -105,18 +130,92 @@ EXPO_PUBLIC_API_URL=/api
 ## Seguridad de Sesiones
 
 - **Login envía `scope: "user"`** → Backend crea cookies `user_token`
+- **Todas las peticiones envían `X-Auth-Scope: user`** → Aislamiento completo
 - **Cookies httpOnly** con path `/` para que se envíen a `/api/*`
 - **CORS restringido** en nginx a `http://localhost:3000`
 - **No usa localStorage** en web (usa cookies como el dashboard)
+- **Logout aislado:** Cerrar sesión en mobile NO afecta dashboard
 
-## Cambios Recientes (2026-07-27)
+## Testing
 
-### Calidad
-- ✅ Logger unificado (reemplazados console.log/error con logger)
-- ✅ Sanitización de input en chat (previene XSS, límite 500 chars)
+```bash
+npm test              # Ejecutar tests
+npm run test:watch    # Tests en modo watch
+npm run test:coverage # Tests con cobertura
+```
+
+### Tests incluidos
+
+- **constants.test.ts** - Tests de constantes de color (URGENCIA_COLORS, ESTADO_LABELS, etc.)
+- **logger.test.ts** - Tests del servicio de logging
+
+### Configuración
+
+- Jest 29 con preset `@react-native/jest-preset`
+- Testing Library para React Native
+- Mocks automáticos para expo-router, expo-secure-store, etc.
+
+## Crash Reporting
+
+El sistema incluye un servicio de crash reporting que puede integrarse con Sentry:
+
+```bash
+# Configurar DSN de Sentry en mobile/.env
+EXPO_PUBLIC_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project
+```
+
+### Características
+
+- **ErrorBoundary** - Captura errores de React y muestra pantalla de error
+- **Crash Reporting** - Envía reportes a Sentry (si está configurado)
+- **Device Info** - Incluye modelo, OS, versión de app
+- **User Context** - Rastrea usuario actual para debugging
+- **Breadcrumbs** - Registro de navegación antes del crash
+
+Si no hay DSN configurado, los errores se loguean localmente.
+
+## Constantes de Color
+
+Centralizadas en `src/constants/colors.ts`:
+
+```typescript
+// Uso en componentes
+import { COLORS, URGENCIA_COLORS, ESTADO_COLORS, ESTADO_LABELS } from "../src/constants/colors";
+
+// COLORS: primary, primaryLight, textDark, background, error, success, etc.
+// URGENCIA_COLORS: alta (#EF4444), media (#F59E0B), baja (#22C55E)
+// ESTADO_COLORS: pendiente (#3B82F6), en_proceso (#F59E0B), resuelto (#22C55E)
+```
+
+## Estado de Calidad
+
+| Aspecto | Estado |
+|---------|:------:|
+| TypeScript | ✅ 0 errores |
+| Tests | ✅ 14/14 pasando |
+| Error Boundaries | ✅ Implementados |
+| Crash Reporting | ✅ Implementado |
+| Sesiones Aisladas | ✅ Funcionando |
+| PWA | ✅ Completa |
+| Dark Mode | ❌ Pendiente (6 pantallas) |
+
+---
+
+## Cambios Recientes (2026-07-28)
+
+### Verificado
+- ✅ Password mínimo 6 chars en login (corregido de 4 a 6)
 - ✅ Constantes de color centralizadas en `src/constants/colors.ts`
-- ✅ Estilos consistentes usando constantes COLORS
-- ✅ Colores divergentes corregidos (en_proceso unificado)
+- ✅ `historial.tsx` usa imports de COLORS (verificado)
+- ✅ `incidente/[id].tsx` usa imports de COLORS (verificado)
+- ✅ `isReady` state tiene propósito: controla render post-splash screen
+- ✅ Logger unificado (reemplazados console.log/error)
+- ✅ Sanitización de input en chat (previene XSS, límite 500 chars)
+
+### Pendiente
+- ❌ Sin Error Boundaries (crash = pantalla blanca)
+- ❌ Sin tests unitarios
+- ❌ Sin Sentry/Crashlytics
 
 ### PWA Completa (2026-07-24)
 - ✅ manifest.json, service worker, meta tags

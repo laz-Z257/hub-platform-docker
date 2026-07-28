@@ -6,12 +6,14 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-hub_platform}
-    ports:
-      - "5432:5432"
+    # No exponer puerto en producción — backend se conecta por red interna Docker
+    # Para acceso local con DBeaver/pgAdmin, descomentar:
+    # ports:
+    #   - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hub_admin -d hub_platform"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-hub_platform}"]
       interval: 5s
       timeout: 3s
       retries: 5

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
-import { setTokenCookies, clearAllTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
+import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
 import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
@@ -216,6 +216,8 @@ export async function me(req: Request, res: Response): Promise<void> {
  * @throws 500 - Error interno del servidor
  */
 export async function refresh(req: Request, res: Response): Promise<void> {
+  const scope = detectRefreshScope(req);
+
   try {
     const refreshToken = extractRefreshToken(req);
 
@@ -233,12 +235,11 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user || user.token_version !== payload.tokenVersion) {
-      clearAllTokenCookies(res);
+      // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
+      clearTokenCookies(res, scope);
       res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
       return;
     }
-
-    const scope = detectRefreshScope(req);
 
     setTokenCookies(res, {
       userId: payload.userId,
@@ -252,32 +253,27 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
     res.json({ ok: true, csrfToken });
   } catch {
-    clearAllTokenCookies(res);
+    // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
+    clearTokenCookies(res, scope);
     res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
   }
 }
 
 /**
  * Cierra la sesión del usuario
- * - Incrementa token_version para invalidar todos los tokens activos
- * - Limpia todas las cookies de autenticación
+ * - Detecta el scope (admin/user) desde header X-Auth-Scope
+ * - Solo limpia las cookies del scope correspondiente
+ * - NUNCA limpia cookies de otros scopes (sesiones aisladas)
  * 
- * Nota: Si el token es inválido, igual limpia las cookies
+ * Sesiones aisladas: logout en mobile no afecta dashboard y viceversa
  */
 export async function logout(req: Request, res: Response): Promise<void> {
-  try {
-    const token = extractToken(req);
+  const headerScope = req.headers["x-auth-scope"];
+  const scope: AuthScope | undefined = headerScope === "admin" || headerScope === "user" ? headerScope : undefined;
 
-    if (token) {
-      const payload = verifyToken(token);
-      await db
-        .update(users)
-        .set({ token_version: sql`token_version + 1` })
-        .where(eq(users.id, payload.userId));
-    }
-  } catch {
-    // Token invalid/expired — still clear cookies
-  }
-  clearAllTokenCookies(res);
+  // Siempre limpiar solo las cookies del scope correspondiente
+  // NUNCA clearAllTokenCookies — destruiría sesiones de otros scopes
+  clearTokenCookies(res, scope);
+  
   res.json({ ok: true });
 }

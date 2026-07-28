@@ -35,7 +35,7 @@ export default function LoginScreen() {
     const newErrors: FormErrors = {};
     if (!form.documento.trim()) newErrors.documento = "El documento es requerido";
     if (!form.contrasena.trim()) newErrors.contrasena = "La contraseña es requerida";
-    else if (form.contrasena.length < 4) newErrors.contrasena = "Mínimo 4 caracteres";
+    else if (form.contrasena.length < 6) newErrors.contrasena = "Mínimo 6 caracteres";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

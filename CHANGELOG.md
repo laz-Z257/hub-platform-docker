@@ -1,5 +1,133 @@
 # Changelog
 
+## 2026-07-28 — Mobile: TypeScript limpio al 100%
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Fix TypeScript Input.tsx** | `src/components/Input.tsx` | Reemplazados `name` e `id` (HTML) por `testID` (React Native) |
+| **Fix TypeScript SafeAreaProviderWrapper** | `src/components/SafeAreaProviderWrapper.tsx` | Agregado type assertion para compatibilidad de tipos |
+
+### Estado Mobile
+
+- ✅ TypeScript: 0 errores
+- ✅ Tests: 14/14 pasando
+- ✅ Error Boundaries: Implementados
+- ✅ Crash Reporting: Implementado
+- ✅ Sesiones aisladas: Funcionando
+
+---
+
+## 2026-07-28 — Mobile: Error Boundaries, Tests y Crash Reporting
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Error Boundary** | `mobile/src/components/ErrorBoundary.tsx`, `mobile/app/_layout.tsx` | Captura errores de React, muestra pantalla de error, permite recargar |
+| **Crash Reporting Service** | `mobile/src/services/crashReporting.ts` | Servicio compatible con Sentry, captura errores con device info |
+| **Tests Unitarios** | `mobile/__tests__/`, `mobile/jest.config.js` | Jest 29 + Testing Library, 14 tests pasando |
+| **Crash Reporting integrado** | `mobile/src/components/ErrorBoundary.tsx` | ErrorBoundary envía reportes a Sentry si está configurado |
+
+### Detalles
+
+**Error Boundary:**
+- Wrapper en `_layout.tsx` que captura errores de toda la app
+- Pantalla de error con opciones: "Ir al Inicio" y "Recargar"
+- En modo DEV muestra detalles del error
+- Loguea errores con logger + crash reporting
+
+**Crash Reporting:**
+- Servicio compatible con Sentry (configurable via `EXPO_PUBLIC_SENTRY_DSN`)
+- Captura: error message, stack trace, component stack, device info
+- Device info: modelo, OS, versión de app
+- Si no hay DSN, solo loguea localmente
+- Integrado con ErrorBoundary
+
+**Tests:**
+- Jest 29 con preset `@react-native/jest-preset`
+- Testing Library para React Native
+- Tests de constantes de color (URGENCIA_COLORS, ESTADO_COLORS, etc.)
+- Tests de logger service
+- 14 tests pasando
+
+---
+
+## 2026-07-28 — Fix sesiones aisladas (logout + refresh)
+
+### Bug Fix
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Logout aislado por scope** | `backend/src/modules/auth/auth.controller.ts` | Logout solo limpia cookies del scope (admin/user), NUNCA todas |
+| **Refresh aislado por scope** | `backend/src/modules/auth/auth.controller.ts` | Refresh solo limpia cookies del scope si falla, NUNCA todas |
+| **Mobile envía X-Auth-Scope** | `mobile/src/services/api.ts` | Header `X-Auth-Scope: user` en todas las peticiones y refresh |
+
+### Problema resuelto
+
+**Síntoma:** Cerrar sesión en mobile también cerraba la sesión del dashboard.
+
+**Causa raíz:** Mobile y dashboard comparten cookies en `localhost` (mismo dominio, distinto puerto). El backend usaba `clearAllTokenCookies()` que borraba admin_token TAMBIÉN.
+
+**Dónde ocurría:**
+1. `logout()` catch → `clearAllTokenCookies()` → borraba admin_token
+2. `refresh()` fail → `clearAllTokenCookies()` → borraba admin_token
+3. `refresh()` token_version mismatch → `clearAllTokenCookies()` → borraba admin_token
+
+**Solución:**
+- `logout()` ahora usa `clearTokenCookies(res, scope)` — solo limpia user_* o admin_*
+- `refresh()` ahora usa `clearTokenCookies(res, scope)` — solo limpia user_* o admin_*
+- `clearAllTokenCookies` ya NO se usa en auth.controller.ts
+- Mobile envía `X-Auth-Scope: user` para que el backend sepa qué scope limpiar
+
+---
+
+## 2026-07-28 — 3 fixes críticos de seguridad
+
+### Seguridad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Puerto 5432 no expuesto** | `docker-compose.yml:10` | Postgres ya no es accesible desde el host. Backend se conecta por red interna Docker |
+| **Healthcheck parametrizado** | `docker-compose.yml:14` | Usa `${POSTGRES_USER}` y `${POSTGRES_DB}` en vez de valores hardcodeados |
+| **Middleware valida JWT** | `web/src/middleware.ts` | Verifica estructura y expiración del token (sin validar firma). Previene acceso con cookies falsas |
+
+### Detalles del middleware JWT
+
+- Decodifica JWT (base64url) sin verificar firma (eso lo hace el backend)
+- Verifica 3 partes separadas por `.`
+- Verifica claim `exp` > timestamp actual
+- Si token inválido/expirado → redirect a login
+- Si token válido → acceso normal
+- Evita loops de redirect: token inválido en /login NO redirecta a dashboard
+
+---
+
+## 2026-07-28 — Auditoría completa + fixes de seguridad
+
+### Auditoría
+
+| Cambio | Detalle |
+|--------|---------|
+| **Auditoría completa del código** | Revisión línea por línea de backend, frontend, mobile e infraestructura |
+| **PENDIENTES.md actualizado** | 42 resueltos verificados, 26 pendientes reales identificados |
+| **READMEs actualizados** | Todos los READMEs sincronizados con estado actual |
+
+### Backend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Constraint CHECK en ratings** | `backend/src/db/schema.ts` | Agregado `check("ratings_puntuacion_check", ...)` para validar 1-5 en BD |
+
+### Mobile
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Password mínimo 6 chars** | `mobile/src/screens/LoginScreen.tsx:38` | Corregido de 4 a 6 caracteres (consistente con backend) |
+
+---
+
 ## 2026-07-27 — Fix isReady state en mobile
 
 ### Mobile

@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-27
+> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-28
 
 ---
 
@@ -13,7 +13,7 @@ hub-platform-docker/
 ├── backend/          # API REST (Express + TypeScript + Drizzle ORM + PostgreSQL)
 ├── web/              # Dashboard Admin (Next.js 15 + React 19 + TailwindCSS)
 ├── mobile/           # App Móvil PWA (Expo SDK 56 + React Native + NativeWind)
-├── ota-server/       # Servidor nginx para PWA mobile + proxy API
+├── ota-server/       # Servidor nginx para PWA mobile + proxy API (deshabilitado)
 ├── shared/           # Tipos TypeScript compartidos (@hub/shared)
 ├── docker-compose.yml
 ├── render.yaml       # Deploy backend en Render
@@ -43,7 +43,7 @@ hub-platform-docker/
 | **api** | Express.js + TypeScript | 3001 | Backend REST API con sesiones aisladas |
 | **web** | Next.js 15 (React 19) | 3000 | Dashboard administrativo |
 | **mobile** | Expo SDK 56 + PWA | 8081 | App móvil PWA instalable |
-| **ota-server** | nginx Alpine | 3002 | Proxy API + PWA (opcional) |
+| **ota-server** | nginx Alpine | 3002 | Proxy API + PWA (deshabilitado) |
 
 ---
 
@@ -113,11 +113,11 @@ backend/src/
 ├── index.ts              # App Express
 ├── config/env.ts         # Variables de entorno tipadas
 ├── db/
-│   ├── schema.ts         # 8 tablas con índices
+│   ├── schema.ts         # 8 tablas con índices + constraints
 │   ├── migrate.ts        # Migraciones Drizzle
 │   └── seed.ts           # Admin + ~73 puntos de venta
 ├── middlewares/
-│   ├── auth.ts           # JWT + bloqueo de usuarios
+│   ├── auth.ts           # JWT + bloqueo de usuarios + token version
 │   ├── admin.ts          # Restricción admin/tecnico
 │   ├── validate.ts       # Zod validation
 │   ├── csrf.ts           # CSRF protection
@@ -127,7 +127,7 @@ backend/src/
     ├── auth/             # Login, register, logout, refresh
     ├── incidents/        # CRUD tickets + comentarios
     ├── chat/             # Chatbot (7 intenciones)
-    ├── ratings/          # Calificaciones 1-5
+    ├── ratings/          # Calificaciones 1-5 con constraint CHECK
     ├── users/            # Gestión usuarios
     ├── dashboard/        # KPIs y estadísticas
     ├── push/             # Notificaciones push
@@ -155,16 +155,17 @@ backend/src/
 | POST | `/api/incidents/:id/comments` | Sí | No | Agregar comentario |
 | GET | `/api/incidents/agentes` | Sí | Sí | Lista técnicos |
 | GET | `/api/incidents/stats` | Sí | Sí | Estadísticas |
-| GET | `/api/incidents/export` | Sí | Sí | Datos para exportar |
+| GET | `/api/incidents/export-data` | Sí | Sí | Datos para exportar |
 | GET | `/api/incidents/unread-count` | Sí | Sí | No leídos |
 | PATCH | `/api/incidents/mark-seen` | Sí | Sí | Marcar vistos |
 | POST | `/api/chat/message` | Sí | No | Mensaje al bot |
-| GET | `/api/chat/history` | Sí | No | Historial chat |
+| GET | `/api/chat/history` | Sí | No | Historial chat (paginado) |
 | GET | `/api/dashboard/kpis` | Sí | Sí | KPIs |
 | GET | `/api/dashboard/summary` | Sí | Sí | Resumen |
 | POST | `/api/ratings/:id` | Sí | No | Calificar incidente |
 | GET | `/api/ratings/my-ratings` | Sí | No | Mis calificaciones |
 | GET | `/api/ratings` | Sí | Sí | Stats admin |
+| GET | `/api/ratings/stats` | No | No | Stats públicas |
 | GET | `/api/users` | Sí | Sí | Listar usuarios |
 | POST | `/api/users` | Sí | Sí | Crear usuario |
 | PATCH | `/api/users/:id` | Sí | Sí | Actualizar |
@@ -175,7 +176,7 @@ backend/src/
 | GET | `/api/settings` | Sí | Sí | Config empresa |
 | PATCH | `/api/settings` | Sí | Sí | Actualizar config |
 | POST | `/api/upload` | Sí | Sí | Subir imagen |
-| GET | `/api/metrics` | No | No | Métricas |
+| GET | `/api/metrics` | Sí | Sí | Métricas (protegido) |
 
 ### Roles
 
@@ -321,9 +322,10 @@ EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
 El sistema implementa **sesiones aisladas** entre dashboard y mobile:
 
 - **Dashboard** usa cookies `admin_token` con header `X-Auth-Scope: admin`
-- **Mobile** usa cookies `user_token` con `scope: "user"` en login
+- **Mobile** usa cookies `user_token` con header `X-Auth-Scope: user`
 - **Cookies** tienen path `/` para que el navegador las envíe a `/api/*`
 - **Prioridad** de extracción: `admin_token` > `user_token` > `token`
+- **Logout aislado:** Cerrar sesión en mobile NO cierra dashboard (y viceversa)
 
 Esto evita conflictos cuando se usan ambas aplicaciones simultáneamente.
 
@@ -375,32 +377,36 @@ cd web && npm test
 |---------|-----------|
 | `README.md` | Este archivo |
 | `CHANGELOG.md` | Historial de cambios |
-| `PENDIENTES.md` | 11 resueltos, 57 pendientes |
+| `PENDIENTES.md` | Auditoría de pendientes |
 | `DISTRIBUCION-APK.md` | Guía distribución APK |
 
 ---
 
-## Cambios Recientes (2026-07-27)
+## Estado de Calidad (2026-07-28)
 
 ### ✅ Implementado
 
 | Feature | Descripción |
 |---------|-------------|
-| **Fix Ratings Mobile** | Verifica estado del ticket antes de calificar |
+| **Sesiones Aisladas** | Cookies con scope (admin_token vs user_token) |
+| **PWA Completa** | manifest.json, service worker, meta tags |
 | **Seguridad Backend** | /uploads y /metrics protegidos con auth |
-| **Password Policy** | Login exige mínimo 6 chars (igual que register) |
+| **Password Policy** | Login y register exigen mínimo 6 chars |
 | **Push Token Security** | Verifica owner antes de reasignar |
-| **Performance** | ultima_actividad throttle cada 5 min |
+| **Ratings Constraint** | CHECK constraint en BD (1-5) |
+| **Performance** | N+1 query optimizado, ultima_actividad throttle |
 | **updateUser** | Verifica documento duplicado (409) |
 | **Mobile PWA** | Logger unificado, sanitización input, constantes de color |
-| **Dashboard** | Botón "Editar" removido en gestión de usuarios |
+| **Chat History** | Límite 200, paginación con offset |
 
-### 📊 Estado de Calidad
+### 📊 Métricas
 
-- **68 hallazgos totales** → 11 resueltos, 57 pendientes
-- **Tests:** 105 pasando en backend
+- **69 hallazgos originales** → 48 resueltos, 21 pendientes
+- **Tests:** 105 pasando en backend, 14 pasando en mobile
 - **TypeScript:** Compila sin errores en backend y web
 - **Docker:** Todos los servicios corriendo y saludables
+- **Seguridad:** 0 pendientes críticos
+- **Mobile:** Error Boundaries + Crash Reporting + Tests implementados
 
 ---
 
