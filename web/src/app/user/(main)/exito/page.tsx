@@ -2,17 +2,15 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { formatTicketId } from "@/lib/utils";
 import { Check, Copy, MessageSquare } from "lucide-react";
 
-function shortTicketId(id: string): string {
-  return `#TK-${id.replace(/-/g, "").slice(-8).toUpperCase()}`;
-}
 
 export default function ExitoPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const ticketId = searchParams.get("ticketId") || "";
-  const userId = ticketId ? shortTicketId(ticketId) : "Ticket no disponible";
+  const userId = ticketId ? formatTicketId(ticketId) : "Ticket no disponible";
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {

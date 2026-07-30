@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ClipboardList, CheckCircle, Clock, Activity, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ import AnalyticsMetrics from "@/components/AnalyticsMetrics";
 import AnalyticsFilters, { type FilterPreset } from "@/components/AnalyticsFilters";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange, getDateRange } from "@/lib/utils";
 import type { KpiResponse } from "@hub/shared/types/api";
 
 function ChartSkeleton() {
@@ -24,39 +24,6 @@ function ChartSkeleton() {
   );
 }
 
-function getDefaultRange(preset: FilterPreset): { start: string; end: string } {
-  const today = new Date();
-  const end = today.toISOString().split("T")[0];
-  let start: string;
-
-  switch (preset) {
-    case "today":
-      start = end;
-      break;
-    case "week": {
-      const monday = new Date(today);
-      const day = monday.getDay();
-      const diff = day === 0 ? 6 : day - 1;
-      monday.setDate(monday.getDate() - diff);
-      start = monday.toISOString().split("T")[0];
-      break;
-    }
-    case "month": {
-      const first = new Date(today.getFullYear(), today.getMonth(), 1);
-      start = first.toISOString().split("T")[0];
-      break;
-    }
-    case "30d":
-    default: {
-      const thirtyAgo = new Date(today);
-      thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-      start = thirtyAgo.toISOString().split("T")[0];
-      break;
-    }
-  }
-
-  return { start, end };
-}
 
 
 export default function AnalyticsPage() {
@@ -64,6 +31,7 @@ export default function AnalyticsPage() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const fetchIdRef = useRef(0);
   const [appliedRange, setAppliedRange] = useState<{
     start: string;
     end: string;
@@ -87,6 +55,7 @@ export default function AnalyticsPage() {
   }, []);
 
   const fetchData = useCallback((start: string, end: string, agente?: string) => {
+    const id = ++fetchIdRef.current;
     setChartsLoading(true);
     const params = new URLSearchParams({ start, end });
     if (agente) params.set("agente", agente);
@@ -96,6 +65,7 @@ export default function AnalyticsPage() {
       api.get<KpiResponse>(`/dashboard/kpis${qs}`),
       api.get<{ timeline: { fecha: string; incidentes: number; resueltos: number }[]; distribution: DonutDataPoint[]; statusCounts: { pendientes: number; enProceso: number; resueltos: number } }>(`/incidents/stats${qs}`)
     ]).then(([kpiResult, statsResult]) => {
+      if (id !== fetchIdRef.current) return;
       if (kpiResult.status === 'fulfilled') {
         const kpis = kpiResult.value;
         setMetrics([
@@ -132,7 +102,7 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    const range = getDefaultRange("30d");
+    const range = getDateRange("30d");
     fetchData(range.start, range.end);
   }, [fetchData]);
 
@@ -141,7 +111,7 @@ export default function AnalyticsPage() {
       setFilter("custom");
       setShowDatePicker(true);
       if (!startDate) {
-        const range = getDefaultRange("30d");
+        const range = getDateRange("30d");
         setStartDate(range.start);
         setEndDate(range.end);
       }
@@ -149,7 +119,7 @@ export default function AnalyticsPage() {
       setFilter(newFilter);
       setShowDatePicker(false);
       setAppliedRange(null);
-      const range = getDefaultRange(newFilter);
+      const range = getDateRange(newFilter);
       setStartDate(range.start);
       setEndDate(range.end);
       fetchData(range.start, range.end, selectedAgente);
@@ -158,7 +128,7 @@ export default function AnalyticsPage() {
 
   const handleAgentChange = useCallback((agente: string) => {
     setSelectedAgente(agente);
-    const range = filter === "custom" && appliedRange ? appliedRange : getDefaultRange(filter);
+    const range = filter === "custom" && appliedRange ? appliedRange : getDateRange(filter);
     fetchData(range.start, range.end, agente || undefined);
   }, [filter, appliedRange, fetchData]);
 
@@ -172,7 +142,7 @@ export default function AnalyticsPage() {
   }, [startDate, endDate, selectedAgente, fetchData]);
 
   const handleCancelRange = useCallback(() => {
-    const range = getDefaultRange("30d");
+    const range = getDateRange("30d");
     setShowDatePicker(false);
     setFilter("30d");
     setAppliedRange(null);

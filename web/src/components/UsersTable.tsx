@@ -4,24 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 import type { ApiUser } from "@hub/shared/types/user";
 import { ROLE_BADGES, ESTADO_BADGES } from "@/lib/styles";
-
-function getInitials(user: ApiUser): string {
-  const name = hasName(user) ? user.nombre : user.documento;
-  return name
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function hasName(user: ApiUser): boolean {
-  return user.nombre !== user.documento;
-}
-
-function displayName(user: ApiUser): string {
-  return hasName(user) ? user.nombre : user.documento;
-}
+import { getInitials, hasName, displayName } from "@/lib/utils";
 
 function formatLastActivity(date: string | null): string {
   if (!date) return "Sin actividad";
@@ -49,12 +32,13 @@ function UserActionsMenu({ user, onEdit, onToggleStatus, onResetPassword }: { us
   const isAdmin = user.rol === "admin" || user.rol === "tecnico";
 
   useEffect(() => {
+    if (!open) return;
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [open]);
 
   if (isAdmin) {
     return (
@@ -159,7 +143,7 @@ export default function UsersTable({ users, onEdit, onToggleStatus, onResetPassw
             <span className="text-[13px] text-gray-500 dark:text-gray-400 font-inter">
               {user.estado === "bloqueado" && user.bloqueado_por_documento
                 ? user.bloqueado_por_documento
-                : "—"}
+                : "\u2014"}
             </span>
           </div>
 

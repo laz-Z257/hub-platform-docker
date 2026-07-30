@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db } from "../../db";
 import { companySettings } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -30,33 +30,24 @@ export async function updateSettings(
   try {
     const { nombre, contribuyente, direccion } = req.body;
 
-    const [existing] = await db
-      .select({ id: companySettings.id })
-      .from(companySettings)
-      .limit(1);
-
-    let result: typeof companySettings.$inferSelect;
-    if (existing) {
-      [result] = await db
-        .update(companySettings)
-        .set({
-          nombre: nombre ?? "",
-          contribuyente: contribuyente ?? "",
-          direccion: direccion ?? "",
+    const [result] = await db
+      .insert(companySettings)
+      .values({
+        key: "default",
+        nombre: nombre ?? "",
+        contribuyente: contribuyente ?? "",
+        direccion: direccion ?? "",
+      })
+      .onConflictDoUpdate({
+        target: companySettings.key,
+        set: {
+          nombre: sql`excluded.nombre`,
+          contribuyente: sql`excluded.contribuyente`,
+          direccion: sql`excluded.direccion`,
           updated_at: new Date(),
-        })
-        .where(eq(companySettings.id, existing.id))
-        .returning();
-    } else {
-      [result] = await db
-        .insert(companySettings)
-        .values({
-          nombre: nombre ?? "",
-          contribuyente: contribuyente ?? "",
-          direccion: direccion ?? "",
-        })
-        .returning();
-    }
+        },
+      })
+      .returning();
 
     res.json(result);
   } catch (error) {

@@ -103,8 +103,8 @@ export default function LoginScreen() {
             placeholder="Ingrese su documento"
             value={form.documento}
             onChangeText={(text) => {
-              setForm({ ...form, documento: text });
-              if (errors.documento) setErrors({ ...errors, documento: undefined });
+              setForm((prev) => ({ ...prev, documento: text }));
+              setErrors((prev) => prev.documento ? { ...prev, documento: undefined } : prev);
               if (loginError) setLoginError("");
             }}
             error={errors.documento}
@@ -117,8 +117,8 @@ export default function LoginScreen() {
             isPassword
             value={form.contrasena}
             onChangeText={(text) => {
-              setForm({ ...form, contrasena: text });
-              if (errors.contrasena) setErrors({ ...errors, contrasena: undefined });
+              setForm((prev) => ({ ...prev, contrasena: text }));
+              setErrors((prev) => prev.contrasena ? { ...prev, contrasena: undefined } : prev);
               if (loginError) setLoginError("");
             }}
             error={errors.contrasena}

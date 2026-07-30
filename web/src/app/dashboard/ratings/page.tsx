@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import type { RatingStats } from "@hub/shared/types/rating";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import RatingSummaryCards from "@/components/RatingSummaryCards";
 import RatingCharts from "@/components/RatingCharts";
 import RecentRatingsTable from "@/components/RecentRatingsTable";
@@ -16,8 +17,8 @@ export default function RatingsPage() {
   const [allPvNames, setAllPvNames] = useState<string[]>([]);
 
   useEffect(() => {
-    api.get<RatingStats>("/ratings").then(setStats).catch(() => {}).finally(() => setLoading(false));
-    api.get<{ nombre: string }[]>("/puntos-venta").then((list) => setAllPvNames(list.map((p) => p.nombre))).catch(() => {});
+    api.get<RatingStats>("/ratings").then(setStats).catch((err) => logger.error("Error fetching ratings", { error: (err as Error).message })).finally(() => setLoading(false));
+    api.get<{ nombre: string }[]>("/puntos-venta").then((list) => setAllPvNames(list.map((p) => p.nombre))).catch((err) => logger.error("Error fetching puntos-venta", { error: (err as Error).message }));
   }, []);
 
   if (loading) return <div className="bg-[#F7F8FC] dark:bg-gray-950 min-h-screen p-8 flex items-center justify-center"><p className="text-[#6B7280] text-sm font-inter">Cargando...</p></div>;

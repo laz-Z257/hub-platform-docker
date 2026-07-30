@@ -6,19 +6,10 @@ const API_URL = "/api";
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 let csrfToken: string | null = null;
-let authToken: string | null = null;
 let currentScope: "admin" | "user" | null = null;
 
 export function setCsrfToken(token: string | null) {
   csrfToken = token;
-}
-
-export function setAuthToken(token: string) {
-  authToken = token;
-}
-
-export function clearAuthToken() {
-  authToken = null;
 }
 
 export function setAuthScope(scope: "admin" | "user" | null) {
@@ -38,10 +29,6 @@ function requestHeaders(options: RequestInit): Record<string, string> {
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`;
-  }
-
   if (currentScope) {
     headers["X-Auth-Scope"] = currentScope;
   }
@@ -58,7 +45,6 @@ async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
   const headers: Record<string, string> = {};
-  if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
   if (currentScope) headers["X-Auth-Scope"] = currentScope;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",

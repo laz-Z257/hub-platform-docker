@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | 2026-07-28
+> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | Soft Deletes | 2026-07-30
 
 ---
 
@@ -16,7 +16,7 @@ hub-platform-docker/
 ├── ota-server/       # Servidor nginx para PWA mobile + proxy API (deshabilitado)
 ├── shared/           # Tipos TypeScript compartidos (@hub/shared)
 ├── docker-compose.yml
-├── render.yaml       # Deploy backend en Render
+├── render.yaml       # Deploy backend en Render (alternativo)
 └── .env.example
 ```
 
@@ -47,7 +47,136 @@ hub-platform-docker/
 
 ---
 
-## Quick Start
+## Deploy a Servidor Docker (VPS)
+
+### 1. Preparar el servidor
+
+```bash
+# Requisitos: Docker + Docker Compose
+sudo apt install docker.io docker-compose-v2
+git clone <tu-repo> hub-platform && cd hub-platform
+```
+
+### 2. Configurar dominio y variables
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+**Variables REQUERIDAS (generar con `openssl rand`):**
+
+| Variable | Ejemplo | Cómo generar |
+|----------|---------|-------------|
+| `POSTGRES_PASSWORD` | `B3kX...` | `openssl rand -base64 24` |
+| `JWT_SECRET` | `a1b2...` | `openssl rand -hex 32` |
+| `JWT_REFRESH_SECRET` | `c3d4...` | `openssl rand -hex 32` |
+| `SEED_ADMIN_PASSWORD` | `e5f6...` | `openssl rand -hex 16` |
+| `CORS_ORIGIN` | `https://admin.tudominio.com,https://app.tudominio.com` | Tu dominio |
+| `DATABASE_URL` | `postgres://hub_admin:<password>@postgres:5432/hub_platform` | Misma pass de arriba |
+
+### 3. Configurar Nginx reverse proxy (en el servidor)
+
+Crea `/etc/nginx/sites-available/hub-platform`:
+
+```nginx
+# Dashboard Web
+server {
+    listen 80;
+    server_name admin.tudominio.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name admin.tudominio.com;
+    ssl_certificate /etc/letsencrypt/live/admin.tudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/admin.tudominio.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Mobile PWA
+server {
+    listen 443 ssl;
+    server_name app.tudominio.com;
+    ssl_certificate /etc/letsencrypt/live/app.tudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.tudominio.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+```bash
+# Obtener SSL
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d admin.tudominio.com -d app.tudominio.com
+
+# Habilitar sitio
+sudo ln -s /etc/nginx/sites-available/hub-platform /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 4. Ajustar variables para producción
+
+En el `.env` del servidor:
+
+```bash
+NODE_ENV=production
+CORS_ORIGIN=https://admin.tudominio.com,https://app.tudominio.com
+NEXT_PUBLIC_API_URL=http://api:3001/api       # Docker interno (no cambiar)
+```
+
+En `mobile/.env` (para build PWA):
+
+```bash
+EXPO_PUBLIC_API_URL=https://api.tudominio.com/api
+```
+
+> ⚠️ Si usas solo la PWA (sin APK nativa), la URL del API se resuelve desde el dominio `app.tudominio.com` porque el nginx del contenedor mobile hace proxy a `api:3001`. No necesitas un subdominio separado para la API.
+
+### 5. Iniciar todo
+
+```bash
+# Construir imágenes (LENTO la primera vez ~30 min)
+docker compose build
+
+# Iniciar
+docker compose up -d
+
+# Verificar salud
+docker compose ps
+curl http://localhost:3001/api/health
+curl -sL http://localhost:3000 | head -1
+```
+
+### 6. Post-deploy
+
+```bash
+# Ver logs
+docker compose logs -f --tail=50
+
+# Forzar rebuild de un servicio
+docker compose build api && docker compose up -d api --force-recreate
+
+# Backup DB
+docker exec hub-postgres pg_dump -U hub_admin hub_platform > backup_$(date +%Y%m%d).sql
+```
+
+---
+
+## Quick Start (Desarrollo Local)
 
 ```bash
 # 1. Clonar y configurar
@@ -284,24 +413,30 @@ Ver [DISTRIBUCION-APK.md](./DISTRIBUCION-APK.md) para distribución.
 ```bash
 # PostgreSQL - GENERAR CON: openssl rand -base64 24
 POSTGRES_USER=hub_admin
-POSTGRES_PASSWORD=<generar_seguro>
+POSTGRES_PASSWORD=<generar>
 DATABASE_URL=postgres://hub_admin:<password>@postgres:5432/hub_platform
 
 # JWT - GENERAR CON: openssl rand -hex 32
-JWT_SECRET=<generar_seguro>
-JWT_REFRESH_SECRET=<generar_seguro>
+JWT_SECRET=<generar>
+JWT_REFRESH_SECRET=<generar>
 
 # Server
 NODE_ENV=development
-PORT=3001
 CORS_ORIGIN=http://localhost:3000,http://localhost:8081
 
-# Security
-MAX_LOGIN_ATTEMPTS=5
-SEED_ADMIN_PASSWORD=<generar_seguro>
+# Opcionales (tienen defaults)
+# PORT=3001
+# MAX_LOGIN_ATTEMPTS=5
+# JWT_EXPIRES_IN=24h
 
-# External systems
+# Admin password (si no se define, se genera una aleatoria en seed)
+SEED_ADMIN_PASSWORD=<generar>
+
+# Web app
+NEXT_PUBLIC_API_URL=http://api:3001/api    # Docker interno
 NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100
+# NEXT_PUBLIC_SUPPORT_WHATSAPP=https://wa.me/573000000000
+# NEXT_PUBLIC_SUPPORT_PHONE=+57 300 000 0000
 ```
 
 ### mobile/.env
@@ -379,10 +514,11 @@ cd web && npm test
 | `CHANGELOG.md` | Historial de cambios |
 | `PENDIENTES.md` | Auditoría de pendientes |
 | `DISTRIBUCION-APK.md` | Guía distribución APK |
+| `backend/openapi.yaml` | Documentación API REST (OpenAPI 3.0) |
 
 ---
 
-## Estado de Calidad (2026-07-28)
+## Estado de Calidad (2026-07-30)
 
 ### ✅ Implementado
 
@@ -398,15 +534,22 @@ cd web && npm test
 | **updateUser** | Verifica documento duplicado (409) |
 | **Mobile PWA** | Logger unificado, sanitización input, constantes de color |
 | **Chat History** | Límite 200, paginación con offset |
+| **Soft Deletes** | Campo `deleted_at` en users e incidents |
+| **UPSERT Atómico** | Settings sin race conditions |
+| **JWT Solo Cookies** | Token eliminado del body, solo httpOnly cookies |
+| **Documentación API** | OpenAPI/Swagger completo |
 
 ### 📊 Métricas
 
-- **69 hallazgos originales** → 48 resueltos, 21 pendientes
-- **Tests:** 105 pasando en backend, 14 pasando en mobile
+- **72 hallazgos originales** → 72 resueltos, 0 pendientes ✅
+- **Tests:** 146 pasando en backend, 46 pasando en web, 14 pasando en mobile
 - **TypeScript:** Compila sin errores en backend y web
 - **Docker:** Todos los servicios corriendo y saludables
 - **Seguridad:** 0 pendientes críticos
 - **Mobile:** Error Boundaries + Crash Reporting + Tests implementados
+- **Dashboard:** Responsive implementado y reconstruido
+- **Frontend:** Dark mode completo, modales custom, helpers centralizados, tests de componentes
+- **Infra:** Métricas Prometheus, iconos PNG en PWA
 
 ---
 

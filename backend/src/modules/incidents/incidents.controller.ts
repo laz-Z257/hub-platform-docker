@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, sql } from "drizzle-orm";
+import { eq, ilike, or, and, desc, gte, lte, isNotNull, ne, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -45,7 +45,7 @@ export async function listIncidents(
     const estado = q.estado as string | undefined;
     const urgencia = q.urgencia as string | undefined;
 
-    const conditions = [];
+    const conditions = [isNull(incidents.deleted_at)];
 
     // Non-admin users only see their own incidents
     if (req.user!.rol !== "admin" && req.user!.rol !== "tecnico") {
@@ -67,7 +67,7 @@ export async function listIncidents(
           ilike(incidents.nombre, `%${search}%`),
           ilike(incidents.punto_venta, `%${search}%`),
           ilike(incidents.descripcion, `%${search}%`)
-        )
+        ) ?? sql`1=0`
       );
     }
 
@@ -122,7 +122,7 @@ export async function getIncident(
     const [incident] = await db
       .select()
       .from(incidents)
-      .where(eq(incidents.id, id))
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .limit(1);
 
     if (!incident) {
@@ -141,7 +141,7 @@ export async function getIncident(
       const [user] = await db
         .select({ nombre: users.nombre })
         .from(users)
-        .where(eq(users.id, incident.cerrado_por))
+        .where(and(eq(users.id, incident.cerrado_por), isNull(users.deleted_at)))
         .limit(1);
       cerrado_por_nombre = user?.nombre || null;
     }
@@ -177,7 +177,7 @@ export async function updateIncident(
       const [current] = await db
         .select({ estado: incidents.estado })
         .from(incidents)
-        .where(eq(incidents.id, id))
+        .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
         .limit(1);
 
       if (current) {
@@ -205,7 +205,7 @@ export async function updateIncident(
     const [updated] = await db
       .update(incidents)
       .set(updateData)
-      .where(eq(incidents.id, id))
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .returning();
 
     if (!updated) {
@@ -277,7 +277,7 @@ export async function addComment(
     const [incident] = await db
       .select()
       .from(incidents)
-      .where(eq(incidents.id, id))
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .limit(1);
 
     if (!incident) {
@@ -369,7 +369,7 @@ export async function exportIncidents(
     const limit = Math.min(parseInt(req.query.limit as string) || 5000, 10000);
     const page = Math.max(parseInt(req.query.page as string) || 1, 1);
     const offset = (page - 1) * limit;
-    const conditions = [];
+    const conditions = [isNull(incidents.deleted_at)];
 
     if (start) {
       conditions.push(gte(incidents.created_at, new Date(start)));
@@ -427,7 +427,7 @@ export async function getAgentes(
     const agentes = await db
       .selectDistinct({ agente: incidents.agente })
       .from(incidents)
-      .where(and(isNotNull(incidents.agente), ne(incidents.agente, "")));
+      .where(and(isNotNull(incidents.agente), ne(incidents.agente, ""), isNull(incidents.deleted_at)));
 
     res.json(agentes.map((a) => a.agente).filter(Boolean));
   } catch (error) {
@@ -445,7 +445,7 @@ export async function getStats(
     const start = q.start as string | undefined;
     const end = q.end as string | undefined;
     const agente = q.agente as string | undefined;
-    const conditions = [];
+    const conditions = [isNull(incidents.deleted_at)];
 
     if (agente) {
       conditions.push(eq(incidents.agente, agente));
@@ -542,7 +542,11 @@ export async function unreadCount(
     const [result] = await db
       .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(incidents)
-      .where(and(eq(incidents.visto_por_admin, false), eq(incidents.estado, "pendiente")));
+      .where(and(
+        eq(incidents.visto_por_admin, false),
+        eq(incidents.estado, "pendiente"),
+        isNull(incidents.deleted_at)
+      ));
 
     res.json({ count: result.count });
   } catch (error) {
@@ -559,7 +563,11 @@ export async function markSeen(
     await db
       .update(incidents)
       .set({ visto_por_admin: true })
-      .where(and(eq(incidents.visto_por_admin, false), eq(incidents.estado, "pendiente")));
+      .where(and(
+        eq(incidents.visto_por_admin, false),
+        eq(incidents.estado, "pendiente"),
+        isNull(incidents.deleted_at)
+      ));
 
     res.json({ message: "Marcados como vistos" });
   } catch (error) {
@@ -576,8 +584,9 @@ export async function deleteIncident(
     const { id } = req.params as { id: string };
 
     const [deleted] = await db
-      .delete(incidents)
-      .where(eq(incidents.id, id))
+      .update(incidents)
+      .set({ deleted_at: new Date() })
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .returning();
 
     if (!deleted) {

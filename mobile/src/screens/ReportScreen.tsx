@@ -31,6 +31,7 @@ import TextField from "../components/TextField";
 import TextAreaField from "../components/TextAreaField";
 import Logo from "../components/Logo";
 import { api } from "../services/api";
+import { logger } from "../services/logger";
 import { useAuth } from "../contexts/AuthContext";
 
 const AnimatedTouchable =
@@ -76,17 +77,21 @@ export default function ReportScreen() {
       setDocumento(user.documento);
     }
     api.get<{ items: { telefono: string }[]; total: number }>("/incidents?limit=1").then((data) => {
-      if (data?.items?.length > 0 && data.items[0].telefono) {
-        setTelefono(data.items[0].telefono);
+      if (data?.items?.length > 0) {
         setHasHistory(true);
-      } else if (data?.total && data.total > 0) {
-        setHasHistory(true);
+        if (data.items[0].telefono) {
+          setTelefono(data.items[0].telefono);
+        }
       }
-    }).catch(() => {});
+    }).catch((err) => {
+      logger.error("ReportScreen: error fetching incidents", { error: (err as Error).message });
+    });
 
     api.get<{ nombre: string }[]>("/puntos-venta").then((list) => {
       setPvList(list.map((p) => p.nombre));
-    }).catch(() => {});
+    }).catch((err) => {
+      logger.error("ReportScreen: error fetching puntos-venta", { error: (err as Error).message });
+    });
   }, [user]);
 
   const scale = useSharedValue(1);

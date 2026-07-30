@@ -49,13 +49,15 @@ export async function registerForPushNotifications(): Promise<string | null> {
 }
 
 export function setupNotificationListeners(handleNotification: (data: Record<string, unknown>) => void) {
-  // When app is in foreground
+  if (Platform.OS === "web") {
+    return () => {};
+  }
+
   const foregroundSub = Notifications.addNotificationReceivedListener((notification) => {
     const data = notification.request.content.data || {};
     handleNotification(data as Record<string, unknown>);
   });
 
-  // When user taps on notification (app in background/killed)
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
     const data = response.notification.request.content.data || {};
     handleNotification(data as Record<string, unknown>);

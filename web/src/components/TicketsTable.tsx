@@ -30,9 +30,9 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
   }));
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-6">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-inter">
+        <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100 font-inter">
           Tickets Recientes
         </h3>
         <Link
@@ -48,45 +48,47 @@ export default function TicketsTable({ incidents }: TicketsTableProps) {
           No hay tickets recientes.
         </p>
       ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              {["USUARIO", "ASUNTO", "FECHA", "ESTADO"].map((h) => (
-                <th
-                  key={h}
-                  className="text-left px-3 py-2.5 text-xs font-semibold text-gray-400 font-inter uppercase tracking-[0.5px]"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket, i) => (
-              <tr key={ticket.id} className="border-t border-gray-100">
-                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
-                  {ticket.nombre}
-                </td>
-                <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
-                  {ticket.asunto}
-                </td>
-                <td className="px-3 py-3 text-[13px] text-gray-500 dark:text-gray-400 font-inter">
-                  {ticket.fecha}
-                </td>
-                <td className="px-3 py-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOTS[ticket.estado] || "bg-gray-300"}`}
-                    />
-                    <span className="text-[13px] text-gray-700 dark:text-gray-300 font-inter">
-                      {ticket.estado}
-                    </span>
-                  </div>
-                </td>
+        <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <table className="w-full border-collapse min-w-[500px]">
+            <thead>
+              <tr>
+                {["USUARIO", "ASUNTO", "FECHA", "ESTADO"].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-3 py-2.5 text-xs font-semibold text-gray-400 font-inter uppercase tracking-[0.5px]"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tickets.map((ticket, i) => (
+                <tr key={ticket.id} className="border-t border-gray-100">
+                  <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter whitespace-nowrap">
+                    {ticket.nombre}
+                  </td>
+                  <td className="px-3 py-3 text-[13px] font-medium text-gray-800 dark:text-gray-100 font-inter">
+                    {ticket.asunto}
+                  </td>
+                  <td className="px-3 py-3 text-[13px] text-gray-500 dark:text-gray-400 font-inter whitespace-nowrap">
+                    {ticket.fecha}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOTS[ticket.estado] || "bg-gray-300"}`}
+                      />
+                      <span className="text-[13px] text-gray-700 dark:text-gray-300 font-inter whitespace-nowrap">
+                        {ticket.estado}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

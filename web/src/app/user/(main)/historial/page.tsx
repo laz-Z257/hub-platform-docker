@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { formatDate, ESTADO_LABELS, ESTADO_COLORS } from "@/lib/utils";
+import { URGENCIA_COLORS } from "@/lib/styles";
 import { MessageSquare, History, AlertCircle, RefreshCw } from "lucide-react";
 
 interface Incident {
@@ -12,7 +13,6 @@ interface Incident {
   estado: "pendiente" | "en_proceso" | "resuelto"; created_at: string;
 }
 
-const URGENCIA_COLORS: Record<string, string> = { alta: "#EF4444", media: "#F59E0B", baja: "#22C55E" };
 
 export default function HistorialPage() {
   const router = useRouter();

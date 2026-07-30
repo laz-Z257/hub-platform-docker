@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, desc, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { incidents, users, ratings, puntosVenta, messages } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -23,7 +23,7 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
     const start = q.start as string | undefined;
     const end = q.end as string | undefined;
     const agente = q.agente as string | undefined;
-    const conditions = [];
+    const conditions = [isNull(incidents.deleted_at)];
 
     if (typeof agente === "string" && agente) {
       conditions.push(eq(incidents.agente, agente));
@@ -57,7 +57,8 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
 
     const [usuarioCount] = await db
       .select({ total: sql<number>`count(*)`.mapWith(Number) })
-      .from(users);
+      .from(users)
+      .where(isNull(users.deleted_at));
 
     res.json({
       totalIncidentes: result.totalIncidentes,
@@ -79,7 +80,8 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
 
     const todayCondition = and(
       gte(incidents.created_at, todayStart),
-      lte(incidents.created_at, todayEnd)
+      lte(incidents.created_at, todayEnd),
+      isNull(incidents.deleted_at)
     );
 
     const [todayStats] = await db
@@ -102,7 +104,8 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         enProceso: sql<number>`count(*) filter (where ${incidents.estado} = 'en_proceso')`.mapWith(Number),
         resueltos: sql<number>`count(*) filter (where ${incidents.estado} = 'resuelto')`.mapWith(Number),
       })
-      .from(incidents);
+      .from(incidents)
+      .where(isNull(incidents.deleted_at));
 
     const [avgResolution] = await db
       .select({
@@ -111,6 +114,7 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
       .from(incidents)
       .where(and(
         eq(incidents.estado, "resuelto"),
+        isNull(incidents.deleted_at),
         sql`${incidents.fecha_cierre} IS NOT NULL`
       ));
 
@@ -120,7 +124,8 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         activos: sql<number>`count(*) filter (where ${users.estado} = 'activo')`.mapWith(Number),
         bloqueados: sql<number>`count(*) filter (where ${users.estado} = 'bloqueado')`.mapWith(Number),
       })
-      .from(users);
+      .from(users)
+      .where(isNull(users.deleted_at));
 
     const [ratingStats] = await db
       .select({
@@ -147,6 +152,7 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         created_at: incidents.created_at,
       })
       .from(incidents)
+      .where(isNull(incidents.deleted_at))
       .orderBy(desc(incidents.created_at))
       .limit(5);
 
@@ -161,6 +167,7 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         created_at: users.created_at,
       })
       .from(users)
+      .where(isNull(users.deleted_at))
       .orderBy(desc(users.created_at))
       .limit(5);
 
@@ -178,7 +185,7 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(incidents)
-      .where(gte(incidents.created_at, sevenDaysAgo))
+      .where(and(gte(incidents.created_at, sevenDaysAgo), isNull(incidents.deleted_at)))
       .groupBy(sql`DATE(${incidents.created_at})`)
       .orderBy(sql`DATE(${incidents.created_at})`);
     

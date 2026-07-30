@@ -75,6 +75,7 @@ export default function ChatScreen() {
   const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const autoActionTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (initializing) return;
@@ -95,11 +96,9 @@ export default function ChatScreen() {
     };
 
     api
-      .get<
-        { id: string; content: string; is_bot: boolean; created_at: string }[]
-      >("/chat/history?limit=30")
+      .get<{ items: { id: string; content: string; is_bot: boolean; created_at: string }[] }>("/chat/history?limit=30")
       .then((history) => {
-        const historyMsgs: Message[] = history.map((msg) => ({
+        const historyMsgs: Message[] = (history.items ?? []).map((msg) => ({
           id: msg.id,
           type: msg.is_bot ? ("bot-card" as const) : ("user" as const),
           text: msg.content,
@@ -138,12 +137,20 @@ export default function ChatScreen() {
     api
       .get<{ ratedIncidentIds: string[] }>("/ratings/my-ratings")
       .then((data) => {
-        setRatedIncidents(new Set(data.ratedIncidentIds));
+        setRatedIncidents(new Set(data.ratedIncidentIds ?? []));
       })
       .catch((err) => {
         logger.error("Rated incidents fetch error", { error: err instanceof Error ? err.message : err });
       });
   }, [initializing, user, router]);
+
+  useEffect(() => {
+    return () => {
+      if (autoActionTimerRef.current) {
+        clearTimeout(autoActionTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSend = useCallback(async (text: string, displayText?: string) => {
     const userMsg: Message = {
@@ -177,7 +184,7 @@ export default function ChatScreen() {
       setMessages((prev) => [...prev, botMsg]);
 
       if (data.autoAction) {
-        setTimeout(() => {
+        autoActionTimerRef.current = setTimeout(() => {
           switch (data.autoAction) {
             case "reportar":
               router.push("/reportar");

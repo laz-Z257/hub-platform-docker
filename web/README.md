@@ -34,6 +34,22 @@ Dashboard administrativo para la plataforma HUB AI Assistant.
 - Variables CSS centralizadas (`--brand`, `--brand-light`, `--brand-bg`, `--sidebar-width`)
 - Área de usuario pendiente (6 pantallas)
 
+### ✅ Responsive Dashboard
+
+- **Sidebar colapsable** en móvil (< 1024px) con overlay
+- **Botón menú hamburguesa** en Topbar para móvil
+- **Breakpoints**:
+  - Móvil (< 640px): 1 columna, sidebar oculto
+  - Tablet (640px - 1024px): 2 columnas, sidebar oculto
+  - Desktop (>= 1024px): 3 columnas, sidebar fijo
+- **Tablas con scroll horizontal** en móvil
+- **Padding y tamaños adaptables** en todos los componentes
+
+**⚠️ Nota:** Si no ves los cambios responsive, reconstruye el contenedor:
+```bash
+docker compose build --no-cache web && docker compose up -d web
+```
+
 ### ✅ Sidebar Responsive (CSS Variable)
 
 - Ancho definido como variable CSS `--sidebar-width: 250px`

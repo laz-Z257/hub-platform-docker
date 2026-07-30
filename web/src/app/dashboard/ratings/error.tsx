@@ -9,13 +9,13 @@ export default function RatingsError({
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-      <h2 className="text-xl font-semibold text-text-dark">Error en Calificaciones</h2>
-      <p className="text-text-muted mt-2 text-center max-w-md">
+      <h2 className="text-xl font-semibold text-gray-900">Error en Calificaciones</h2>
+      <p className="text-gray-500 mt-2 text-center max-w-md">
         {error.message || "Ocurrió un error al cargar las calificaciones."}
       </p>
       <button
         onClick={reset}
-        className="mt-6 px-6 py-2 bg-primary text-white rounded-button hover:bg-primary-dark transition-colors"
+        className="mt-6 px-6 py-2 bg-[#25207E] text-white rounded-lg hover:bg-[#25207E]-dark transition-colors"
       >
         Intentar de nuevo
       </button>

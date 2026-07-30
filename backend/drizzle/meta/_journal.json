@@ -78,6 +78,34 @@
       "when": 1783689959168,
       "tag": "0010_far_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785334159436,
+      "tag": "0011_charming_meteor",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785335240176,
+      "tag": "0012_fuzzy_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785967100000,
+      "tag": "0013_tiny_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785967200000,
+      "tag": "0014_silent_horizon",
+      "breakpoints": true
     }
   ]
 }

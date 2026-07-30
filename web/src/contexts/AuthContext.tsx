@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { api, setCsrfToken, setAuthToken, clearAuthToken, setAuthScope } from "@/lib/api";
+import { api, setCsrfToken, setAuthScope } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -37,7 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data);
         if (data.csrfToken) setCsrfToken(data.csrfToken);
       })
-      .catch(() => {
+      .catch((err) => {
+        logger.warn("Auth init: failed to fetch user", { error: (err as Error).message });
         setUser(null);
       })
       .finally(() => setInitializing(false));
@@ -48,15 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       try {
         const scope = pathname.startsWith("/user") ? "user" : "admin";
-        setAuthScope(scope);
-        const data = await api.post<{ user: AuthUser; csrfToken?: string; token: string }>(
+        const data = await api.post<{ user: AuthUser; csrfToken?: string }>(
           "/auth/login",
           { documento, contrasena, scope }
         );
+        setAuthScope(scope);
         setUser(data.user);
-        setAuthToken(data.token);
         if (data.csrfToken) setCsrfToken(data.csrfToken);
         router.push(scope === "admin" ? "/dashboard" : "/user/chat");
+      } catch (err) {
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -66,8 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post("/auth/logout").catch(() => {});
-    clearAuthToken();
+    await api.post("/auth/logout").catch((err) => logger.warn("Logout API call failed", { error: (err as Error).message }));
     setAuthScope(null);
     setUser(null);
     router.push("/login");

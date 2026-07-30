@@ -139,7 +139,7 @@ async function sendToSentry(report: CrashReport): Promise<void> {
 export function setUserContext(userId: string, documento: string) {
   if (!crashReportingEnabled) return;
   
-  logger.info("User context set for crash reporting", { userId });
+  logger.info("User context set for crash reporting", { userId, documento });
 }
 
 export function clearUserContext() {

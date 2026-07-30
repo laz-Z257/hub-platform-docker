@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MoreVertical, Eye, CheckCircle, Clock, Loader, UserPlus } from "lucide-react";
 import { STATUS_ACTION_COLORS } from "@/lib/styles";
+import { formatTicketId } from "@/lib/utils";
 
 interface TicketRow {
   id: string;
@@ -20,11 +21,6 @@ const STATUS_BADGES: Record<string, string> = {
   "En Proceso": "bg-purple-100 text-purple-600",
   Resuelto: "bg-slate-100 text-slate-600",
 };
-
-function formatTicketId(id: string): string {
-  const short = id.replace(/-/g, "").slice(-8).toUpperCase();
-  return `#TK-${short}`;
-}
 
 interface TicketTableProps {
   tickets: TicketRow[];

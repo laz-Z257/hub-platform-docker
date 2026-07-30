@@ -26,15 +26,15 @@ export function ConnectivityProvider({ children }: { children: React.ReactNode }
       setLastOnlineAt(new Date());
       setConsecutiveFailures(0);
     } catch {
-      setConsecutiveFailures((prev) => {
-        const newCount = prev + 1;
-        if (newCount >= FAILURES_BEFORE_OFFLINE) {
-          setIsOnline(false);
-        }
-        return newCount;
-      });
+      setConsecutiveFailures((prev) => prev + 1);
     }
   }, []);
+
+  useEffect(() => {
+    if (consecutiveFailures >= FAILURES_BEFORE_OFFLINE) {
+      setIsOnline(false);
+    }
+  }, [consecutiveFailures]);
 
   useEffect(() => {
     checkNow();

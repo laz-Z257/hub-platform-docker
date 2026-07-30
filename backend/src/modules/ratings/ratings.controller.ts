@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { ratings, incidents, users } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -17,7 +17,7 @@ export async function createRating(req: Request, res: Response): Promise<void> {
     const [incident] = await db
       .select({ id: incidents.id, user_id: incidents.user_id, estado: incidents.estado })
       .from(incidents)
-      .where(eq(incidents.id, id))
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .limit(1);
 
     if (!incident) {
@@ -67,6 +67,17 @@ export async function getRating(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params as { id: string };
 
+    const [incident] = await db
+      .select({ id: incidents.id })
+      .from(incidents)
+      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
+      .limit(1);
+
+    if (!incident) {
+      res.status(404).json({ error: "Incidente no encontrado" });
+      return;
+    }
+
     const [rating] = await db
       .select()
       .from(ratings)
@@ -90,6 +101,7 @@ export async function getMyRatedIncidents(req: Request, res: Response): Promise<
     const rows = await db
       .select({ incident_id: ratings.incident_id })
       .from(ratings)
+      .innerJoin(incidents, and(eq(ratings.incident_id, incidents.id), isNull(incidents.deleted_at)))
       .where(eq(ratings.user_id, req.user!.userId));
 
     res.json({ ratedIncidentIds: rows.map((r) => r.incident_id) });
@@ -112,8 +124,8 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
         ticket_descripcion: incidents.descripcion,
       })
       .from(ratings)
-      .innerJoin(incidents, eq(ratings.incident_id, incidents.id))
-      .innerJoin(users, eq(ratings.user_id, users.id))
+      .innerJoin(incidents, and(eq(ratings.incident_id, incidents.id), isNull(incidents.deleted_at)))
+      .innerJoin(users, and(eq(ratings.user_id, users.id), isNull(users.deleted_at)))
       .orderBy(desc(ratings.created_at));
 
     const total = rows.length;
@@ -168,7 +180,7 @@ export async function getPublicRatingStats(_req: Request, res: Response): Promis
         punto_venta: incidents.punto_venta,
       })
       .from(ratings)
-      .innerJoin(incidents, eq(ratings.incident_id, incidents.id))
+      .innerJoin(incidents, and(eq(ratings.incident_id, incidents.id), isNull(incidents.deleted_at)))
       .orderBy(desc(ratings.created_at));
 
     const total = rows.length;

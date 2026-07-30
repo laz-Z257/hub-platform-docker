@@ -4,13 +4,15 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm install && npx tsc
-    startCommand: node dist/db/migrate.js; node dist/db/seed.js; node dist/index.js
+    startCommand: node dist/db/migrate.js && node dist/db/seed.js && node dist/index.js
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        value: "http://localhost:3000,http://localhost:8081"
+        sync: false

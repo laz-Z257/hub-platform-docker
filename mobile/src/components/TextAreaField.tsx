@@ -39,7 +39,7 @@ export default function TextAreaField({
         style={{ height }}
       >
         <TextInput
-          className="flex-1 text-base text-text-dark font-inter"
+          className="flex-1 text-base text-gray-900 font-inter"
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           value={value}

@@ -33,9 +33,7 @@ describe("loginSchema", () => {
   });
 
   it("rejects missing contrasena", () => {
-    expect(() =>
-      (loginSchema as any).parse({ documento: "123" })
-    ).toThrow();
+    expect(() => loginSchema.parse({ documento: "123" })).toThrow();
   });
 });
 

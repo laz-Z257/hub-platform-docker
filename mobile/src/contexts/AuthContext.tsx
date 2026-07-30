@@ -18,6 +18,7 @@ import {
   setBlockedHandler,
 } from "../services/api";
 import { registerForPushNotifications, setupNotificationListeners } from "../services/notifications";
+import { logger } from "../services/logger";
 import type { AuthUser } from "@hub/shared/types/auth";
 
 interface AuthContextType {
@@ -50,7 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const fresh = await api.get<AuthUser>("/auth/me");
             setUser(fresh);
             await saveUser(fresh);
-            registerForPushNotifications().catch(() => {});
+            registerForPushNotifications().catch((err) => {
+              logger.warn("Push notification registration failed on restore", { error: (err as Error).message });
+            });
             router.replace("/chat");
           } catch (err) {
             await clearToken();
@@ -101,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const data = await api.post<{ token: string; user: AuthUser }>(
+        const data = await api.post<{ user: AuthUser; token: string }>(
           "/auth/login",
           { documento, contrasena, scope: "user" }
         );
@@ -110,7 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await saveUser(data.user);
         setUser(data.user);
 
-        registerForPushNotifications().catch(() => {});
+        registerForPushNotifications().catch((err) => {
+          logger.warn("Push notification registration failed on login", { error: (err as Error).message });
+        });
       } catch (err) {
         if (err instanceof Error && err.message === "bloqueado") {
           const originalMsg = (err as { originalMsg?: string }).originalMsg;
@@ -125,7 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post("/auth/logout").catch(() => {});
+    await api.post("/auth/logout").catch((err) => {
+      logger.warn("Logout API call failed", { error: (err as Error).message });
+    });
     await clearToken();
     setUser(null);
   }, []);

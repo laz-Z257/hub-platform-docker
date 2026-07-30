@@ -57,17 +57,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-70px)] p-8">
-      <div className="mb-8">
-        <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
+    <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-70px)] p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
           Panel de Control
         </h1>
-        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 font-inter">
+        <p className="mt-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-inter">
           Bienvenido de nuevo. Aquí tienes un vistazo del estado actual de tu ecosistema.
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-5 max-w-[860px] mb-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-[860px] mb-6 sm:mb-7">
         {kpis ? (
           <>
             <MetricCard
@@ -95,7 +95,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <TicketsTable incidents={incidents} />
         <UserManagement />
       </div>

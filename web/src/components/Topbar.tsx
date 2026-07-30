@@ -7,7 +7,11 @@ import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import HelpModal from "./HelpModal";
 
-export default function Topbar({ userName }: { userName?: string }) {
+interface TopbarProps {
+  userName?: string;
+}
+
+export default function Topbar({ userName }: TopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isUsers = pathname === "/dashboard/users";
@@ -35,47 +39,49 @@ export default function Topbar({ userName }: { userName?: string }) {
   }, [router]);
 
   return (
-    <header className="fixed top-0 left-[var(--sidebar-width)] right-0 h-[72px] bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-6 z-30">
+    <header className="fixed top-0 right-0 h-[72px] bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-4 sm:px-6 z-30 left-[var(--sidebar-width)]">
 
-      <div className="ml-auto flex items-center gap-5">
-        <button
-          onClick={handleBellClick}
-          className="bg-none border-none cursor-pointer relative p-2 rounded-lg"
-        >
-          <Bell size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
-          {unreadCount > 0 && (
-            <div className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center px-[4px]">
-              <span className="text-[10px] font-bold text-white leading-none">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            </div>
-          )}
-        </button>
-
-        <button
-          onClick={() => setShowHelp(true)}
-          className="bg-none border-none cursor-pointer p-2 rounded-lg"
-        >
-          <HelpCircle size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
-        </button>
-
-        {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
-
-        <div className="w-px h-6 bg-gray-200" />
-
-        <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-200 font-inter">
-          User - {userName || "xxxxxx"}
-        </span>
-
-        {isUsers && (
+      <div className="flex items-center gap-2 sm:gap-5">
+        <div className="ml-auto flex items-center gap-3 sm:gap-5">
           <button
-            onClick={() => router.push("/dashboard/users?create=true")}
-            className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
+            onClick={handleBellClick}
+            className="bg-none border-none cursor-pointer relative p-2 rounded-lg"
           >
-            <UserPlus size={16} strokeWidth={2.5} />
-            Añadir Usuario
+            <Bell size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+            {unreadCount > 0 && (
+              <div className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center px-[4px]">
+                <span className="text-[10px] font-bold text-white leading-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              </div>
+            )}
           </button>
-        )}
+
+          <button
+            onClick={() => setShowHelp(true)}
+            className="bg-none border-none cursor-pointer p-2 rounded-lg"
+          >
+            <HelpCircle size={20} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+          </button>
+
+          {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+          <div className="hidden sm:block w-px h-6 bg-gray-200" />
+
+          <span className="hidden sm:inline text-[13px] font-semibold text-gray-700 dark:text-gray-200 font-inter">
+            User - {userName || "xxxxxx"}
+          </span>
+
+          {isUsers && (
+            <button
+              onClick={() => router.push("/dashboard/users?create=true")}
+              className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
+            >
+              <UserPlus size={16} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Añadir Usuario</span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

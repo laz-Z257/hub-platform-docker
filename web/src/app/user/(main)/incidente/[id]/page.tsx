@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { formatDate, ESTADO_LABELS, ESTADO_COLORS } from "@/lib/utils";
+import { formatDate, ESTADO_LABELS, ESTADO_COLORS, formatTicketId } from "@/lib/utils";
+import { URGENCIA_COLORS } from "@/lib/styles";
 import { ArrowLeft, User, Phone, MapPin, AlertCircle, Clock, Shield, MessageSquare, XCircle } from "lucide-react";
 
 interface IncidentDetail {
@@ -15,11 +16,6 @@ interface IncidentDetail {
   comments: { id: string; autor: string; texto: string; fecha: string }[];
 }
 
-const URGENCIA_COLORS: Record<string, string> = { alta: "#EF4444", media: "#F59E0B", baja: "#22C55E" };
-
-function formatTicketId(id: string): string {
-  return `#TK-${id.replace(/-/g, "").slice(-8).toUpperCase()}`;
-}
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (

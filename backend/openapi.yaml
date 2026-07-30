@@ -1,0 +1,740 @@
+openapi: 3.0.3
+info:
+  title: HUB Platform API
+  description: API REST para plataforma de soporte con ticketing, chatbot y dashboard administrativo
+  version: 1.0.0
+  contact:
+    name: HUB Platform
+servers:
+  - url: http://localhost:3001/api
+    description: Desarrollo
+  - url: https://hub-platform-api.onrender.com/api
+    description: Producción
+
+tags:
+  - name: Health
+    description: Health checks
+  - name: Auth
+    description: Autenticación y autorización
+  - name: Incidents
+    description: Gestión de incidentes/tickets
+  - name: Chat
+    description: Chatbot inteligente
+  - name: Dashboard
+    description: KPIs y estadísticas
+  - name: Users
+    description: Gestión de usuarios
+  - name: Ratings
+    description: Calificaciones de incidentes
+  - name: Push
+    description: Notificaciones push
+  - name: Settings
+    description: Configuración de empresa
+  - name: Puntos de Venta
+    description: Catálogo de puntos de venta
+  - name: Upload
+    description: Subida de archivos
+  - name: Metrics
+    description: Métricas del sistema
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: API está funcionando
+
+  /health/db:
+    get:
+      tags: [Health]
+      summary: Health check con base de datos
+      responses:
+        '200':
+          description: API y DB están funcionando
+        '500':
+          description: Error de conexión a la base de datos
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documento, nombre, contrasena]
+              properties:
+                documento:
+                  type: string
+                nombre:
+                  type: string
+                contrasena:
+                  type: string
+                  minLength: 6
+      responses:
+        '201':
+          description: Usuario registrado
+        '409':
+          description: Documento ya existe
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documento, contrasena]
+              properties:
+                documento:
+                  type: string
+                contrasena:
+                  type: string
+                scope:
+                  type: string
+                  enum: [admin, user]
+      responses:
+        '200':
+          description: Login exitoso
+        '401':
+          description: Credenciales incorrectas
+        '403':
+          description: Usuario bloqueado
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Obtener usuario actual
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Usuario actual
+        '401':
+          description: No autorizado
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refrescar token
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Token refrescado
+        '401':
+          description: Refresh token inválido
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesión
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout exitoso
+
+  /incidents:
+    post:
+      tags: [Incidents]
+      summary: Crear incidente
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncident'
+      responses:
+        '201':
+          description: Incidente creado
+    get:
+      tags: [Incidents]
+      summary: Listar incidentes (paginado)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [pendiente, en_proceso, resuelto]
+      responses:
+        '200':
+          description: Lista de incidentes
+
+  /incidents/{id}:
+    get:
+      tags: [Incidents]
+      summary: Obtener incidente por ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle del incidente
+    patch:
+      tags: [Incidents]
+      summary: Actualizar incidente
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIncident'
+      responses:
+        '200':
+          description: Incidente actualizado
+    delete:
+      tags: [Incidents]
+      summary: Eliminar incidente
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Incidente eliminado
+
+  /incidents/{id}/comments:
+    post:
+      tags: [Incidents]
+      summary: Agregar comentario a incidente
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texto]
+              properties:
+                texto:
+                  type: string
+      responses:
+        '201':
+          description: Comentario agregado
+
+  /incidents/agentes:
+    get:
+      tags: [Incidents]
+      summary: Listar agentes/técnicos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de agentes
+
+  /incidents/stats:
+    get:
+      tags: [Incidents]
+      summary: Estadísticas de incidentes
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+        - name: end
+          in: query
+          schema:
+            type: string
+        - name: agente
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estadísticas de incidentes
+
+  /incidents/export-data:
+    get:
+      tags: [Incidents]
+      summary: Exportar datos de incidentes
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+        - name: end
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos de incidentes para exportar
+
+  /incidents/unread-count:
+    get:
+      tags: [Incidents]
+      summary: Contar incidentes no leídos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Cantidad de incidentes no leídos
+
+  /incidents/mark-seen:
+    patch:
+      tags: [Incidents]
+      summary: Marcar incidentes como vistos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Incidentes marcados como vistos
+
+  /chat/message:
+    post:
+      tags: [Chat]
+      summary: Enviar mensaje al chatbot
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Respuesta del bot
+
+  /chat/history:
+    get:
+      tags: [Chat]
+      summary: Historial de chat (paginado)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        '200':
+          description: Historial de mensajes
+
+  /dashboard/kpis:
+    get:
+      tags: [Dashboard]
+      summary: Obtener KPIs
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: KPIs del dashboard
+
+  /dashboard/summary:
+    get:
+      tags: [Dashboard]
+      summary: Resumen ejecutivo
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Resumen de datos
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar usuarios
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+    post:
+      tags: [Users]
+      summary: Crear usuario
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: Usuario creado
+
+  /users/{id}:
+    patch:
+      tags: [Users]
+      summary: Actualizar usuario
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: Usuario actualizado
+
+  /users/{id}/toggle-status:
+    patch:
+      tags: [Users]
+      summary: Bloquear/desbloquear usuario
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Estado actualizado
+
+  /users/{id}/reset-password:
+    patch:
+      tags: [Users]
+      summary: Restablecer contraseña de usuario
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contrasena]
+              properties:
+                contrasena:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Contraseña restablecida
+
+  /ratings/{id}:
+    post:
+      tags: [Ratings]
+      summary: Calificar incidente
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [puntuacion]
+              properties:
+                puntuacion:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comentario:
+                  type: string
+      responses:
+        '201':
+          description: Calificación registrada
+    get:
+      tags: [Ratings]
+      summary: Obtener calificación de un incidente
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Calificación del incidente
+        '404':
+          description: Calificación no encontrada
+
+  /ratings/my-ratings:
+    get:
+      tags: [Ratings]
+      summary: Obtener mis calificaciones
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de incidentes calificados por el usuario
+
+  /ratings:
+    get:
+      tags: [Ratings]
+      summary: Obtener estadísticas de calificaciones (admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Estadísticas de calificaciones
+
+  /ratings/stats:
+    get:
+      tags: [Ratings]
+      summary: Estadísticas públicas de calificaciones
+      responses:
+        '200':
+          description: Estadísticas públicas
+
+  /settings:
+    get:
+      tags: [Settings]
+      summary: Obtener configuración de empresa
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Configuración actual
+    put:
+      tags: [Settings]
+      summary: Actualizar configuración
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                contribuyente:
+                  type: string
+                direccion:
+                  type: string
+      responses:
+        '200':
+          description: Configuración actualizada
+
+  /puntos-venta:
+    get:
+      tags: [Puntos de Venta]
+      summary: Listar puntos de venta
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de puntos de venta
+
+  /puntos-venta/seed:
+    post:
+      tags: [Puntos de Venta]
+      summary: Seed de puntos de venta (admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Seed completado
+
+  /upload:
+    post:
+      tags: [Upload]
+      summary: Subir imagen
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Imagen subida
+        '400':
+          description: Error en el archivo
+        '507':
+          description: Almacenamiento lleno
+
+  /metrics:
+    get:
+      tags: [Metrics]
+      summary: Métricas del sistema (admin)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Métricas del sistema
+
+  /push/register:
+    post:
+      tags: [Push]
+      summary: Registrar token push
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token registrado
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: admin_token o user_token
+
+  schemas:
+    CreateIncident:
+      type: object
+      required: [nombre, punto_venta, descripcion]
+      properties:
+        nombre:
+          type: string
+        punto_venta:
+          type: string
+        telefono:
+          type: string
+        descripcion:
+          type: string
+        urgencia:
+          type: string
+          enum: [baja, media, alta]
+
+    UpdateIncident:
+      type: object
+      properties:
+        estado:
+          type: string
+          enum: [pendiente, en_proceso, resuelto]
+        agente:
+          type: string
+        solucion:
+          type: string
+
+    CreateUser:
+      type: object
+      required: [documento, nombre, contrasena]
+      properties:
+        documento:
+          type: string
+        nombre:
+          type: string
+        email:
+          type: string
+        contrasena:
+          type: string
+        rol:
+          type: string
+          enum: [user, asesor, admin, tecnico]
+
+    UpdateUser:
+      type: object
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+          enum: [user, asesor, admin, tecnico]

@@ -1,5 +1,164 @@
 # Changelog
 
+## 2026-07-29 — Frontend: Refactor y Tests de Componentes
+
+### Refactor de Archivos Grandes
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **tickets/page.tsx** | 505→362 líneas | Extraído CreateTicketModal.tsx |
+| **settings/page.tsx** | 511→230 líneas | Extraídos SettingsEmpresaTab, SettingsAparienciaTab, SettingsMantenimientoTab |
+
+### Tests de Componentes
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Modal.test.tsx** | 7 tests | Tests para renderizado, interacciones, tipos |
+| **TicketTable.test.tsx** | 5 tests | Tests para renderizado, estados, acciones |
+| **CreateTicketModal.test.tsx** | 6 tests | Tests para formulario, validación, submit |
+| **useModal.test.ts** | 5 tests | Tests para hook de modales |
+
+### Configuración de Tests
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **vitest.config.ts** | Actualizado | Agregado plugin-react para soporte JSX |
+| **vitest.setup.ts** | Nuevo | Setup para jest-dom |
+| **package.json** | Actualizado | Agregadas dependencias de testing |
+
+### Estado Frontend
+
+- ✅ Tests: 46/46 pasando
+- ✅ TypeScript: 0 errores
+- ✅ Build exitoso
+- ✅ Archivos refactorizados bajo 400 líneas
+- ✅ Cobertura de tests en componentes principales
+
+---
+
+## 2026-07-29 — Frontend e Infra: Pendientes Completados
+
+### Frontend
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Dashboard responsive** | Docker | Reconstruido sin caché, responsive aplicado |
+| **Dark mode parcial** | `user/ajustes/page.tsx` | Clases dark: agregadas |
+| **Modales custom** | `Modal.tsx`, `useModal.ts` | Componente Modal y hook useModal creados |
+| **Reemplazo alert/confirm** | `ajustes/page.tsx`, `tickets/page.tsx`, `settings/page.tsx` | 6 usos reemplazados con modales custom |
+| **Helpers centralizados** | `lib/utils.ts` | formatTicketId centralizado, eliminadas 3 copias duplicadas |
+
+### Infraestructura
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Iconos PNG PWA** | `public/icons/`, `manifest.json` | Iconos PNG 192x192 y 512x512 generados |
+| **Métricas Prometheus** | `middlewares/metrics.ts`, `package.json` | prom-client instalado, middleware actualizado a formato Prometheus |
+
+### Estado Frontend/Infra
+
+- ✅ Tests: 146/146 pasando en backend
+- ✅ TypeScript: 0 errores
+- ✅ Build exitoso
+- ✅ Responsive aplicado
+- ✅ Dark mode parcial
+- ✅ Modales custom implementados
+- ✅ Métricas Prometheus operativas
+
+---
+
+## 2026-07-29 — Backend: Pendientes Completados (Parte 2)
+
+### Fixes de Seguridad y Calidad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Queries sin filtro deleted_at** | `incidents.controller.ts`, `ratings.controller.ts` | 3 queries corregidas para filtrar soft deletes |
+| **Tests de controllers** | 8 archivos `.test.ts` nuevos | Tests para chat, dashboard, incidents, puntos-venta, push, ratings, upload, users |
+| **openapi.yaml completo** | `backend/openapi.yaml` | 14 endpoints agregados + fix PUT/PATCH en settings |
+| **`as any` en tests** | `auth.schema.test.ts` | Reemplazado con `@ts-expect-error` |
+
+### Estado Backend
+
+- ✅ Tests: 146/146 pasando (antes 114)
+- ✅ TypeScript: 0 errores
+- ✅ API healthy
+- ✅ Soft deletes completamente implementados
+- ✅ Documentación API completa
+
+---
+
+## 2026-07-29 — Backend: Pendientes Completados
+
+### Seguridad y Estabilidad
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Race condition fix** | `settings.controller.ts` | UPSERT atómico con `onConflictDoUpdate` para evitar condiciones de carrera |
+| **FK bloqueado_por** | SQL manual | Migración SQL para agregar ON DELETE SET NULL |
+| **JWT solo en cookies** | `auth.controller.ts`, `mobile/src/services/api.ts`, `web/src/lib/api.ts` | Token eliminado del body, solo cookies httpOnly |
+| **Soft deletes** | `schema.ts`, múltiples controllers | Campo `deleted_at` en `users` e `incidents`, todas las queries filtran por `IS NULL` |
+
+### Documentación y Tests
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **OpenAPI/Swagger** | `backend/openapi.yaml` | Documentación completa de la API REST |
+| **Tests controllers** | `settings.controller.test.ts`, `auth.controller.test.ts` | 114 tests pasando |
+
+### Archivos Modificados
+
+- `backend/src/db/schema.ts` - Agregados `deleted_at` y columna `key` única
+- `backend/src/modules/settings/settings.controller.ts` - UPSERT atómico
+- `backend/src/modules/auth/auth.controller.ts` - JWT solo en cookies, filtros soft delete
+- `backend/src/modules/incidents/incidents.controller.ts` - Soft delete + filtros
+- `backend/src/modules/users/users.controller.ts` - Filtros soft delete
+- `backend/src/modules/dashboard/dashboard.controller.ts` - Filtros soft delete
+- `backend/src/modules/chat/chat.controller.ts` - Filtros soft delete
+- `backend/src/modules/ratings/ratings.controller.ts` - Filtros soft delete
+- `backend/src/middlewares/auth.ts` - Filtros soft delete
+- `mobile/src/services/api.ts` - Solo cookies
+- `mobile/src/contexts/AuthContext.tsx` - Solo cookies
+- `web/src/lib/api.ts` - Solo cookies
+- `web/src/contexts/AuthContext.tsx` - Solo cookies
+
+### Estado Backend
+
+- ✅ Tests: 114/114 pasando
+- ✅ TypeScript: 0 errores
+- ✅ API healthy
+- ✅ Soft deletes operativos
+- ✅ UPSERT atómico implementado
+- ✅ JWT solo en cookies
+
+---
+
+## 2026-07-28 — Dashboard Responsive (pendiente de aplicar)
+
+### Frontend Web
+
+| Cambio | Archivos | Detalle |
+|--------|----------|---------|
+| **Sidebar colapsable en móvil** | `Sidebar.tsx` | Drawer que se abre/cierra con overlay en pantallas < 1024px |
+| **Botón menú hamburguesa** | `Topbar.tsx` | Visible solo en móvil (< 1024px) |
+| **Layout responsive** | `dashboard/layout.tsx` | Estado para manejar sidebar móvil, contenido adaptable |
+| **Dashboard page responsive** | `dashboard/page.tsx` | Grid adaptable (1/2/3 columnas), títulos y padding responsive |
+| **TicketsTable responsive** | `TicketsTable.tsx` | Scroll horizontal en móvil, padding adaptable |
+| **UserManagement responsive** | `UserManagement.tsx` | Tamaños y padding adaptables a pantallas pequeñas |
+
+**⚠️ Estado:** Código implementado pero no visible en el contenedor Docker. Requiere reconstruir sin caché:
+```bash
+docker compose build --no-cache web && docker compose up -d web
+```
+
+### Breakpoints
+
+- **Móvil**: < 640px (sidebar oculto, 1 columna)
+- **Tablet**: 640px - 1024px (sidebar oculto, 2 columnas)
+- **Desktop**: >= 1024px (sidebar fijo, 3 columnas)
+
+---
+
 ## 2026-07-28 — Mobile: TypeScript limpio al 100%
 
 ### Mobile

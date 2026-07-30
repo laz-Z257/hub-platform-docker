@@ -3,16 +3,11 @@
 import { X, Clock, User, Phone, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { Incident } from "@hub/shared/types/incident";
 import { PRIORITY_BADGES, STATUS_BADGES } from "@/lib/styles";
-import { formatDate, ESTADO_LABELS } from "@/lib/utils";
+import { formatDate, ESTADO_LABELS, formatTicketId } from "@/lib/utils";
 
 interface TicketDetailModalProps {
   incident: Incident | null;
   onClose: () => void;
-}
-
-function formatTicketId(id: string): string {
-  const short = id.replace(/-/g, "").slice(-8).toUpperCase();
-  return `#TK-${short}`;
 }
 
 export default function TicketDetailModal({ incident, onClose }: TicketDetailModalProps) {

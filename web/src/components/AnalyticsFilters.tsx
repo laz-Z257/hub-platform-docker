@@ -6,7 +6,7 @@ import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
 import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange, getDateRange } from "@/lib/utils";
 
 type IncidentExport = Incident;
 
@@ -61,47 +61,6 @@ const cellBorder = {
   },
 };
 
-function getDefaultRange(preset: FilterPreset): { start: string; end: string } {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const day = today.getDate();
-  
-  // Formato local YYYY-MM-DD
-  const formatDate = (y: number, m: number, d: number) => {
-    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  };
-  
-  const end = formatDate(year, month, day);
-  let start: string;
-
-  switch (preset) {
-    case "today":
-      start = end;
-      break;
-    case "week": {
-      const monday = new Date(today);
-      const dayOfWeek = monday.getDay();
-      const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      monday.setDate(monday.getDate() - diff);
-      start = formatDate(monday.getFullYear(), monday.getMonth(), monday.getDate());
-      break;
-    }
-    case "month": {
-      start = formatDate(year, month, 1);
-      break;
-    }
-    case "30d":
-    default: {
-      const thirtyAgo = new Date(today);
-      thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-      start = formatDate(thirtyAgo.getFullYear(), thirtyAgo.getMonth(), thirtyAgo.getDate());
-      break;
-    }
-  }
-
-  return { start, end };
-}
 
 async function handleExport(
   metrics: AnalyticsFiltersProps["metrics"],
@@ -117,7 +76,7 @@ async function handleExport(
   const generatedAt = baseDate.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   
   // Usar appliedRange si existe (rango personalizado), sino calcular según el preset
-  const effectiveRange = appliedRange || getDefaultRange(filter);
+  const effectiveRange = appliedRange || getDateRange(filter);
   const rangeLabel = `Rango: ${formatDateRange(effectiveRange.start, effectiveRange.end)}`;
   const rangeSuffix = `_${effectiveRange.start}_${effectiveRange.end}`;
 

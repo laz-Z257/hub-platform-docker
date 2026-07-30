@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { messages, incidents } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -296,6 +296,7 @@ async function lookupTicket(
     .where(
       and(
         eq(incidents.user_id, userId),
+        isNull(incidents.deleted_at),
         sql`UPPER(RIGHT(REPLACE(${incidents.id}::text, '-', ''), 8)) LIKE ${'%' + shortId}`
       )
     )

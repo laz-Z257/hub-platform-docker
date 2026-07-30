@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { AlertCircle, RefreshCw, Home } from "lucide-react-native";
+import { router } from "expo-router";
 import { logger } from "../services/logger";
 import { captureException } from "../services/crashReporting";
 
@@ -45,6 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleGoHome = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
+    router.replace("/");
   };
 
   render() {

@@ -72,9 +72,10 @@ async function tryRefresh(): Promise<boolean> {
       const body = await r.json().catch(() => ({}));
       if (body.token) {
         await setToken(body.token);
+        return true;
       }
     }
-    return r.ok;
+    return false;
   });
 
   try {
@@ -90,22 +91,14 @@ async function request<T>(
   options: RequestInit = {},
   timeoutMs?: number
 ): Promise<T> {
-  if (!authToken) {
-    authToken = await getSavedToken();
-  }
-
-  const token = authToken;
   const isGet = !options.method || options.method === "GET";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Auth-Scope": "user",
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? REQUEST_TIMEOUT);
@@ -116,6 +109,7 @@ async function request<T>(
     res = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include",
       signal: controller.signal,
     });
   } catch (err) {
@@ -134,22 +128,15 @@ async function request<T>(
   clearTimeout(timeoutId);
 
   if (res.status === 401) {
-    if (!authToken) {
-      const body = await res.json().catch(() => ({}));
-      const msg = body?.error || "Documento o contraseña incorrectos";
-      throw new Error(msg);
-    }
-
     const refreshed = await tryRefresh();
     if (refreshed) {
-      const newToken = authToken;
-      headers["Authorization"] = `Bearer ${newToken}`;
       const retryController = new AbortController();
       const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT);
       try {
         res = await fetch(`${API_URL}${endpoint}`, {
           ...options,
           headers,
+          credentials: "include",
           signal: retryController.signal,
         });
       } catch (err) {
@@ -191,12 +178,9 @@ async function request<T>(
           ? (data as { error: string }).error
           : "";
       if (msg.includes("bloqueado")) {
-        const hadToken = !!authToken;
         await clearToken();
-        if (hadToken) {
-          onBlocked?.();
-          onForceLogout?.();
-        }
+        onBlocked?.();
+        onForceLogout?.();
         const err = new Error("bloqueado");
         (err as { originalMsg?: string }).originalMsg = msg;
         throw err;
@@ -209,15 +193,15 @@ async function request<T>(
     throw new Error(msg);
   }
 
-  if (isGet && !endpoint.includes("/auth/") && !endpoint.includes("/users")) {
-    saveCache(endpoint, data);
-  }
-
   if (data === null || data === undefined) {
     throw new Error(`Respuesta inválida: ${endpoint} retornó ${data === null ? "null" : "undefined"}`);
   }
   if (typeof data !== "object") {
     throw new Error(`Respuesta inválida: ${endpoint} retornó un tipo inesperado (${typeof data})`);
+  }
+
+  if (isGet && !endpoint.includes("/auth/") && !endpoint.includes("/users")) {
+    saveCache(endpoint, data);
   }
 
   return data as T;

@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { csrfProtection } from "./middlewares/csrf";
 import { requestId } from "./middlewares/requestId";
-import { metricsMiddleware, getMetrics } from "./middlewares/metrics";
+import { metricsMiddleware, getMetrics, getMetricsContentType } from "./middlewares/metrics";
 import { authMiddleware } from "./middlewares/auth";
 import { adminOnly } from "./middlewares/admin";
 import { logger } from "./lib/logger";
@@ -27,6 +27,8 @@ import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
 import settingsRoutes from "./modules/settings/settings.routes";
 
 const app = express();
+
+app.set("trust proxy", 1);
 
 app.use((req, res, next) => {
   if (env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
@@ -111,10 +113,11 @@ app.get("/api/health/db", async (_req, res) => {
   }
 });
 
-// Metrics
-app.get("/api/metrics", authMiddleware, adminOnly, (_req, res) => {
+// Metrics (Prometheus format)
+app.get("/api/metrics", authMiddleware, adminOnly, async (_req, res) => {
   try {
-    res.json(getMetrics());
+    res.set("Content-Type", getMetricsContentType());
+    res.end(await getMetrics());
   } catch (error) {
     logger.error("Metrics error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al obtener métricas" });
@@ -122,16 +125,7 @@ app.get("/api/metrics", authMiddleware, adminOnly, (_req, res) => {
 });
 
 // Serve uploads (protected)
-app.use("/uploads", (req, res, next) => {
-  const adminToken = req.cookies.admin_token;
-  const userToken = req.cookies.user_token;
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  
-  if (!adminToken && !userToken && !token) {
-    return res.status(401).json({ error: "No autorizado" });
-  }
-  next();
-}, express.static("uploads"));
+app.use("/uploads", authMiddleware, express.static("uploads"));
 
 // Routes
 app.use("/api/auth", authRoutes);

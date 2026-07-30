@@ -30,6 +30,12 @@ export const ROLE_BADGES: Record<string, string> = {
   user: "bg-[#DCCFFF] text-[#6D4AFF]",
 };
 
+export const URGENCIA_COLORS: Record<string, string> = {
+  alta: "#EF4444",
+  media: "#F59E0B",
+  baja: "#22C55E",
+};
+
 export const ESTADO_BADGES: Record<string, { bg: string; text: string; dot: string }> = {
   activo: { bg: "bg-green-100", text: "text-green-600", dot: "bg-green-500" },
   bloqueado: { bg: "bg-red-100", text: "text-red-600", dot: "bg-red-500" },

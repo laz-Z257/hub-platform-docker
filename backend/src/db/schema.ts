@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   token_version: integer("token_version").notNull().default(0),
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
   bloqueado_por: uuid("bloqueado_por"),
+  deleted_at: timestamp("deleted_at"),
   created_at: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("users_estado_idx").on(table.estado),
@@ -58,6 +59,7 @@ export const incidents = pgTable(
     cerrado_por: uuid("cerrado_por").references(() => users.id, { onDelete: "set null" }),
     fecha_cierre: timestamp("fecha_cierre"),
     visto_por_admin: boolean("visto_por_admin").notNull().default(false),
+    deleted_at: timestamp("deleted_at"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -140,6 +142,7 @@ export const puntosVenta = pgTable(
 
 export const companySettings = pgTable("company_settings", {
   id: uuid("id").defaultRandom().primaryKey(),
+  key: varchar("key", { length: 10 }).notNull().default("default").unique(),
   nombre: varchar("nombre", { length: 200 }).notNull().default(""),
   contribuyente: varchar("contribuyente", { length: 50 }).notNull().default(""),
   direccion: text("direccion").notNull().default(""),

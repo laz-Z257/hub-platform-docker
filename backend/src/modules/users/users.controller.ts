@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, ne, and, sql, ilike, or } from "drizzle-orm";
+import { eq, ne, and, sql, ilike, or, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
@@ -16,7 +16,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
     const [existing] = await db
       .select()
       .from(users)
-      .where(eq(users.documento, documento))
+      .where(and(eq(users.documento, documento), isNull(users.deleted_at)))
       .limit(1);
 
     if (existing) {
@@ -61,7 +61,7 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
     const search = q.search as string | undefined;
     const rol = q.rol as string | undefined;
 
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions: ReturnType<typeof eq>[] = [isNull(users.deleted_at)];
 
     if (rol) {
       conditions.push(eq(users.rol, rol as "admin" | "user" | "tecnico" | "asesor"));
@@ -123,7 +123,7 @@ export async function toggleUserStatus(
     const [user] = await db
       .select({ id: users.id, estado: users.estado, rol: users.rol })
       .from(users)
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
       .limit(1);
 
     if (!user) {
@@ -148,7 +148,7 @@ export async function toggleUserStatus(
     const [updated] = await db
       .update(users)
       .set(updateData)
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
       .returning({
         id: users.id,
         nombre: users.nombre,
@@ -178,7 +178,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
         intentos_fallidos: 0,
         estado: "activo",
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
       .returning({
         id: users.id,
         documento: users.documento,
@@ -208,14 +208,14 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       const [targetUser] = await db
         .select({ rol: users.rol })
         .from(users)
-        .where(eq(users.id, id))
+        .where(and(eq(users.id, id), isNull(users.deleted_at)))
         .limit(1);
 
       if (targetUser && targetUser.rol === "admin") {
         const [count] = await db
           .select({ total: sql<number>`count(*)`.mapWith(Number) })
           .from(users)
-          .where(and(eq(users.rol, "admin"), ne(users.id, id)));
+          .where(and(eq(users.rol, "admin"), ne(users.id, id), isNull(users.deleted_at)));
 
         if (count.total === 0) {
           res.status(403).json({ error: "No se puede degradar al único administrador" });
@@ -228,7 +228,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
       const [duplicate] = await db
         .select({ id: users.id })
         .from(users)
-        .where(and(eq(users.documento, documento), ne(users.id, id)))
+        .where(and(eq(users.documento, documento), ne(users.id, id), isNull(users.deleted_at)))
         .limit(1);
 
       if (duplicate) {
@@ -251,7 +251,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     const [updated] = await db
       .update(users)
       .set(updateData)
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
       .returning({
         id: users.id,
         documento: users.documento,

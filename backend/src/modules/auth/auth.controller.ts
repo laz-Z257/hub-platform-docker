@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
@@ -44,7 +44,7 @@ export async function register(
     const [existing] = await db
       .select()
       .from(users)
-      .where(eq(users.documento, documento))
+      .where(and(eq(users.documento, documento), isNull(users.deleted_at)))
       .limit(1);
 
     if (existing) {
@@ -102,7 +102,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.documento, documento))
+      .where(and(eq(users.documento, documento), isNull(users.deleted_at)))
       .limit(1);
 
     if (!user) {
@@ -156,12 +156,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       tokenVersion: user.token_version,
     };
 
-    const { token } = setTokenCookies(res, payload, scope);
+    const tokens = setTokenCookies(res, payload, scope);
 
     const csrfToken = generateCsrfToken();
     setCsrfCookie(res, csrfToken);
 
-    res.json({ token, user: userResponse(user), csrfToken });
+    res.json({ user: userResponse(user), token: tokens.token, csrfToken });
   } catch (error) {
     logger.error("Login error", { error: (error as Error).message });
     res.status(500).json({ error: "Error interno del servidor" });
@@ -187,7 +187,7 @@ export async function me(req: Request, res: Response): Promise<void> {
         created_at: users.created_at,
       })
       .from(users)
-      .where(eq(users.id, req.user!.userId))
+      .where(and(eq(users.id, req.user!.userId), isNull(users.deleted_at)))
       .limit(1);
 
     if (!user) {
@@ -231,7 +231,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
     const [user] = await db
       .select({ token_version: users.token_version })
       .from(users)
-      .where(eq(users.id, payload.userId))
+      .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)))
       .limit(1);
 
     if (!user || user.token_version !== payload.tokenVersion) {

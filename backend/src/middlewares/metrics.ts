@@ -1,73 +1,55 @@
 import type { Request, Response, NextFunction } from "express";
+import client from "prom-client";
 
-interface MetricEntry {
-  method: string;
-  path: string;
-  status: number;
-  duration: number;
-  timestamp: string;
-}
+const register = new client.Registry();
 
-const MAX_METRICS = 1000;
-const metrics: MetricEntry[] = [];
-let requestCount = 0;
-let errorCount = 0;
+client.collectDefaultMetrics({ register });
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: "http_request_duration_seconds",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "route", "status_code"],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+});
+
+const httpRequestTotal = new client.Counter({
+  name: "http_requests_total",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "route", "status_code"],
+});
+
+register.registerMetric(httpRequestDurationMicroseconds);
+register.registerMetric(httpRequestTotal);
 
 export function metricsMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const start = Date.now();
-  requestCount++;
+  const start = process.hrtime();
 
   res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (res.statusCode >= 400) errorCount++;
-
-    const entry: MetricEntry = {
+    const duration = process.hrtime(start);
+    const durationInSeconds = duration[0] + duration[1] / 1e9;
+    
+    const route = req.route?.path || req.originalUrl.split("?")[0];
+    const labels = {
       method: req.method,
-      path: req.originalUrl,
-      status: res.statusCode,
-      duration,
-      timestamp: new Date().toISOString(),
+      route,
+      status_code: res.statusCode,
     };
 
-    metrics.push(entry);
-    if (metrics.length > MAX_METRICS) metrics.shift();
+    httpRequestDurationMicroseconds.observe(labels, durationInSeconds);
+    httpRequestTotal.inc(labels);
   });
 
   next();
 }
 
-export function getMetrics() {
-  const avgDuration =
-    metrics.length > 0
-      ? Math.round(
-          metrics.reduce((s, m) => s + m.duration, 0) / metrics.length
-        )
-      : 0;
+export async function getMetrics(): Promise<string> {
+  return register.metrics();
+}
 
-  const byPath: Record<string, { count: number; errors: number }> = {};
-  for (const m of metrics) {
-    const key = `${m.method} ${m.path.split("?")[0]}`;
-    if (!byPath[key]) byPath[key] = { count: 0, errors: 0 };
-    byPath[key].count++;
-    if (m.status >= 400) byPath[key].errors++;
-  }
-
-  const recent =
-    metrics.length > 50
-      ? metrics.slice(-50).reverse()
-      : [...metrics].reverse();
-
-  return {
-    uptime: process.uptime(),
-    totalRequests: requestCount,
-    totalErrors: errorCount,
-    avgResponseTime: avgDuration,
-    currentMemory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-    byPath,
-    recent,
-  };
+export function getMetricsContentType(): string {
+  return register.contentType;
 }

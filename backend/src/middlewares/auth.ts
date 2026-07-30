@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { verifyToken, JwtPayload, extractToken } from "../lib/jwt";
 import { db } from "../db";
 import { users } from "../db/schema";
@@ -36,7 +36,7 @@ export async function authMiddleware(
         token_version: users.token_version 
       })
       .from(users)
-      .where(eq(users.id, payload.userId))
+      .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)))
       .limit(1);
 
     if (!user) {
