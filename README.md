@@ -371,8 +371,8 @@ sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable
 
 ```bash
 # Los dominios admin.tudominio.com y app.tudominio.com deben apuntar (DNS) a este servidor
-cp .env.example .env
-nano .env
+cp .env.production.example .env
+nano .env   # reemplazar todos los <GENERAR> por secrets
 ```
 
 **Variables REQUERIDAS (generar con `openssl rand`):**
