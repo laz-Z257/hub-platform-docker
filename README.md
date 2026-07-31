@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | Soft Deletes | 2026-07-30
+> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | Soft Deletes | 2026-07-31
 
 ---
 
@@ -47,135 +47,6 @@ hub-platform-docker/
 
 ---
 
-## Deploy a Servidor Docker (VPS)
-
-### 1. Preparar el servidor
-
-```bash
-# Requisitos: Docker + Docker Compose
-sudo apt install docker.io docker-compose-v2
-git clone <tu-repo> hub-platform && cd hub-platform
-```
-
-### 2. Configurar dominio y variables
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-**Variables REQUERIDAS (generar con `openssl rand`):**
-
-| Variable | Ejemplo | Cómo generar |
-|----------|---------|-------------|
-| `POSTGRES_PASSWORD` | `B3kX...` | `openssl rand -base64 24` |
-| `JWT_SECRET` | `a1b2...` | `openssl rand -hex 32` |
-| `JWT_REFRESH_SECRET` | `c3d4...` | `openssl rand -hex 32` |
-| `SEED_ADMIN_PASSWORD` | `e5f6...` | `openssl rand -hex 16` |
-| `CORS_ORIGIN` | `https://admin.tudominio.com,https://app.tudominio.com` | Tu dominio |
-| `DATABASE_URL` | `postgres://hub_admin:<password>@postgres:5432/hub_platform` | Misma pass de arriba |
-
-### 3. Configurar Nginx reverse proxy (en el servidor)
-
-Crea `/etc/nginx/sites-available/hub-platform`:
-
-```nginx
-# Dashboard Web
-server {
-    listen 80;
-    server_name admin.tudominio.com;
-    return 301 https://$host$request_uri;
-}
-server {
-    listen 443 ssl;
-    server_name admin.tudominio.com;
-    ssl_certificate /etc/letsencrypt/live/admin.tudominio.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/admin.tudominio.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-# Mobile PWA
-server {
-    listen 443 ssl;
-    server_name app.tudominio.com;
-    ssl_certificate /etc/letsencrypt/live/app.tudominio.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.tudominio.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:8081;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-# Obtener SSL
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d admin.tudominio.com -d app.tudominio.com
-
-# Habilitar sitio
-sudo ln -s /etc/nginx/sites-available/hub-platform /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 4. Ajustar variables para producción
-
-En el `.env` del servidor:
-
-```bash
-NODE_ENV=production
-CORS_ORIGIN=https://admin.tudominio.com,https://app.tudominio.com
-NEXT_PUBLIC_API_URL=http://api:3001/api       # Docker interno (no cambiar)
-```
-
-En `mobile/.env` (para build PWA):
-
-```bash
-EXPO_PUBLIC_API_URL=https://api.tudominio.com/api
-```
-
-> ⚠️ Si usas solo la PWA (sin APK nativa), la URL del API se resuelve desde el dominio `app.tudominio.com` porque el nginx del contenedor mobile hace proxy a `api:3001`. No necesitas un subdominio separado para la API.
-
-### 5. Iniciar todo
-
-```bash
-# Construir imágenes (LENTO la primera vez ~30 min)
-docker compose build
-
-# Iniciar
-docker compose up -d
-
-# Verificar salud
-docker compose ps
-curl http://localhost:3001/api/health
-curl -sL http://localhost:3000 | head -1
-```
-
-### 6. Post-deploy
-
-```bash
-# Ver logs
-docker compose logs -f --tail=50
-
-# Forzar rebuild de un servicio
-docker compose build api && docker compose up -d api --force-recreate
-
-# Backup DB
-docker exec hub-postgres pg_dump -U hub_admin hub_platform > backup_$(date +%Y%m%d).sql
-```
-
----
-
 ## Quick Start (Desarrollo Local)
 
 ```bash
@@ -189,6 +60,7 @@ docker compose up -d
 # 3. Acceder
 # Dashboard:  http://localhost:3000
 # API:        http://localhost:3001/api/health
+# Mobile:     http://localhost:8081
 ```
 
 ### Credenciales por defecto
@@ -201,9 +73,9 @@ docker compose up -d
 
 ---
 
-## Tecnologías
+## Backend - API REST
 
-### Backend
+### Tecnología
 
 - **Runtime:** Node.js 22 (Alpine)
 - **Framework:** Express.js 4 + TypeScript 5
@@ -212,28 +84,6 @@ docker compose up -d
 - **Validación:** Zod 3.24
 - **Seguridad:** Helmet, CORS, CSRF, rate limiting (100/min global, 3/min auth)
 - **Testing:** Vitest
-
-### Frontend Web (Dashboard)
-
-- **Framework:** Next.js 15 (App Router) + React 19
-- **Estilos:** TailwindCSS 3.4 + dark mode
-- **Gráficos:** Recharts 3.x (memoizados)
-- **Exportación:** ExcelJS
-- **Iconos:** Lucide React
-
-### Mobile
-
-- **Framework:** Expo SDK 56 + React Native 0.85
-- **Navegación:** Expo Router (file-based)
-- **Estilos:** NativeWind 4 (TailwindCSS para RN)
-- **Storage:** expo-secure-store
-- **Animaciones:** Reanimated 4 + Gesture Handler
-- **Notificaciones:** expo-notifications
-- **OTA Updates:** expo-updates
-
----
-
-## Backend - API REST
 
 ### Estructura
 
@@ -262,8 +112,11 @@ backend/src/
     ├── push/             # Notificaciones push
     ├── puntos-venta/     # Catálogo PDVs
     ├── settings/         # Configuración empresa
-    └── upload/           # Subida de imágenes
+    ├── upload/           # Subida de imágenes
+    └── external-systems/ # Redirect a sistemas externos (auth + admin)
 ```
+
+> 📘 **Documentación detallada de cada módulo** (endpoints, auth, comportamientos): [`backend/src/modules/README.md`](./backend/src/modules/README.md)
 
 ### Endpoints
 
@@ -306,6 +159,7 @@ backend/src/
 | PATCH | `/api/settings` | Sí | Sí | Actualizar config |
 | POST | `/api/upload` | Sí | Sí | Subir imagen |
 | GET | `/api/metrics` | Sí | Sí | Métricas (protegido) |
+| GET | `/api/external-systems/:module` | Sí | Sí | Redirect 302 al sistema externo |
 
 ### Roles
 
@@ -331,9 +185,47 @@ backend/src/
 | faq | preguntas frecuentes, guía |
 | reportar | reportar problema, crear ticket |
 
+### Sesiones Aisladas (Dashboard + Mobile)
+
+El sistema implementa **sesiones aisladas** entre dashboard y mobile:
+
+- **Dashboard** usa cookies `admin_token` con header `X-Auth-Scope: admin`
+- **Mobile** usa cookies `user_token` con header `X-Auth-Scope: user`
+- **Cookies** tienen path `/` para que el navegador las envíe a `/api/*`
+- **Prioridad** de extracción: `admin_token` > `user_token` > `token`
+- **Logout aislado:** Cerrar sesión en mobile NO cierra dashboard (y viceversa)
+
+Esto evita conflictos cuando se usan ambas aplicaciones simultáneamente.
+
+### Seguridad y Calidad
+
+| Feature | Descripción |
+|---------|-------------|
+| **Seguridad Backend** | `/uploads` y `/metrics` protegidos con auth |
+| **Password Policy** | Login y register exigen mínimo 6 chars |
+| **Push Token Security** | Verifica owner antes de reasignar |
+| **Ratings Constraint** | CHECK constraint en BD (1-5) |
+| **Performance** | N+1 query optimizado, ultima_actividad throttle |
+| **updateUser** | Verifica documento duplicado (409) |
+| **Chat History** | Límite 200, paginación con offset |
+| **Soft Deletes** | Campo `deleted_at` en users e incidents |
+| **UPSERT Atómico** | Settings sin race conditions |
+| **JWT Solo Cookies** | Token eliminado del body, solo httpOnly cookies |
+| **CSRF estable** | Token no rota por llamada (multi-pestaña no rompe sesión) |
+| **Documentación API** | OpenAPI/Swagger completo |
+
 ---
 
 ## Dashboard Web
+
+### Tecnología
+
+- **Framework:** Next.js 15 (App Router) + React 19
+- **Estilos:** TailwindCSS 3.4 + dark mode
+- **Gráficos:** Recharts 3.x (memoizados)
+- **Exportación:** ExcelJS
+- **Iconos:** Lucide React
+- **Testing:** Vitest
 
 ### Rutas
 
@@ -346,11 +238,44 @@ backend/src/
 | `/dashboard/users` | Gestión usuarios, bloqueo, reset password |
 | `/dashboard/ratings` | Calificaciones con estadísticas y gráficos |
 | `/dashboard/settings` | Config empresa, apariencia, mantenimiento |
-| `/dashboard/external-systems` | Módulos externos |
+| `/dashboard/external-systems` | Módulos externos (links seguros vía backend) |
+
+### Funcionalidades
+
+- **Dark mode completo** — dashboard y páginas `/user/*`
+- **Dashboard responsive** — sidebar colapsable con breakpoints
+- **Modales custom** — sin `alert()` nativos (Modal + useModal)
+- **Helpers centralizados** — `utils.ts` y `styles.ts` sin duplicación
+- **Exportación Excel** con filtros de fecha
+- **Gráficos memoizados** en analytics
+- **Sistemas externos seguros** — las URLs viven en el backend; el frontend usa un redirect protegido (`/api/external-systems/:module`)
+
+### Variables
+
+```bash
+# El frontend usa ruta relativa /api (NEXT_PUBLIC_API_URL es opcional)
+NEXT_PUBLIC_API_URL=http://api:3001/api    # Opcional (Docker interno)
+# NEXT_PUBLIC_SUPPORT_WHATSAPP=https://wa.me/573000000000
+# NEXT_PUBLIC_SUPPORT_PHONE=+57 300 000 0000
+```
+
+### Tests
+
+- ✅ 46 tests de componentes y hooks pasando
 
 ---
 
-## Mobile
+## Mobile - App PWA
+
+### Tecnología
+
+- **Framework:** Expo SDK 56 + React Native 0.85
+- **Navegación:** Expo Router (file-based)
+- **Estilos:** NativeWind 4 (TailwindCSS para RN)
+- **Storage:** expo-secure-store
+- **Animaciones:** Reanimated 4 + Gesture Handler
+- **Notificaciones:** expo-notifications
+- **OTA Updates:** expo-updates
 
 ### PWA Completa (Progressive Web App)
 
@@ -404,6 +329,163 @@ eas build -p android --profile preview
 
 Ver [DISTRIBUCION-APK.md](./DISTRIBUCION-APK.md) para distribución.
 
+### Variables
+
+```bash
+# PWA en Docker: ruta relativa (el nginx del contenedor proxya /api → api:3001)
+EXPO_PUBLIC_API_URL=/api
+
+# Desarrollo local (sin proxy)
+EXPO_PUBLIC_API_URL=http://localhost:3001/api
+
+# APK nativa: URL pública del API
+EXPO_PUBLIC_API_URL=https://api.tudominio.com/api
+```
+
+### Calidad
+
+- **Logger unificado** — sin `console.log` dispersos
+- **Sanitización de input** — ChatInput con límite de 500 chars
+- **Constantes de color** — centralizadas en `constants/colors.ts`
+- **Error Boundaries** — pantalla de error en vez de crash
+- **Crash Reporting** — compatible con Sentry
+- **PWA completa** — manifest.json + service worker + iconos
+- **Tests** — 14 tests unitarios (Jest)
+
+---
+
+## Deploy a Servidor Docker (VPS)
+
+### 1. Preparar el servidor
+
+```bash
+# Requisitos: Docker + Docker Compose
+sudo apt install docker.io docker-compose-v2
+git clone <tu-repo> hub-platform && cd hub-platform
+
+# Firewall: abrir solo 80 y 443 (la API 3001 no se expone públicamente)
+sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable
+```
+
+### 2. Configurar dominio y variables
+
+```bash
+# Los dominios admin.tudominio.com y app.tudominio.com deben apuntar (DNS) a este servidor
+cp .env.example .env
+nano .env
+```
+
+**Variables REQUERIDAS (generar con `openssl rand`):**
+
+| Variable | Ejemplo | Cómo generar |
+|----------|---------|-------------|
+| `POSTGRES_PASSWORD` | `B3kX...` | `openssl rand -base64 24` |
+| `JWT_SECRET` | `a1b2...` | `openssl rand -hex 32` |
+| `JWT_REFRESH_SECRET` | `c3d4...` | `openssl rand -hex 32` |
+| `SEED_ADMIN_PASSWORD` | `e5f6...` | `openssl rand -hex 16` |
+| `CORS_ORIGIN` | `https://admin.tudominio.com,https://app.tudominio.com` | Tus dominios |
+| `DATABASE_URL` | `postgres://hub_admin:<password>@postgres:5432/hub_platform` | Misma pass de arriba |
+| `EXTERNAL_SYSTEMS_URL` | `https://.../login.xhtml` | URL completa del login del sistema externo (solo si lo usas) |
+
+### 3. Configurar Nginx reverse proxy (en el servidor)
+
+Primero crea `/etc/nginx/sites-available/hub-platform` **solo con HTTP** (certbot agregará HTTPS después):
+
+```nginx
+# Dashboard Web
+server {
+    listen 80;
+    server_name admin.tudominio.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Mobile PWA
+server {
+    listen 80;
+    server_name app.tudominio.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Habilita el sitio y prueba antes de pedir los certificados:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/hub-platform /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Obtén los certificados con certbot (agrega HTTPS y el redirect automáticamente):
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d admin.tudominio.com -d app.tudominio.com
+sudo systemctl reload nginx
+```
+
+### 4. Ajustar variables para producción
+
+En el `.env` del servidor:
+
+```bash
+NODE_ENV=production
+CORS_ORIGIN=https://admin.tudominio.com,https://app.tudominio.com
+```
+
+> ℹ️ No necesitas configurar `NEXT_PUBLIC_API_URL` ni un subdominio para la API: el dashboard usa una ruta relativa `/api` y nginx/Next.js la proxean internamente a `api:3001`.
+
+Crea `mobile/.env` (para build PWA):
+
+```bash
+cat > mobile/.env <<'EOF'
+# PWA en Docker: ruta relativa (el nginx del contenedor proxya /api → api:3001)
+EXPO_PUBLIC_API_URL=/api
+EOF
+```
+
+> ⚠️ El navegador llama a `app.tudominio.com/api`, y el nginx del contenedor mobile lo proxya a `api:3001`. No necesitas un subdominio separado para la API. Esta URL relativa solo aplica a la PWA servida por Docker; para APK nativa usa la URL pública del API.
+
+### 5. Iniciar todo
+
+```bash
+# Construir imágenes (LENTO la primera vez ~30 min)
+docker compose build
+
+# Iniciar
+docker compose up -d
+
+# Verificar salud
+docker compose ps
+curl http://localhost:3001/api/health
+curl -sL http://localhost:3000 | head -1
+```
+
+### 6. Post-deploy
+
+```bash
+# Ver logs
+docker compose logs -f --tail=50
+
+# Forzar rebuild de un servicio
+docker compose build api && docker compose up -d api --force-recreate
+
+# Backup DB
+docker exec hub-postgres pg_dump -U hub_admin hub_platform > backup_$(date +%Y%m%d).sql
+```
+
 ---
 
 ## Variables de Entorno
@@ -432,37 +514,11 @@ CORS_ORIGIN=http://localhost:3000,http://localhost:8081
 # Admin password (si no se define, se genera una aleatoria en seed)
 SEED_ADMIN_PASSWORD=<generar>
 
-# Web app
-NEXT_PUBLIC_API_URL=http://api:3001/api    # Docker interno
-NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100
-# NEXT_PUBLIC_SUPPORT_WHATSAPP=https://wa.me/573000000000
-# NEXT_PUBLIC_SUPPORT_PHONE=+57 300 000 0000
+# Sistema externo (solo backend — nunca expuesto al frontend)
+EXTERNAL_SYSTEMS_URL=http://192.168.60.66:8100/Seguridad-WEB/XHTML/general/login.xhtml
 ```
 
-### mobile/.env
-
-```bash
-# PWA (Docker local) - URL relativa (proxy nginx)
-EXPO_PUBLIC_API_URL=/api
-
-# Desarrollo local (sin proxy)
-EXPO_PUBLIC_API_URL=http://localhost:3001/api
-
-# Producción (Render)
-EXPO_PUBLIC_API_URL=https://hub-platform-api.onrender.com/api
-```
-
-### Seguridad de Sesiones
-
-El sistema implementa **sesiones aisladas** entre dashboard y mobile:
-
-- **Dashboard** usa cookies `admin_token` con header `X-Auth-Scope: admin`
-- **Mobile** usa cookies `user_token` con header `X-Auth-Scope: user`
-- **Cookies** tienen path `/` para que el navegador las envíe a `/api/*`
-- **Prioridad** de extracción: `admin_token` > `user_token` > `token`
-- **Logout aislado:** Cerrar sesión en mobile NO cierra dashboard (y viceversa)
-
-Esto evita conflictos cuando se usan ambas aplicaciones simultáneamente.
+> Las variables de `web/.env` y `mobile/.env` están documentadas en sus secciones correspondientes.
 
 ---
 
@@ -511,45 +567,30 @@ cd web && npm test
 | Archivo | Contenido |
 |---------|-----------|
 | `README.md` | Este archivo |
+| `backend/src/modules/README.md` | Documentación de los 11 módulos del backend |
 | `CHANGELOG.md` | Historial de cambios |
-| `PENDIENTES.md` | Auditoría de pendientes |
 | `DISTRIBUCION-APK.md` | Guía distribución APK |
 | `backend/openapi.yaml` | Documentación API REST (OpenAPI 3.0) |
 
 ---
 
-## Estado de Calidad (2026-07-30)
+## Estado de Calidad (2026-07-31)
 
-### ✅ Implementado
+### Tests
 
-| Feature | Descripción |
-|---------|-------------|
-| **Sesiones Aisladas** | Cookies con scope (admin_token vs user_token) |
-| **PWA Completa** | manifest.json, service worker, meta tags |
-| **Seguridad Backend** | /uploads y /metrics protegidos con auth |
-| **Password Policy** | Login y register exigen mínimo 6 chars |
-| **Push Token Security** | Verifica owner antes de reasignar |
-| **Ratings Constraint** | CHECK constraint en BD (1-5) |
-| **Performance** | N+1 query optimizado, ultima_actividad throttle |
-| **updateUser** | Verifica documento duplicado (409) |
-| **Mobile PWA** | Logger unificado, sanitización input, constantes de color |
-| **Chat History** | Límite 200, paginación con offset |
-| **Soft Deletes** | Campo `deleted_at` en users e incidents |
-| **UPSERT Atómico** | Settings sin race conditions |
-| **JWT Solo Cookies** | Token eliminado del body, solo httpOnly cookies |
-| **Documentación API** | OpenAPI/Swagger completo |
+| Módulo | Tests | Comando |
+|--------|:-----:|---------|
+| Backend | ✅ 148 pasando | `cd backend && npm test` |
+| Web | ✅ 46 pasando | `cd web && npm test` |
+| Mobile | ✅ 14 pasando | `cd mobile && npm test` |
 
-### 📊 Métricas
+### Verificación
 
-- **72 hallazgos originales** → 72 resueltos, 0 pendientes ✅
-- **Tests:** 146 pasando en backend, 46 pasando en web, 14 pasando en mobile
-- **TypeScript:** Compila sin errores en backend y web
+- **TypeScript:** Compila sin errores en backend, web y mobile
 - **Docker:** Todos los servicios corriendo y saludables
-- **Seguridad:** 0 pendientes críticos
-- **Mobile:** Error Boundaries + Crash Reporting + Tests implementados
-- **Dashboard:** Responsive implementado y reconstruido
-- **Frontend:** Dark mode completo, modales custom, helpers centralizados, tests de componentes
-- **Infra:** Métricas Prometheus, iconos PNG en PWA
+- **Lint web:** 0 warnings
+- **Seguridad:** 0 pendientes críticos (CSRF estable, URLs externas fuera del frontend)
+- **Infra:** Métricas Prometheus, PWA con iconos PNG
 
 ---
 

@@ -38,6 +38,7 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      EXTERNAL_SYSTEMS_URL: ${EXTERNAL_SYSTEMS_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,13 +55,15 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
+        NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
     container_name: hub-web
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/api}
-      NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL: ${NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL:-}
       NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
       NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
     depends_on:

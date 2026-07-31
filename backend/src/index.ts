@@ -25,6 +25,7 @@ import ratingsRoutes from "./modules/ratings/ratings.routes";
 import pushRoutes from "./modules/push/push.routes";
 import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
 import settingsRoutes from "./modules/settings/settings.routes";
+import externalSystemsRoutes from "./modules/external-systems/external-systems.routes";
 
 const app = express();
 
@@ -138,6 +139,7 @@ app.use("/api/ratings", ratingsRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/puntos-venta", puntosVentaRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/external-systems", externalSystemsRoutes);
 
 // 404
 app.use((_req, res) => {

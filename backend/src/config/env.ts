@@ -22,4 +22,5 @@ export const env = {
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   MAX_LOGIN_ATTEMPTS: parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10),
   EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN || "",
+  EXTERNAL_SYSTEMS_URL: process.env.EXTERNAL_SYSTEMS_URL || "",
 };

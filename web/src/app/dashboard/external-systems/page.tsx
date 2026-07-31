@@ -11,7 +11,7 @@ interface Module {
 }
 
 const modules: Module[] = [
-  { id: 1, title: "Traslados", url: process.env.NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL ? `${process.env.NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL}/Seguridad-WEB/XHTML/general/login.xhtml` : undefined },
+  { id: 1, title: "Traslados", url: "/api/external-systems/traslados" },
   { id: 2, title: "Inventario", status: "coming" },
   { id: 3, title: "Facturación", status: "coming" },
   { id: 4, title: "Reportes", status: "coming" },

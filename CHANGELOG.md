@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-07-31 — Documentación: README reescrito + módulos del backend
+
+- **README.md reescrito** por componente: Estructura, Arquitectura, Quick Start, Backend API (endpoints, roles, intenciones del bot, sesiones aisladas), Dashboard Web, Mobile PWA, Deploy VPS (Nginx + certbot), Variables, Comandos, Infra, Documentación y Estado de Calidad.
+- **Guía de deploy corregida**: orden Nginx HTTP → certbot, `EXPO_PUBLIC_API_URL=/api` (era una URL pública inexistente), firewall `ufw`, `EXTERNAL_SYSTEMS_URL` documentada, `NEXT_PUBLIC_API_URL` marcada opcional.
+- **`backend/src/modules/README.md` (nuevo)**: documentación uniforme de los 11 módulos (endpoints, auth, límites y comportamientos clave).
+- **`PENDIENTES.md` eliminado**: 75/76 ítems resueltos, 0 pendientes (se referenciaba desde la tabla Documentación).
+
+---
+
+## 2026-07-31 — Seguridad: URL sistema externo movida al backend (redirect server-side)
+
+### Motivación
+
+La URL del sistema externo (`http://192.168.60.66:8100/...`) estaba inyectada en el bundle JS del frontend (visible con F12 para cualquier visitante). Se movió al backend para que nunca llegue al navegador.
+
+### Cambios
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Nuevo módulo `external-systems`** | `backend/src/modules/external-systems/` | Controller + routes con `GET /api/external-systems/:module` que responde 302 al destino real |
+| **Protección** | `external-systems.routes.ts` | `authMiddleware` + `adminOnly` (solo admin/tecnico logueados) |
+| **Variable de entorno** | `env.ts`, `docker-compose.yml` | `EXTERNAL_SYSTEMS_URL` solo en backend |
+| **Frontend sin URL** | `web/.../external-systems/page.tsx` | Link a ruta relativa `/api/external-systems/traslados` |
+| **Build args limpiados** | `docker-compose.yml`, `web/Dockerfile` | Eliminado `NEXT_PUBLIC_EXTERNAL_SYSTEMS_URL` (ya no se usa) |
+| **Tests** | `external-systems.controller.test.ts` | 2 tests: redirect 302 y 404 para módulo no configurado |
+
+### Verificación
+
+- ✅ URL real NO aparece en el bundle del frontend (0 ocurrencias)
+- ✅ Sin auth: 401 · Con admin: 302 al sistema externo · Módulo no configurado: 404
+- ✅ Backend: 148/148 tests pasando
+- ✅ tsc OK, contenedores `hub-api` y `hub-web` reconstruidos y healthy
+
+---
+
 ## 2026-07-31 — Revisión completa: fix CSRF, TS mobile, catches vacíos y lint
 
 ### Fix: 403 CSRF al cerrar ticket en dashboard (multi-pestaña)
