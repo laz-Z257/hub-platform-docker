@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { Send, MapPin, ChevronDown, Search, X, MessageSquare } from "lucide-react";
 
 export default function ReportarPage() {
@@ -43,10 +44,10 @@ export default function ReportarPage() {
         } else if (data?.total && data.total > 0) {
           setHasHistory(true);
         }
-      }).catch(() => {});
+      }).catch((err) => logger.error("Error fetching incident history", { error: err instanceof Error ? err.message : err }));
     api.get<{ nombre: string }[]>("/puntos-venta")
       .then((list) => setPvList(list.map((p) => p.nombre)))
-      .catch(() => {});
+      .catch((err) => logger.error("Error fetching puntos de venta", { error: err instanceof Error ? err.message : err }));
   }, [user]);
 
   const validate = () => {

@@ -75,7 +75,7 @@ export default function ChatScreen() {
   const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const autoActionTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const autoActionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (initializing) return;

@@ -5,6 +5,6 @@ import { useRouter } from "next/navigation";
 
 export default function UserPage() {
   const router = useRouter();
-  useEffect(() => { router.replace("/user/chat"); }, []);
+  useEffect(() => { router.replace("/user/chat"); }, [router]);
   return null;
 }

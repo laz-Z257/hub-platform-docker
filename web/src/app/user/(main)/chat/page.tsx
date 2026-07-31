@@ -77,12 +77,12 @@ export default function ChatPage() {
 
     api.get<{ items: { id: string; descripcion: string; estado: string }[] }>("/incidents?limit=1")
       .then((data) => { if (data.items.length > 0) setLatestIncident(data.items[0]); })
-      .catch(() => {});
+      .catch((err) => logger.error("Error fetching latest incident", { error: err instanceof Error ? err.message : err }));
 
     api.get<{ ratedIncidentIds: string[] }>("/ratings/my-ratings")
       .then((data) => setRatedIncidents(new Set(data.ratedIncidentIds)))
-      .catch(() => {});
-  }, [initializing, user]);
+      .catch((err) => logger.error("Error fetching my ratings", { error: err instanceof Error ? err.message : err }));
+  }, [initializing, user, router]);
 
   useEffect(() => { if (!loadingHistory) scrollToBottom(); }, [messages, loadingHistory]);
 
@@ -225,7 +225,7 @@ export default function ChatPage() {
                       if (latestIncident?.id) setRatingIncidentId(latestIncident.id);
                       else api.get<{ items: { id: string; estado: string }[] }>("/incidents?limit=1&estado=resuelto")
                         .then((d) => { if (d.items?.[0]) setRatingIncidentId(d.items[0].id); })
-                        .catch(() => {});
+                        .catch((err) => logger.error("Error fetching resolved incident", { error: err instanceof Error ? err.message : err }));
                     }}
                     onSubmenuPress={handleSubmenuPress}
                     onMenuPress={handleMenuPress}

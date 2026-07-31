@@ -1,6 +1,6 @@
 # PENDIENTES - HUB Platform
 
-**Última actualización:** 2026-07-30
+**Última actualización:** 2026-07-31
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Estado | Cantidad |
 |--------|:--------:|
-| ✅ Resueltos | 71 |
+| ✅ Resueltos | 74 |
 | ❌ Pendientes | 0 |
-| **Total hallazgos** | **72** |
+| **Total hallazgos** | **75** |
 
 ---
 
@@ -43,6 +43,7 @@ Adicionales resueltos: Race condition updateSettings (UPSERT atómico), JWT solo
 
 | B-19 | Login devuelve token en body | `auth.controller.ts:164` | ✅ `tokens.token` en respuesta |
 | B-20 | Transición a "en_proceso" falla por CSRF | `middlewares/csrf.ts` + `web/src/lib/api.ts` | ✅ Backend devuelve csrfToken en body login/me/refresh. Frontend lo guarda en memoria y lo envía como header `x-csrf-token`. |
+| B-21 | 403 CSRF al cerrar ticket (multi-pestaña) | `middlewares/csrf.ts` + `auth.controller.ts` | ✅ La cookie csrf-token se rotaba en cada me/login/refresh; con 2 pestañas el header en memoria quedaba obsoleto → 403. Corregido con `getOrCreateCsrfToken()` que reutiliza el token existente. |
 
 ### Frontend (9)
 
@@ -57,6 +58,7 @@ Adicionales resueltos: Race condition updateSettings (UPSERT atómico), JWT solo
 | F-7 | Volumen uploads | `docker-compose.yml:43-44` | ✅ `uploads:/app/uploads` |
 | F-8 | EXTERNAL_SYSTEMS_URL | `docker-compose.yml:61` | ✅ Variable pasada |
 | F-9 | Dashboard responsive | `Sidebar.tsx`, `Topbar.tsx`, `layout.tsx` | ✅ Sidebar colapsable, breakpoints |
+| F-10 | `.catch(() => {})` silenciosos en `/user/*` | `chat/page.tsx`, `reportar/page.tsx` | ✅ 5 catches vacíos reemplazados con `logger.error` (consistente con dashboard). Lint web: 4 warnings → 0. |
 
 Adicionales resueltos: Dashboard responsive en Docker, dark mode /user/*, modales custom (Modal + useModal), archivos extraídos (tickets 505→362, settings 511→230), helpers centralizados (formatTicketId), tests componentes (46), PWA icons PNG, HOSTNAME=0.0.0.0 en web Dockerfile.
 
@@ -79,6 +81,7 @@ Adicionales resueltos: Dashboard responsive en Docker, dark mode /user/*, modale
 | M-13 | Crash Reporting | `src/services/crashReporting.ts` | ✅ Compatible con Sentry |
 | M-14 | Chat history `t.map is not a function` | `ChatScreen.tsx:100` | ✅ `history.items.map()` |
 | M-15 | Sesión perdida al recargar (sin cookies en RN) | `api.ts:98`, `AuthContext.tsx:109` | ✅ `Authorization: Bearer` header + token guardado en login |
+| M-16 | Error TS en `useRef` bloqueaba compilación | `ChatScreen.tsx:78` | ✅ `useRef<T>()` → `useRef<T \| null>(null)` (TS 5.5 exige argumento) |
 
 ### Infraestructura (6)
 
@@ -145,7 +148,7 @@ Adicional: Prometheus metrics middleware, render.yaml con variables, CORS_ORIGIN
 
 ---
 
-*Auditoría realizada: 2026-07-30*
-**71/72 hallazgos resueltos — 0 pendientes**
+*Auditoría realizada: 2026-07-30 (actualizada 2026-07-31)*
+**74/75 hallazgos resueltos — 0 pendientes**
 
 ✅ **Todos los hallazgos resueltos.**

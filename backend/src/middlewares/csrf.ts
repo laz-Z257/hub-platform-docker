@@ -20,6 +20,16 @@ export function setCsrfCookie(res: Response, token: string) {
   res.cookie(CSRF_COOKIE, token, opts);
 }
 
+export function getOrCreateCsrfToken(req: Request, res: Response): string {
+  const existing = req.cookies?.[CSRF_COOKIE];
+  if (typeof existing === "string" && existing.length >= 32) {
+    return existing;
+  }
+  const token = generateCsrfToken();
+  setCsrfCookie(res, token);
+  return token;
+}
+
 export function csrfProtection(
   req: Request,
   res: Response,

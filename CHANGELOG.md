@@ -1,5 +1,61 @@
 # Changelog
 
+## 2026-07-31 — Revisión completa: fix CSRF, TS mobile, catches vacíos y lint
+
+### Fix: 403 CSRF al cerrar ticket en dashboard (multi-pestaña)
+
+### Bug
+
+El backend **rotaba la cookie `csrf-token`** en cada llamada a `/auth/me`, `/auth/login` y `/auth/refresh`. Como el frontend guarda el token en memoria JS (por pestaña) pero la cookie es compartida entre pestañas del navegador, abrir una segunda pestaña o recargar invalidaba el token en memoria de la primera → `403 CSRF token inválido` al hacer `PATCH /api/incidents/:id` (cerrar/resolver ticket).
+
+### Corregido
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Nuevo `getOrCreateCsrfToken()`** | `backend/src/middlewares/csrf.ts` | Reutiliza el token existente en cookie; solo genera uno nuevo si no hay cookie o es inválida |
+| **Sin rotación** | `auth.controller.ts` | `login`, `register`, `me` y `refresh` usan `getOrCreateCsrfToken` en vez de generar siempre uno nuevo |
+| **Tests actualizados** | `auth.controller.test.ts` | Mock de `getOrCreateCsrfToken` en register y login |
+
+### Verificación
+
+- ✅ Reproducido el fallo multi-pestaña (403) antes del fix
+- ✅ Confirmado que pasa después del fix (mismo token en `me` + PATCH OK)
+- ✅ Tests backend: 146/146 pasando
+- ✅ TypeScript: 0 errores
+- ✅ Contenedor `hub-api` reconstruido y healthy
+
+### Fix: Error TS en mobile (bloqueaba compilación)
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **useRef sin valor inicial** | `mobile/src/screens/ChatScreen.tsx:78` | `useRef<ReturnType<typeof setTimeout>>()` → `useRef<... | null>(null)`. TypeScript 5.5+ exige argumento en `useRef`. |
+
+### Fix: `.catch(() => {})` silenciosos en páginas `/user/*`
+
+| Archivo | Líneas | Detalle |
+|---------|--------|---------|
+| `chat/page.tsx` | 80, 84, 228 | Agregado `logger.error` a los catch de incidents, ratings y resolved incident |
+| `reportar/page.tsx` | 46, 49 | Agregado import de `logger` + `logger.error` en history y puntos de venta |
+
+### Fix: Lint web — de 4 warnings a 0
+
+| Archivo | Detalle |
+|---------|---------|
+| `user/(main)/layout.tsx` | Agregado `router` a deps de useEffect (estable en Next.js) |
+| `user/(main)/page.tsx` | Idem |
+| `user/(main)/chat/page.tsx` | Idem |
+| `contexts/AuthContext.tsx` | Silenciado con `eslint-disable` + comentario (agregar `pathname` re-ejecutaría `/auth/me` en cada navegación) |
+
+### Verificación final
+
+- ✅ Backend: 146/146 tests, tsc OK, build OK
+- ✅ Web: 46/46 tests, tsc OK, build OK, lint 0 warnings
+- ✅ Mobile: 14/14 tests, tsc OK
+- ✅ Contenedores `hub-api`, `hub-web`, `hub-mobile` reconstruidos y healthy
+- ✅ Smoke test: health OK, web/mobile 200
+
+---
+
 ## 2026-07-29 — Frontend: Refactor y Tests de Componentes
 
 ### Refactor de Archivos Grandes

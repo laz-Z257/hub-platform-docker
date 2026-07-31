@@ -35,6 +35,7 @@ vi.mock("../../lib/jwt", () => ({
 vi.mock("../../middlewares/csrf", () => ({
   generateCsrfToken: vi.fn(),
   setCsrfCookie: vi.fn(),
+  getOrCreateCsrfToken: vi.fn(),
 }));
 
 describe("Auth Controller", () => {
@@ -82,7 +83,7 @@ describe("Auth Controller", () => {
 
       (bcrypt.hash as ReturnType<typeof vi.fn>).mockResolvedValue("hashed");
       (jwt.setTokenCookies as ReturnType<typeof vi.fn>).mockReturnValue({ token: "jwt-token" });
-      (csrf.generateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
+      (csrf.getOrCreateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
 
       req.body = {
         documento: "123456789",
@@ -160,7 +161,7 @@ describe("Auth Controller", () => {
 
       (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
       (jwt.setTokenCookies as ReturnType<typeof vi.fn>).mockReturnValue({ token: "jwt-token" });
-      (csrf.generateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
+      (csrf.getOrCreateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
 
       req.body = {
         documento: "123456789",

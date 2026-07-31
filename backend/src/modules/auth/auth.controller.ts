@@ -4,7 +4,7 @@ import { eq, sql, and, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
-import { generateCsrfToken, setCsrfCookie } from "../../middlewares/csrf";
+import { getOrCreateCsrfToken } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
@@ -72,8 +72,7 @@ export async function register(
       tokenVersion: user.token_version,
     }, "user");
 
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    const csrfToken = getOrCreateCsrfToken(req, res);
 
     res.status(201).json({ user: userResponse(user), csrfToken });
   } catch (error) {
@@ -158,8 +157,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     const tokens = setTokenCookies(res, payload, scope);
 
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    const csrfToken = getOrCreateCsrfToken(req, res);
 
     res.json({ user: userResponse(user), token: tokens.token, csrfToken });
   } catch (error) {
@@ -195,8 +193,7 @@ export async function me(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    const csrfToken = getOrCreateCsrfToken(req, res);
 
     res.json({ ...user, csrfToken });
   } catch (error) {
@@ -248,8 +245,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       tokenVersion: user.token_version,
     }, scope);
 
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    const csrfToken = getOrCreateCsrfToken(req, res);
 
     res.json({ ok: true, csrfToken });
   } catch {

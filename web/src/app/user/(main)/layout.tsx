@@ -13,7 +13,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     if (!initializing && !user) {
       router.push("/user/login");
     }
-  }, [user, initializing]);
+  }, [user, initializing, router]);
 
   if (initializing || !user) {
     return (
