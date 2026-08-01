@@ -75,17 +75,6 @@ export function setTokenCookies(
   return { token, refreshToken };
 }
 
-export function clearAllTokenCookies(res: import("express").Response) {
-  for (const scope of SCOPE_ORDER) {
-    const path = getCookiePath(scope);
-    const tokenName = getCookieName("token", scope);
-    const refreshName = getCookieName("refreshToken", scope);
-    res.clearCookie(tokenName, { path });
-    res.clearCookie(refreshName, { path });
-    res.clearCookie("userRole", { path });
-  }
-}
-
 export function clearTokenCookies(
   res: import("express").Response,
   scope?: AuthScope
