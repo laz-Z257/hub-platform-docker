@@ -24,11 +24,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import Logo from "../src/components/Logo";
-
-function shortTicketId(id: string): string {
-  const clean = id.replace(/-/g, "").slice(-8).toUpperCase();
-  return `#TK-${clean}`;
-}
+import { formatTicketId } from "../src/lib/format";
 
 export default function SuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -38,7 +34,7 @@ export default function SuccessScreen() {
   const { user } = useAuth();
 
   const userId = ticketId
-    ? shortTicketId(ticketId)
+    ? formatTicketId(ticketId)
     : "Ticket no disponible";
 
   const scaleOuter = useSharedValue(0.6);

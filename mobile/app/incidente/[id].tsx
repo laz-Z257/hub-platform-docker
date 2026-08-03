@@ -11,6 +11,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
 import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { formatTicketId, formatDate } from "../../src/lib/format";
 
 interface IncidentDetail {
   id: string;
@@ -25,21 +26,6 @@ interface IncidentDetail {
   created_at: string;
   updated_at: string;
   comments: { id: string; autor: string; texto: string; fecha: string }[];
-}
-
-function formatTicketId(id: string): string {
-  const short = id.replace(/-/g, "").slice(-8).toUpperCase();
-  return `#TK-${short}`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export default function IncidentDetailScreen() {
