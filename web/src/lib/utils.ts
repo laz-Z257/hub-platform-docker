@@ -46,7 +46,7 @@ export const ESTADO_LABELS: Record<string, string> = {
 
 export const ESTADO_COLORS: Record<string, string> = {
   pendiente: "#3B82F6",
-  en_proceso: "#7C3AED",
+  en_proceso: "#F59E0B",
   resuelto: "#22C55E",
 };
 
