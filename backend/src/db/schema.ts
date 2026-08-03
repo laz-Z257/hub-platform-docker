@@ -10,6 +10,7 @@ import {
   pgEnum,
   index,
   check,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 export const rolEnum = pgEnum("rol", ["user", "asesor", "admin", "tecnico"]);
@@ -32,7 +33,12 @@ export const users = pgTable("users", {
   ultima_actividad: timestamp("ultima_actividad"),
   token_version: integer("token_version").notNull().default(0),
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
-  bloqueado_por: uuid("bloqueado_por"),
+  bloqueado_por: uuid("bloqueado_por").references(
+    (): AnyPgColumn => users.id,
+    {
+      onDelete: "set null",
+    }
+  ),
   deleted_at: timestamp("deleted_at"),
   created_at: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [

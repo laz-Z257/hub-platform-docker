@@ -130,9 +130,7 @@ npm run test:watch    # Vitest watch
 - ✅ `ultima_actividad` throttle cada 5 min (verificado)
 - ✅ `/api/metrics` protegido con auth + adminOnly (verificado)
 - ✅ `/uploads` protegido con middleware de auth (verificado)
-
-### Pendiente
-- ❌ `bloqueado_por` FK sin ON DELETE (requiere migración SQL manual por referencia circular)
+- ✅ `bloqueado_por` FK con `ON DELETE SET NULL` (migración `0015`, auto-referencia resuelta con `AnyPgColumn`; verificado que al borrar al bloqueador el campo queda NULL)
 
 ### Performance
 - ✅ N+1 query en `getSummary` optimizado con GROUP BY (verificado)
