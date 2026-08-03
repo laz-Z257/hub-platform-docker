@@ -13,7 +13,6 @@ hub-platform-docker/
 ├── backend/          # API REST (Express + TypeScript + Drizzle ORM + PostgreSQL)
 ├── web/              # Dashboard Admin (Next.js 15 + React 19 + TailwindCSS)
 ├── mobile/           # App Móvil PWA (Expo SDK 56 + React Native + NativeWind)
-├── ota-server/       # Servidor nginx para PWA mobile + proxy API (deshabilitado)
 ├── shared/           # Tipos TypeScript compartidos (@hub/shared)
 ├── docker-compose.yml
 ├── render.yaml       # Deploy backend en Render (alternativo)
@@ -43,7 +42,6 @@ hub-platform-docker/
 | **api** | Express.js + TypeScript | 3001 | Backend REST API con sesiones aisladas |
 | **web** | Next.js 15 (React 19) | 3000 | Dashboard administrativo |
 | **mobile** | Expo SDK 56 + PWA | 8081 | App móvil PWA instalable |
-| **ota-server** | nginx Alpine | 3002 | Proxy API + PWA (deshabilitado) |
 
 ---
 
@@ -315,20 +313,6 @@ docker compose up -d mobile
 # Mobile: "Agregar a pantalla principal"
 ```
 
-### Compilar APK
-
-```bash
-# Con Docker
-docker compose --profile build-only run mobile-builder
-# Output: mobile/output/app-release.apk
-
-# Con EAS Build (nube)
-cd mobile
-eas build -p android --profile preview
-```
-
-Ver [DISTRIBUCION-APK.md](./DISTRIBUCION-APK.md) para distribución.
-
 ### Variables
 
 ```bash
@@ -569,7 +553,6 @@ cd web && npm test
 | `README.md` | Este archivo |
 | `backend/src/modules/README.md` | Documentación de los 11 módulos del backend |
 | `CHANGELOG.md` | Historial de cambios |
-| `DISTRIBUCION-APK.md` | Guía distribución APK |
 | `backend/openapi.yaml` | Documentación API REST (OpenAPI 3.0) |
 
 ---

@@ -1,6 +1,0 @@
-FROM node:22-alpine
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-CMD ["sh", "-c", "npx expo export --platform android --output-dir /tmp/expo-out && cp -r /tmp/expo-out/* /output/ && rm -rf /tmp/expo-out && echo 'OTA bundles listos'"]

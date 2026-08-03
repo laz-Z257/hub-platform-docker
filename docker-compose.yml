@@ -107,39 +107,3 @@ volumes:
   pgdata:
   uploads:
 
-  # === SERVICIOS DESHABILITADOS (migración a PWA) ===
-  # Si en el futuro se requiere la app nativa, descomentar:
-  #
-  # ota-server:
-  #   build: ./ota-server
-  #   container_name: hub-ota-server
-  #   ports:
-  #     - "3002:3002"
-  #   volumes:
-  #     - ./ota-server/data:/usr/share/nginx/html
-  #   restart: unless-stopped
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 128M
-  #         cpus: '0.25'
-  #
-  # ota-builder:
-  #   build:
-  #     context: ./mobile
-  #     dockerfile: Dockerfile.ota
-  #   container_name: hub-ota-builder
-  #   profiles:
-  #     - build-only
-  #   volumes:
-  #     - ota-data:/output
-  #
-  # mobile-builder:
-  #   build:
-  #     context: .
-  #     dockerfile: mobile/Dockerfile.builder
-  #   container_name: hub-mobile-builder
-  #   profiles:
-  #     - build-only
-  #   volumes:
-  #     - ./mobile/output:/output
