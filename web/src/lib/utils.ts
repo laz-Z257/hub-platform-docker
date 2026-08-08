@@ -98,8 +98,7 @@ export function getDateRange(filter: string): { start: string; end: string } {
       start = toDateKey(d);
       break;
     }
-    case "30d":
-    default: {
+    case "30d": {
       const d = new Date(now);
       d.setDate(d.getDate() - 30);
       start = toDateKey(d);
@@ -108,6 +107,12 @@ export function getDateRange(filter: string): { start: string; end: string } {
     case "90d": {
       const d = new Date(now);
       d.setDate(d.getDate() - 90);
+      start = toDateKey(d);
+      break;
+    }
+    default: {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 30);
       start = toDateKey(d);
       break;
     }

@@ -28,7 +28,7 @@ export async function seedPuntosVenta(
     res.json({ ok: true, created, total: PV_SEED_NAMES.length });
   } catch (error) {
     logger.error("Seed PV error", { error: (error as Error).message });
-    res.status(500).json({ error: (error as Error).message });
+    res.status(500).json({ error: "Error al sembrar puntos de venta" });
   }
 }
 

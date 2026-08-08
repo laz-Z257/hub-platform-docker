@@ -113,6 +113,13 @@
       "when": 1785767333282,
       "tag": "0015_material_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1754668800000,
+      "tag": "0016_breezy_index",
+      "breakpoints": true
     }
   ]
 }
