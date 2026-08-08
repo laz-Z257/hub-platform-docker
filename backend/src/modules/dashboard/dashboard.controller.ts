@@ -5,15 +5,28 @@ import { incidents, users, ratings, puntosVenta, messages } from "../../db/schem
 import { logger } from "../../lib/logger";
 
 function getColombiaNow(): Date {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const value = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return new Date(
+    Date.UTC(value("year"), value("month") - 1, value("day"), value("hour") % 24, value("minute"), value("second"))
+  );
 }
 
 function getTodayRangeColombia(): { start: Date; end: Date } {
   const now = getColombiaNow();
   const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
+  start.setUTCHours(0, 0, 0, 0);
   const end = new Date(now);
-  end.setHours(17, 0, 0, 0);
+  end.setUTCHours(23, 59, 59, 999);
   return { start, end };
 }
 

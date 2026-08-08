@@ -33,6 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const scope = pathname.startsWith("/user") ? "user" : "admin";
     setAuthScope(scope);
+  }, [pathname]);
+
+  useEffect(() => {
     api.get<AuthUser & { csrfToken?: string }>("/auth/me")
       .then((data) => {
         setUser(data);

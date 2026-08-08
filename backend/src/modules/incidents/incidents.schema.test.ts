@@ -27,15 +27,13 @@ describe("uuidParamsSchema", () => {
 
 describe("createIncidentSchema", () => {
   const validData = {
-    nombre: "Problema con PC",
-    documento: "12345678",
     punto_venta: "Sucursal Centro",
     descripcion: "No enciende el monitor",
   };
 
   it("accepts valid input with all required fields", () => {
     const result = createIncidentSchema.parse(validData);
-    expect(result.nombre).toBe("Problema con PC");
+    expect(result.punto_venta).toBe("Sucursal Centro");
     expect(result.telefono).toBe("");
     expect(result.urgencia).toBe("media");
   });
@@ -50,15 +48,19 @@ describe("createIncidentSchema", () => {
     expect(result.urgencia).toBe("alta");
   });
 
-  it("rejects empty nombre", () => {
-    expect(() =>
-      createIncidentSchema.parse({ ...validData, nombre: "" })
-    ).toThrow();
+  it("strips nombre and documento (ignored, taken from authenticated user)", () => {
+    const result = createIncidentSchema.parse({
+      ...validData,
+      nombre: "Nombre ignorado",
+      documento: "12345678",
+    });
+    expect(result).not.toHaveProperty("nombre");
+    expect(result).not.toHaveProperty("documento");
   });
 
-  it("rejects nombre over 100 characters", () => {
+  it("rejects empty punto_venta", () => {
     expect(() =>
-      createIncidentSchema.parse({ ...validData, nombre: "a".repeat(101) })
+      createIncidentSchema.parse({ ...validData, punto_venta: "" })
     ).toThrow();
   });
 

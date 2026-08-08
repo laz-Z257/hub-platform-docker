@@ -156,7 +156,7 @@ describe("Ratings Controller", () => {
       const incidentSelect = {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: "incident-id" }]),
+            limit: vi.fn().mockResolvedValue([{ id: "incident-id", user_id: "user-123" }]),
           }),
         }),
       };
@@ -186,6 +186,24 @@ describe("Ratings Controller", () => {
           puntuacion: 5,
         })
       );
+    });
+
+    it("should deny ratings for another user's incident", async () => {
+      const incidentSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "incident-id", user_id: "other-user" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(incidentSelect);
+
+      req.params = { id: "incident-id" };
+
+      await getRating(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
     });
   });
 

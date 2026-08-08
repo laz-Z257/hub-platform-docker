@@ -105,7 +105,8 @@ export default function ChatPage() {
           else if (data.autoAction === "ver_faq") setShowFaq(true);
         }, 1500);
       }
-    } catch {
+    } catch (err) {
+      logger.error("Send message error", { error: (err as Error).message });
       setTyping(false);
       setMessages((prev) => [...prev, { id: `bot-card-${Date.now()}`, type: "bot-card", text: "Ocurrió un error al procesar el mensaje. Selecciona una opción:", timestamp: getTimeString(), suggestedActions: [{ label: "Volver al menú principal", action: "menu_principal" }, { label: "Reportar incidente", action: "reportar" }] }]);
     }
@@ -141,7 +142,8 @@ export default function ChatPage() {
       setRatingIncidentId(null);
       setRatedIncidents((prev) => new Set(prev).add(id));
       setMessages((prev) => [...prev, { id: `bot-card-${Date.now()}`, type: "bot-card", text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`, timestamp: getTimeString() }]);
-    } catch {
+    } catch (err) {
+      logger.error("Submit rating error", { error: (err as Error).message });
       setRatingIncidentId(null);
     }
   }, [ratingIncidentId, latestIncident]);

@@ -6,6 +6,7 @@ import DateRangePicker from "./DateRangePicker";
 import type { AreaDataPoint, DonutDataPoint } from "./AnalyticsCharts";
 import type { Incident } from "@hub/shared/types/incident";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { formatDateRange, getDateRange } from "@/lib/utils";
 
 type IncidentExport = Incident;
@@ -85,7 +86,9 @@ async function handleExport(
     const qs = `?start=${effectiveRange.start}&end=${effectiveRange.end}`;
     const incData = await api.get<{ items: IncidentExport[] }>(`/incidents/export-data${qs}`);
     incidents = incData.items || [];
-  } catch { /* ignore */ }
+  } catch (err) {
+    logger.warn("Export incidents fetch failed", { error: (err as Error).message });
+  }
 
   const totalIncidents = incidents.length;
 

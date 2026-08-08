@@ -12,10 +12,6 @@ export type AuthScope = "admin" | "user";
 
 const SCOPE_ORDER: (AuthScope | undefined)[] = ["admin", "user", undefined];
 
-function getCookiePath(_scope?: AuthScope): string {
-  return "/";
-}
-
 function getCookieName(base: string, scope?: AuthScope): string {
   if (scope === "admin") return `admin_${base}`;
   if (scope === "user") return `user_${base}`;
@@ -47,7 +43,7 @@ export function setTokenCookies(
   const refreshToken = signRefreshToken(payload);
 
   const isSecure = res.req.protocol === "https";
-  const path = getCookiePath(scope);
+  const path = "/";
   const tokenName = getCookieName("token", scope);
   const refreshName = getCookieName("refreshToken", scope);
 
@@ -64,7 +60,7 @@ export function setTokenCookies(
     maxAge: 7 * 24 * 3600 * 1000,
   });
 
-  res.cookie("userRole", payload.rol, {
+  res.cookie(getCookieName("userRole", scope), payload.rol, {
     httpOnly: false,
     secure: isSecure,
     sameSite: isSecure ? ("none" as const) : ("lax" as const),
@@ -79,12 +75,13 @@ export function clearTokenCookies(
   res: import("express").Response,
   scope?: AuthScope
 ) {
-  const path = getCookiePath(scope);
+  const path = "/";
   const tokenName = getCookieName("token", scope);
   const refreshName = getCookieName("refreshToken", scope);
 
   res.clearCookie(tokenName, { path });
   res.clearCookie(refreshName, { path });
+  res.clearCookie(getCookieName("userRole", scope), { path });
   res.clearCookie("userRole", { path });
 }
 

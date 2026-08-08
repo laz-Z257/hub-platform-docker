@@ -146,7 +146,7 @@ describe("Users Controller", () => {
       );
     });
 
-    it("should return 404 for admin user", async () => {
+    it("should return 403 for admin user", async () => {
       const selectChain = {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -164,7 +164,7 @@ describe("Users Controller", () => {
 
       await toggleUserStatus(req as Request, res as Response);
 
-      expect(statusMock).toHaveBeenCalledWith(404);
+      expect(statusMock).toHaveBeenCalledWith(403);
     });
   });
 

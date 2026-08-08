@@ -1,6 +1,15 @@
 import type { ApiUser } from "@hub/shared/types/user";
+
+function toDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "Fecha no disponible";
   return d.toLocaleDateString("es-CO", {
     year: "numeric",
     month: "long",
@@ -12,6 +21,7 @@ export function formatDate(dateStr: string): string {
 
 export function formatDateShort(dateStr: string): string {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "Fecha no disponible";
   return d.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "2-digit",
@@ -23,6 +33,7 @@ export function formatDateShort(dateStr: string): string {
 
 export function formatDateOnly(dateStr: string): string {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "Fecha no disponible";
   return d.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",
@@ -33,6 +44,7 @@ export function formatDateOnly(dateStr: string): string {
 export function formatDateRange(start: string, end: string): string {
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
+  if (isNaN(s.getTime()) || isNaN(e.getTime())) return "Rango de fechas inválido";
   const fmt = (d: Date) =>
     d.toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
   return `${fmt(s)} – ${fmt(e)}`;
@@ -61,7 +73,7 @@ export function formatDescription(desc: string): string {
 
 export function getDateRange(filter: string): { start: string; end: string } {
   const now = new Date();
-  const end = now.toISOString().split("T")[0];
+  const end = toDateKey(now);
   let start: string;
   switch (filter) {
     case "today":
@@ -72,31 +84,31 @@ export function getDateRange(filter: string): { start: string; end: string } {
       const day = monday.getDay();
       const diff = day === 0 ? 6 : day - 1;
       monday.setDate(monday.getDate() - diff);
-      start = monday.toISOString().split("T")[0];
+      start = toDateKey(monday);
       break;
     }
     case "month": {
       const first = new Date(now.getFullYear(), now.getMonth(), 1);
-      start = first.toISOString().split("T")[0];
+      start = toDateKey(first);
       break;
     }
     case "7d": {
       const d = new Date(now);
       d.setDate(d.getDate() - 7);
-      start = d.toISOString().split("T")[0];
+      start = toDateKey(d);
       break;
     }
     case "30d":
     default: {
       const d = new Date(now);
       d.setDate(d.getDate() - 30);
-      start = d.toISOString().split("T")[0];
+      start = toDateKey(d);
       break;
     }
     case "90d": {
       const d = new Date(now);
       d.setDate(d.getDate() - 90);
-      start = d.toISOString().split("T")[0];
+      start = toDateKey(d);
       break;
     }
   }

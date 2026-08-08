@@ -1,7 +1,12 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { useFonts } from "expo-font";
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProviderWrapper } from "../src/components/SafeAreaProviderWrapper";
@@ -17,17 +22,23 @@ initCrashReporting();
 try { SplashScreen.preventAutoHideAsync(); } catch {}
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    if (!fontsLoaded) return;
     const prepare = async () => {
       await SplashScreen.hideAsync().catch(() => {});
       setIsReady(true);
     };
     prepare();
-  }, []);
+  }, [fontsLoaded]);
 
-  if (!isReady) {
+  if (!fontsLoaded || !isReady) {
     return null;
   }
 

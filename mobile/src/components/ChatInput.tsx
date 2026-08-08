@@ -7,24 +7,14 @@ interface ChatInputProps {
   onSend: (text: string) => void;
 }
 
-function sanitizeInput(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .trim();
-}
-
 export default function ChatInput({ onSend }: ChatInputProps) {
   const [text, setText] = useState("");
 
   const handleSend = () => {
-    if (!text.trim()) return;
-    const sanitized = sanitizeInput(text);
-    if (sanitized.length > 0 && sanitized.length <= 500) {
-      onSend(sanitized);
+    const value = text.trim();
+    if (!value) return;
+    if (value.length > 0 && value.length <= 500) {
+      onSend(value);
       setText("");
     }
   };

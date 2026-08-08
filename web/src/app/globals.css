@@ -23,15 +23,14 @@
     color: #f3f4f6;
   }
 
-  .dark .text-gray-100,
-  .dark .text-gray-200,
-  .dark .text-gray-300,
-  .dark .text-gray-400,
-  .dark .text-gray-500,
-  .dark .text-gray-600,
-  .dark .text-gray-700,
-  .dark .text-gray-800,
-  .dark .text-gray-900 {
-    color: #f3f4f6;
-  }
+  /*
+   * Fallback oscuro para componentes sin variantes `dark:text-gray-*` explícitas.
+   * Mapeo por tonalidad para conservar la jerarquía visual (las utilidades
+   * explícitas `dark:text-gray-*` ganan por estar en la capa `utilities`).
+   */
+  .dark .text-gray-500 { color: #9CA3AF; }
+  .dark .text-gray-600 { color: #D1D5DB; }
+  .dark .text-gray-700 { color: #E5E7EB; }
+  .dark .text-gray-800 { color: #F3F4F6; }
+  .dark .text-gray-900 { color: #F9FAFB; }
 }

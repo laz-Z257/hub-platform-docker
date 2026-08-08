@@ -1,11 +1,23 @@
 # Changelog
 
+## 2026-08-05 — Dashboard: módulos externos vacíos
+
+- Se agregaron 10 tarjetas vacías adicionales en Sistemas Externos para futuras integraciones.
+- Las tarjetas aparecen como "Próximamente" y no tienen endpoints ni URLs configuradas.
+
 ## 2026-07-31 — Documentación: README reescrito + módulos del backend
 
 - **README.md reescrito** por componente: Estructura, Arquitectura, Quick Start, Backend API (endpoints, roles, intenciones del bot, sesiones aisladas), Dashboard Web, Mobile PWA, Deploy VPS (Nginx + certbot), Variables, Comandos, Infra, Documentación y Estado de Calidad.
 - **Guía de deploy corregida**: orden Nginx HTTP → certbot, `EXPO_PUBLIC_API_URL=/api` (era una URL pública inexistente), firewall `ufw`, `EXTERNAL_SYSTEMS_URL` documentada, `NEXT_PUBLIC_API_URL` marcada opcional.
 - **`backend/src/modules/README.md` (nuevo)**: documentación uniforme de los 11 módulos (endpoints, auth, límites y comportamientos clave).
 - **`PENDIENTES.md` eliminado**: 75/76 ítems resueltos, 0 pendientes (se referenciaba desde la tabla Documentación).
+
+---
+
+## 2026-07-31 — Infraestructura: retirada la distribución APK/OTA desde Docker
+
+- Se eliminaron los builders y el servidor OTA propios (`mobile/Dockerfile.builder`, `mobile/Dockerfile.ota` y `ota-server/`).
+- Los builds nativos y las actualizaciones OTA mediante Expo EAS siguen siendo opcionales y están configurados en `mobile/eas.json` y `mobile/app.json`.
 
 ---
 

@@ -52,6 +52,11 @@ app.use(
         imgSrc: ["'self'", "data:"],
         fontSrc: ["'self'"],
         connectSrc: env.NODE_ENV === "development" ? ["'self'", "ws:", "http://localhost:*"] : ["'self'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
       },
     },
   })
@@ -84,7 +89,7 @@ app.use(
       : ":method :url :status :response-time ms [:request-id]"
   )
 );
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 app.use(csrfProtection);
 
@@ -104,7 +109,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Health check completo (con DB)
-app.get("/api/health/db", async (_req, res) => {
+app.get("/api/health/db", authMiddleware, adminOnly, async (_req, res) => {
   try {
     const { db } = await import("./db");
     await db.execute("SELECT 1");

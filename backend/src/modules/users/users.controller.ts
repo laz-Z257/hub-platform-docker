@@ -33,7 +33,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         nombre,
         contrasena: hashed,
         email: `${documento}@${env.EMAIL_DOMAIN}`,
-        rol: rol || "user",
+        rol,
       })
       .returning();
 
@@ -132,13 +132,14 @@ export async function toggleUserStatus(
     }
 
     if (user.rol === "admin") {
-      res.status(404).json({ error: "Usuario no encontrado" });
+      res.status(403).json({ error: "No se puede cambiar el estado de una cuenta de administrador" });
       return;
     }
 
     const newEstado = user.estado === "activo" ? "bloqueado" : "activo";
 
     const updateData: Record<string, unknown> = { estado: newEstado };
+    updateData.token_version = sql`${users.token_version} + 1`;
     if (newEstado === "bloqueado") {
       updateData.bloqueado_por = req.user!.userId;
     } else {
@@ -177,6 +178,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
         contrasena: hashed,
         intentos_fallidos: 0,
         estado: "activo",
+        token_version: sql`${users.token_version} + 1`,
       })
       .where(and(eq(users.id, id), isNull(users.deleted_at)))
       .returning({
@@ -241,7 +243,13 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     if (rol !== undefined) updateData.rol = rol;
     if (nombre !== undefined) updateData.nombre = nombre;
     if (email !== undefined) updateData.email = email;
-    if (documento !== undefined) updateData.documento = documento;
+    if (documento !== undefined) {
+      updateData.documento = documento;
+      updateData.email = `${documento}@${env.EMAIL_DOMAIN}`;
+    }
+    if (rol !== undefined) {
+      updateData.token_version = sql`${users.token_version} + 1`;
+    }
 
     if (Object.keys(updateData).length === 0) {
       res.status(400).json({ error: "No hay campos para actualizar" });

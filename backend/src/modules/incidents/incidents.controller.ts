@@ -5,17 +5,53 @@ import { incidents, incidentComments, users, messages, pushTokens } from "../../
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
+async function sendExpoPush(messages: unknown[]): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (env.EXPO_ACCESS_TOKEN) {
+      headers["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
+    }
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(messages),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      logger.warn("Push notification response", { status: response.status });
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function createIncident(
   req: Request,
   res: Response
 ): Promise<void> {
   try {
+    const [user] = await db
+      .select({ nombre: users.nombre, documento: users.documento })
+      .from(users)
+      .where(and(eq(users.id, req.user!.userId), isNull(users.deleted_at)))
+      .limit(1);
+
+    if (!user) {
+      res.status(401).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
     const [incident] = await db
       .insert(incidents)
       .values({
         user_id: req.user!.userId,
-        nombre: req.body.nombre,
-        documento: req.body.documento,
+        nombre: user.nombre,
+        documento: user.documento,
         punto_venta: req.body.punto_venta,
         telefono: req.body.telefono || "",
         descripcion: req.body.descripcion,
@@ -173,6 +209,8 @@ export async function updateIncident(
     const { id } = req.params as { id: string };
     const { estado, agente, solucion, imagen_url } = req.body;
 
+    let previousEstado: string | undefined;
+
     if (estado) {
       const [current] = await db
         .select({ estado: incidents.estado })
@@ -180,7 +218,9 @@ export async function updateIncident(
         .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
         .limit(1);
 
-      if (current) {
+      previousEstado = current?.estado;
+
+      if (current && estado !== current.estado) {
         const allowed = VALID_TRANSITIONS[current.estado];
         if (!allowed || !allowed.includes(estado)) {
           res.status(400).json({
@@ -213,19 +253,19 @@ export async function updateIncident(
       return;
     }
 
-    // Send chat notification when ticket is resolved
-    if (estado === "resuelto") {
+    // Notificar solo en la TRANSICIÓN a resuelto (no al re-guardar la solución)
+    if (estado === "resuelto" && previousEstado !== "resuelto") {
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
       const botMessage = `Tu ticket #TK-${shortId} ha sido marcado como **Resuelto**.\n\n${solucion ? `**Solucion:** ${solucion}\n\n` : ""}Si necesita mas ayuda, contactenos.`;
 
-      await db.insert(messages).values({
-        user_id: updated.user_id,
-        content: botMessage,
-        is_bot: true,
-      });
-
-      // Send push notification
       try {
+        await db.insert(messages).values({
+          user_id: updated.user_id,
+          content: botMessage,
+          is_bot: true,
+        });
+
+        // Send push notification
         const userTokens = await db
           .select({ token: pushTokens.token })
           .from(pushTokens)
@@ -240,22 +280,11 @@ export async function updateIncident(
             data: { incidentId: id },
           }));
 
-          const pushHeaders: Record<string, string> = {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          };
-          if (env.EXPO_ACCESS_TOKEN) {
-            pushHeaders["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
-          }
-
-          await fetch("https://exp.host/--/api/v2/push/send", {
-            method: "POST",
-            headers: pushHeaders,
-            body: JSON.stringify(pushMessages),
-          });
+          await sendExpoPush(pushMessages);
         }
-      } catch (pushErr) {
-        logger.error("Push notification error", { error: (pushErr as Error).message });
+      } catch (notifyErr) {
+        // La actualización ya se aplicó; un fallo de notificación no debe dar 500
+        logger.error("Resolved notification error", { error: (notifyErr as Error).message });
       }
     }
 
@@ -333,19 +362,7 @@ export async function addComment(
             data: { incidentId: id },
           }));
 
-          const commentPushHeaders: Record<string, string> = {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          };
-          if (env.EXPO_ACCESS_TOKEN) {
-            commentPushHeaders["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
-          }
-
-          await fetch("https://exp.host/--/api/v2/push/send", {
-            method: "POST",
-            headers: commentPushHeaders,
-            body: JSON.stringify(pushMessages),
-          });
+          await sendExpoPush(pushMessages);
         }
       } catch (pushErr) {
         logger.error("Push notification error (comment)", { error: (pushErr as Error).message });
@@ -364,10 +381,10 @@ export async function exportIncidents(
   res: Response
 ): Promise<void> {
   try {
-    const start = req.query.start as string | undefined;
-    const end = req.query.end as string | undefined;
-    const limit = Math.min(parseInt(req.query.limit as string) || 5000, 10000);
-    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const start = req.validatedQuery?.start as string | undefined;
+    const end = req.validatedQuery?.end as string | undefined;
+    const limit = Number(req.validatedQuery?.limit ?? 5000);
+    const page = Number(req.validatedQuery?.page ?? 1);
     const offset = (page - 1) * limit;
     const conditions = [isNull(incidents.deleted_at)];
 

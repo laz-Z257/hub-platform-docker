@@ -5,27 +5,53 @@ const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 
 async function nativeSet(key: string, value: string): Promise<void> {
-  await SecureStore.setItemAsync(key, value);
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch (err) {
+    console.warn("SecureStore set failed", key, (err as Error).message);
+  }
 }
 
 async function nativeGet(key: string): Promise<string | null> {
-  return await SecureStore.getItemAsync(key);
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch (err) {
+    console.warn("SecureStore get failed", key, (err as Error).message);
+    return null;
+  }
 }
 
 async function nativeDelete(key: string): Promise<void> {
-  await SecureStore.deleteItemAsync(key);
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch (err) {
+    console.warn("SecureStore delete failed", key, (err as Error).message);
+  }
 }
 
 function webSet(key: string, value: string): void {
-  localStorage.setItem(key, value);
+  try {
+    localStorage.setItem(key, value);
+  } catch (err) {
+    console.warn("localStorage set failed", key, (err as Error).message);
+  }
 }
 
 function webGet(key: string): string | null {
-  return localStorage.getItem(key);
+  try {
+    return localStorage.getItem(key);
+  } catch (err) {
+    console.warn("localStorage get failed", key, (err as Error).message);
+    return null;
+  }
 }
 
 function webDelete(key: string): void {
-  localStorage.removeItem(key);
+  try {
+    localStorage.removeItem(key);
+  } catch (err) {
+    console.warn("localStorage remove failed", key, (err as Error).message);
+  }
 }
 
 export async function saveToken(token: string): Promise<void> {

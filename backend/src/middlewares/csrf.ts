@@ -4,11 +4,11 @@ import crypto from "node:crypto";
 const CSRF_COOKIE = "csrf-token";
 const CSRF_HEADER = "x-csrf-token";
 
-export function generateCsrfToken() {
+function generateCsrfToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-export function setCsrfCookie(res: Response, token: string) {
+function setCsrfCookie(res: Response, token: string) {
   const isSecure = res.req.protocol === "https";
   const opts = {
     httpOnly: true,
@@ -43,7 +43,7 @@ export function csrfProtection(
     return next();
   }
 
-  if (req.path.startsWith("/api/auth") || req.path.startsWith("/api/users/register")) {
+  if (["/api/auth/login", "/api/auth/register"].includes(req.path)) {
     return next();
   }
 

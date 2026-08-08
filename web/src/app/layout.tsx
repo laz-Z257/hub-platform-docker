@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "HUB AI" },
   icons: {
-    icon: { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-    apple: { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
+    icon: { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    apple: { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
   },
 };
 

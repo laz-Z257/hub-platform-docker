@@ -109,6 +109,7 @@ export default function LoginScreen() {
             }}
             error={errors.documento}
             keyboardType="numeric"
+            autoComplete="off"
           />
 
           <Input
@@ -122,6 +123,7 @@ export default function LoginScreen() {
               if (loginError) setLoginError("");
             }}
             error={errors.contrasena}
+            autoComplete="current-password"
           />
 
           <View style={{ marginBottom: 20 }} />

@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Updates from "expo-updates";
+import { logger } from "../src/services/logger";
 import {
   Trash2,
   LogOut,
@@ -47,10 +48,10 @@ export default function SettingsScreen() {
     let bytes = 0;
     if (typeof localStorage !== "undefined") {
       const lsItems = localStorage.length || 0;
-      items += lsItems;
       for (let i = 0; i < lsItems; i++) {
         const key = localStorage.key(i);
-        if (key) {
+        if (key && key.startsWith("api_cache_")) {
+          items++;
           bytes += key.length * 2;
           bytes += (localStorage.getItem(key)?.length || 0) * 2;
         }
@@ -74,10 +75,20 @@ export default function SettingsScreen() {
     try {
       await logout();
       if (typeof localStorage !== "undefined") {
-        localStorage.clear();
+        const toRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("api_cache_")) toRemove.push(key);
+        }
+        toRemove.forEach((key) => localStorage.removeItem(key));
       }
-      await Updates.reloadAsync();
-    } catch {
+      if (Platform.OS === "web") {
+        window.location.reload();
+      } else {
+        await Updates.reloadAsync();
+      }
+    } catch (err) {
+      logger.error("Clear cache error", { error: (err as Error).message });
       if (Platform.OS !== "web") {
         Alert.alert("Error", "No se pudo limpiar la caché completamente.");
       }

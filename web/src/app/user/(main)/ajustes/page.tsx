@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trash2, LogOut, Database } from "lucide-react";
 import { getCacheStats } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import Modal from "@/components/Modal";
 import { useModal } from "@/hooks/useModal";
 
@@ -30,7 +31,8 @@ export default function AjustesPage() {
           await logout();
           if (typeof localStorage !== "undefined") localStorage.clear();
           window.location.href = "/user/login";
-        } catch {
+        } catch (err) {
+          logger.error("Clear cache error", { error: (err as Error).message });
           setClearing(false);
         }
       }
@@ -44,7 +46,9 @@ export default function AjustesPage() {
       async () => {
         try {
           await logout();
-        } catch {}
+        } catch (err) {
+          logger.error("Logout error", { error: (err as Error).message });
+        }
         router.replace("/user/login");
       }
     );

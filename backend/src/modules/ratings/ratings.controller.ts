@@ -36,13 +36,13 @@ export async function createRating(req: Request, res: Response): Promise<void> {
     }
 
     const [existing] = await db
-      .select({ id: ratings.id, user_id: ratings.user_id })
+      .select({ id: ratings.id })
       .from(ratings)
       .where(eq(ratings.incident_id, id))
       .limit(1);
 
-    if (existing && existing.user_id === req.user!.userId) {
-      res.status(409).json({ error: "Ya has calificado este servicio" });
+    if (existing) {
+      res.status(409).json({ error: "Este ticket ya fue calificado" });
       return;
     }
 
@@ -68,13 +68,22 @@ export async function getRating(req: Request, res: Response): Promise<void> {
     const { id } = req.params as { id: string };
 
     const [incident] = await db
-      .select({ id: incidents.id })
+      .select({ id: incidents.id, user_id: incidents.user_id })
       .from(incidents)
       .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
       .limit(1);
 
     if (!incident) {
       res.status(404).json({ error: "Incidente no encontrado" });
+      return;
+    }
+
+    if (
+      req.user!.rol !== "admin" &&
+      req.user!.rol !== "tecnico" &&
+      incident.user_id !== req.user!.userId
+    ) {
+      res.status(403).json({ error: "Acceso denegado" });
       return;
     }
 

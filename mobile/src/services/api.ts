@@ -10,8 +10,7 @@ import {
 } from "./storage";
 import { logger } from "./logger";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "";
-
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || "";
 if (!API_URL) {
   throw new Error("EXPO_PUBLIC_API_URL environment variable is required");
 }
@@ -19,6 +18,7 @@ if (!API_URL) {
 const REQUEST_TIMEOUT = 15000;
 
 let authToken: string | null = null;
+let csrfToken: string | null = null;
 let onForceLogout: (() => void) | null = null;
 let onBlocked: (() => void) | null = null;
 let isRefreshing = false;
@@ -48,6 +48,7 @@ export async function setToken(token: string) {
 
 export async function clearToken() {
   authToken = null;
+  csrfToken = null;
   try {
     await deleteToken();
     await deleteUser();
@@ -59,24 +60,45 @@ export async function clearToken() {
 export { saveUser, getSavedUser };
 
 async function tryRefresh(): Promise<boolean> {
-  if (isRefreshing) return refreshPromise ?? false;
-  isRefreshing = true;
-  refreshPromise = fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "X-Auth-Scope": "user",
-    },
-  }).then(async (r) => {
-    if (r.ok) {
-      const body = await r.json().catch(() => ({}));
-      if (body.token) {
-        await setToken(body.token);
-        return true;
-      }
+  if (isRefreshing) {
+    try {
+      return (await refreshPromise) ?? false;
+    } catch {
+      return false;
     }
-    return false;
-  });
+  }
+  isRefreshing = true;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+  refreshPromise = (async () => {
+    try {
+      const r = await fetch(`${API_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-Auth-Scope": "user",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
+        signal: controller.signal,
+      });
+      if (r.ok) {
+        const body = await r.json().catch(() => ({}));
+        if (body.token) {
+          await setToken(body.token);
+        }
+        if (typeof body.csrfToken === "string") csrfToken = body.csrfToken;
+        return Boolean(body.token);
+      }
+      return false;
+    } catch (err) {
+      logger.error("Refresh error", { error: (err as Error).message });
+      return false;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  })();
 
   try {
     return await refreshPromise;
@@ -97,6 +119,7 @@ async function request<T>(
     "Content-Type": "application/json",
     "X-Auth-Scope": "user",
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...(csrfToken && !isGet ? { "X-CSRF-Token": csrfToken } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -130,6 +153,9 @@ async function request<T>(
   if (res.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
+      if (authToken) headers.Authorization = `Bearer ${authToken}`;
+      else delete headers.Authorization;
+      if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
       const retryController = new AbortController();
       const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT);
       try {
@@ -193,6 +219,11 @@ async function request<T>(
     throw new Error(msg);
   }
 
+  if (typeof data === "object" && data !== null && "csrfToken" in data) {
+    const responseCsrfToken = (data as { csrfToken?: unknown }).csrfToken;
+    if (typeof responseCsrfToken === "string") csrfToken = responseCsrfToken;
+  }
+
   if (data === null || data === undefined) {
     throw new Error(`Respuesta inválida: ${endpoint} retornó ${data === null ? "null" : "undefined"}`);
   }
@@ -201,7 +232,7 @@ async function request<T>(
   }
 
   if (isGet && !endpoint.includes("/auth/") && !endpoint.includes("/users")) {
-    saveCache(endpoint, data);
+    saveCache(endpoint, data).catch(() => {});
   }
 
   return data as T;

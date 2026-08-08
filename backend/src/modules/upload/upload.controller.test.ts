@@ -11,6 +11,11 @@ vi.mock("node:fs", () => ({
     statSync: vi.fn(),
     renameSync: vi.fn(),
     writeFileSync: vi.fn(),
+    promises: {
+      readdir: vi.fn(),
+      stat: vi.fn(),
+      writeFile: vi.fn(),
+    },
   },
 }));
 
@@ -31,6 +36,8 @@ describe("Upload Controller", () => {
     vi.clearAllMocks();
     (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (fs.readdirSync as ReturnType<typeof vi.fn>).mockReturnValue([]);
+    (fs.promises.readdir as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (fs.promises.writeFile as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
   });
 
   describe("uploadFile", () => {
@@ -67,10 +74,24 @@ describe("Upload Controller", () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: "La imagen no puede superar los 5MB" });
     });
 
+    it("should reject a file with an invalid image signature", async () => {
+      req.file = {
+        originalname: "image.png",
+        size: 1000,
+        buffer: Buffer.from("not-an-image"),
+      } as any;
+
+      await uploadFile(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith({ error: "El contenido del archivo no coincide con una imagen válida" });
+    });
+
     it("should upload valid image successfully", async () => {
       req.file = {
         originalname: "image.png",
         size: 1000,
+        buffer: Buffer.from("89504e470d0a1a0a", "hex"),
         path: "/tmp/temp-file",
       } as any;
 

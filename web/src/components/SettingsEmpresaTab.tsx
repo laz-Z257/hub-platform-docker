@@ -75,7 +75,7 @@ export default function SettingsEmpresaTab({ settings, isTecnico, onSettingsChan
           <div className="w-[140px] h-[140px] bg-[#F8FAFC] dark:bg-gray-800 border-2 border-dashed border-[#CBD5E1] dark:border-gray-600 rounded-full flex items-center justify-center">
             <Image
               src={logoImg}
-              alt="Company Logo"
+              alt="Logo de la empresa"
               width={80}
               height={80}
               className="rounded-md object-contain"

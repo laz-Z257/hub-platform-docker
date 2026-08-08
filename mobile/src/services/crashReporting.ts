@@ -26,7 +26,7 @@ export function initCrashReporting() {
   if (sentryDsn) {
     dsn = sentryDsn;
     crashReportingEnabled = true;
-    logger.info("Crash reporting initialized", { dsn: sentryDsn.substring(0, 20) + "..." });
+    logger.info("Crash reporting initialized");
   } else {
     logger.info("Crash reporting disabled (no DSN configured)");
   }
@@ -106,7 +106,6 @@ async function sendToSentry(report: CrashReport): Promise<void> {
       device: {
         model: report.device.model,
         os_version: report.device.osVersion,
-        arch: undefined,
       },
       app: {
         app_version: report.device.appVersion,
@@ -134,22 +133,4 @@ async function sendToSentry(report: CrashReport): Promise<void> {
     },
     body: JSON.stringify(payload),
   });
-}
-
-export function setUserContext(userId: string, documento: string) {
-  if (!crashReportingEnabled) return;
-  
-  logger.info("User context set for crash reporting", { userId, documento });
-}
-
-export function clearUserContext() {
-  if (!crashReportingEnabled) return;
-  
-  logger.info("User context cleared for crash reporting");
-}
-
-export function addBreadcrumb(category: string, message: string, data?: Record<string, unknown>) {
-  if (!crashReportingEnabled) return;
-  
-  logger.debug("Breadcrumb", { category, message, data });
 }

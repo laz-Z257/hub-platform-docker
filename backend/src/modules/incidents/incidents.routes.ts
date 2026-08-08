@@ -20,6 +20,7 @@ import {
   commentSchema,
   listIncidentsQuerySchema,
   statsQuerySchema,
+  exportQuerySchema,
   uuidParamsSchema,
 } from "./incidents.schema";
 import { authMiddleware } from "../../middlewares/auth";
@@ -41,7 +42,7 @@ router.use(incidentsLimiter);
 router.post("/", validate(createIncidentSchema), createIncident);
 router.get("/agentes", adminOnly, getAgentes);
 router.get("/stats", adminOnly, validate(statsQuerySchema), getStats);
-router.get("/export-data", adminOnly, exportIncidents);
+router.get("/export-data", adminOnly, validate(exportQuerySchema), exportIncidents);
 router.get("/unread-count", adminOnly, unreadCount);
 router.patch("/mark-seen", adminOnly, markSeen);
 router.get("/", validate(listIncidentsQuerySchema), listIncidents);

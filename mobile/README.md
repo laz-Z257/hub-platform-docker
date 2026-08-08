@@ -100,17 +100,30 @@ npx expo start          # Iniciar servidor dev
 npx expo start --web    # Web (PWA)
 ```
 
-## Compilar APK
+## Builds nativos opcionales
 
 ```bash
-# Opción 1 — Docker (recomendado, no requiere SDK local)
-docker compose --profile build-only run mobile-builder
-# APK generado en: mobile/output/app-release.apk
+# El proyecto no incluye un builder nativo en Docker.
+# El directorio android/ puede existir localmente, pero está ignorado por Git.
+# Usa Expo Application Services (EAS) para builds nativos reproducibles.
+npx eas-cli build --platform android --profile preview
+# Genera un APK instalable para pruebas.
 
-# Opción 2 — Local (requiere Java 17 + Android SDK)
-cd android && ./gradlew assembleRelease
-# APK generado en: android/app/build/outputs/apk/release/app-release.apk
+npx eas-cli build --platform android --profile production
+# Genera el artefacto de producción configurado en mobile/eas.json.
 ```
+
+Los perfiles y la URL pública del API están definidos en `eas.json`. Estos builds requieren una cuenta/proyecto EAS configurado y no forman parte de `docker compose up`.
+
+## Actualizaciones OTA opcionales
+
+La configuración de `expo-updates` está activa para builds nativos. Para publicar una actualización mediante EAS:
+
+```bash
+npx eas-cli update --channel preview --message "Descripción del cambio"
+```
+
+La PWA de Docker se actualiza reconstruyendo la imagen `mobile`; no utiliza OTA.
 
 ## Variables de entorno
 
@@ -124,7 +137,7 @@ EXPO_PUBLIC_API_URL=/api
 | Tipo | URL | Dónde se define |
 |------|-----|-----------------|
 | **PWA (Docker local)** | `/api` (relativa, proxy nginx) | `mobile/.env` |
-| **APK nativo (EAS Build)** | `https://hub-platform-api.onrender.com` | Hardcodeada en build de EAS |
+| **Build nativo (EAS Build)** | `https://hub-platform-api.onrender.com/api` | `mobile/eas.json` |
 | **Dev local** | `http://localhost:3001/api` | `mobile/.env` en desarrollo |
 
 ## Seguridad de Sesiones

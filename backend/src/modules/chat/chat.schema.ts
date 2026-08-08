@@ -17,5 +17,11 @@ export const historyQuerySchema = {
       .default("50")
       .transform(Number)
       .pipe(z.number().int().min(1).max(200)),
+    page: z
+      .string()
+      .optional()
+      .default("1")
+      .transform(Number)
+      .pipe(z.number().int().min(1)),
   }),
 };

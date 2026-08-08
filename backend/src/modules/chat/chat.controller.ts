@@ -274,16 +274,26 @@ function getDefaultResponse(): ChatResponse {
   };
 }
 
+function matchTicketCode(text: string): string | null {
+  const prefixed = text.match(/(?:#\s*TK[-:]?\s*|TK-)\s*([A-Fa-f0-9]{8})\b/);
+  if (prefixed) return prefixed[1];
+
+  const trimmed = text.trim();
+  if (/^[A-Fa-f0-9]{8}$/.test(trimmed)) return trimmed;
+
+  return null;
+}
+
 async function lookupTicket(
   userId: string,
   text: string
 ): Promise<ChatResponse | null> {
-  const match = text.match(/(?:#?TK-)?([A-Fa-f0-9]{4,8})/);
-  if (!match) return null;
+  const code = matchTicketCode(text);
+  if (!code) return null;
 
-  const shortId = match[1].toUpperCase();
+  const shortId = code.toUpperCase();
 
-  if (!/^[A-F0-9]{4,8}$/.test(shortId)) return null;
+  if (!/^[A-F0-9]{8}$/.test(shortId)) return null;
 
   const [incident] = await db
     .select({
@@ -338,8 +348,10 @@ export async function sendMessage(
       })
       .returning();
 
-    const ticketInfo = await lookupTicket(req.user!.userId, content);
-    const intentInfo = !ticketInfo ? detectIntent(content) : null;
+    const intentInfo = detectIntent(content);
+    const ticketInfo = matchTicketCode(content)
+      ? await lookupTicket(req.user!.userId, content)
+      : null;
     const response = ticketInfo || intentInfo || getDefaultResponse();
 
     const [botMsg] = await db
@@ -368,10 +380,10 @@ export async function getHistory(
   res: Response
 ): Promise<void> {
   try {
-    const rawLimit = (req.validatedQuery?.limit as number) || parseInt(req.query.limit as string) || 50;
+    const rawLimit = (req.validatedQuery?.limit as number) || 50;
     const limit = Math.min(Math.max(1, rawLimit), 200);
-    
-    const rawPage = (req.validatedQuery?.page as number) || parseInt(req.query.page as string) || 1;
+
+    const rawPage = (req.validatedQuery?.page as number) || 1;
     const page = Math.max(1, rawPage);
     const offset = (page - 1) * limit;
 

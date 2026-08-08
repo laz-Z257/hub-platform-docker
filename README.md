@@ -2,7 +2,7 @@
 
 Plataforma de soporte con ticketing, chatbot inteligente y dashboard administrativo.
 
-> **Estado:** ✅ Producción Ready | PWA Completa | Sesiones Aisladas | Soft Deletes | 2026-07-31
+> **Estado:** ✅ Código listo para producción | PWA Completa | Sesiones Aisladas | Soft Deletes | 2026-08-04
 
 ---
 
@@ -23,8 +23,8 @@ hub-platform-docker/
 
 ```
 ┌──────────────────────────────────────────────────┐
-│              Backend API (Render)                 │
-│         hub-platform-api.onrender.com             │
+│          Backend API (Docker / Render)              │
+│       URL definida por el despliegue elegido        │
 │         Express + TypeScript + PostgreSQL          │
 │    Sesiones Aisladas + Cookies Scope + CSRF       │
 └──────────┬────────────────────┬───────────────────┘
@@ -121,7 +121,7 @@ backend/src/
 | Método | Ruta | Auth | Admin | Descripción |
 |--------|------|:---:|:---:|---|
 | GET | `/api/health` | No | No | Health check |
-| GET | `/api/health/db` | No | No | Health check con DB |
+| GET | `/api/health/db` | Sí | Sí | Health check con DB (admin/técnico) |
 | POST | `/api/auth/register` | No | No | Registrar usuario |
 | POST | `/api/auth/login` | No | No | Login |
 | GET | `/api/auth/me` | Sí | No | Usuario actual |
@@ -236,7 +236,7 @@ Esto evita conflictos cuando se usan ambas aplicaciones simultáneamente.
 | `/dashboard/users` | Gestión usuarios, bloqueo, reset password |
 | `/dashboard/ratings` | Calificaciones con estadísticas y gráficos |
 | `/dashboard/settings` | Config empresa, apariencia, mantenimiento |
-| `/dashboard/external-systems` | Módulos externos (links seguros vía backend) |
+| `/dashboard/external-systems` | 16 módulos externos (links seguros vía backend) |
 
 ### Funcionalidades
 
@@ -273,7 +273,7 @@ NEXT_PUBLIC_API_URL=http://api:3001/api    # Opcional (Docker interno)
 - **Storage:** expo-secure-store
 - **Animaciones:** Reanimated 4 + Gesture Handler
 - **Notificaciones:** expo-notifications
-- **OTA Updates:** expo-updates
+- **Builds nativos y OTA opcionales:** Expo EAS + expo-updates (no incluidos en Docker)
 
 ### PWA Completa (Progressive Web App)
 
@@ -322,7 +322,7 @@ EXPO_PUBLIC_API_URL=/api
 # Desarrollo local (sin proxy)
 EXPO_PUBLIC_API_URL=http://localhost:3001/api
 
-# APK nativa: URL pública del API
+# Build nativo EAS: URL pública del API
 EXPO_PUBLIC_API_URL=https://api.tudominio.com/api
 ```
 
@@ -340,6 +340,32 @@ EXPO_PUBLIC_API_URL=https://api.tudominio.com/api
 
 ## Deploy a Servidor Docker (VPS)
 
+### Qué debe configurar la persona que despliega
+
+Antes de ejecutar Docker, debe reemplazar los valores de ejemplo en `.env`:
+
+| Variable | Qué debe poner |
+|----------|----------------|
+| `POSTGRES_USER` | Usuario de PostgreSQL, normalmente `hub_admin` |
+| `POSTGRES_PASSWORD` | Contraseña nueva y segura para PostgreSQL |
+| `DATABASE_URL` | La misma contraseña anterior dentro de `postgres://usuario:contraseña@postgres:5432/hub_platform` |
+| `JWT_SECRET` | Secreto nuevo para firmar sesiones |
+| `JWT_REFRESH_SECRET` | Otro secreto nuevo y diferente para refresh tokens |
+| `SEED_ADMIN_PASSWORD` | Contraseña inicial del administrador `123456789` |
+| `CORS_ORIGIN` | Los dos dominios reales, separados por coma |
+| `EXTERNAL_SYSTEMS_URL` | URL del sistema externo, o eliminar la línea si no se usa |
+
+Los valores se generan con los comandos indicados en la tabla de variables. No debe reutilizar los valores del ejemplo ni compartir el archivo `.env`.
+
+El archivo `.env` solo se crea en el servidor:
+
+```bash
+cp .env.production.example .env
+nano .env
+```
+
+La contraseña de `DATABASE_URL` debe coincidir exactamente con `POSTGRES_PASSWORD`. La contraseña del administrador inicial corresponde al documento `123456789`.
+
 ### 1. Preparar el servidor
 
 ```bash
@@ -350,6 +376,8 @@ git clone <tu-repo> hub-platform && cd hub-platform
 # Firewall: abrir solo 80 y 443 (la API 3001 no se expone públicamente)
 sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable
 ```
+
+Los puertos internos de API, dashboard y PWA quedan enlazados a `127.0.0.1` en Docker. No deben publicarse mediante reglas adicionales del firewall; el acceso externo debe pasar por Nginx con HTTPS.
 
 ### 2. Configurar dominio y variables
 
@@ -440,7 +468,7 @@ EXPO_PUBLIC_API_URL=/api
 EOF
 ```
 
-> ⚠️ El navegador llama a `app.tudominio.com/api`, y el nginx del contenedor mobile lo proxya a `api:3001`. No necesitas un subdominio separado para la API. Esta URL relativa solo aplica a la PWA servida por Docker; para APK nativa usa la URL pública del API.
+> ⚠️ El navegador llama a `app.tudominio.com/api`, y el nginx del contenedor mobile lo proxya a `api:3001`. No necesitas un subdominio separado para la API. Esta URL relativa solo aplica a la PWA servida por Docker; para builds nativos EAS usa la URL pública del API.
 
 ### 5. Iniciar todo
 
@@ -456,6 +484,22 @@ docker compose ps
 curl http://localhost:3001/api/health
 curl -sL http://localhost:3000 | head -1
 ```
+
+`/api/health/db` requiere una sesión administrativa y no debe usarse como endpoint público de monitorización. Para monitorización externa usa `/api/health`.
+
+El contenedor `api` ejecuta automáticamente las migraciones y el seed al iniciar. Si un servicio aparece como `unhealthy`, revisar sus logs antes de continuar:
+
+```bash
+docker compose logs --tail=100 api
+docker compose logs --tail=100 web
+docker compose logs --tail=100 mobile
+```
+
+Cuando los cuatro servicios estén `healthy`, acceder a:
+
+- `https://admin.tudominio.com` para el dashboard.
+- `https://app.tudominio.com` para la PWA.
+- `https://admin.tudominio.com/login` para iniciar sesión como administrador.
 
 ### 6. Post-deploy
 
@@ -540,9 +584,10 @@ cd web && npm test
 
 | Servicio | Plataforma | URL |
 |----------|------------|-----|
-| Backend API | Render | `https://hub-platform-api.onrender.com` |
-| Mobile APK | Expo EAS | Build via `eas build` |
-| Mobile OTA | Expo EAS | Updates via `eas update` |
+| Backend API | Docker o Render | URL definida por el despliegue |
+| Mobile PWA | Docker + Nginx | `http://localhost:8081` en local |
+| Mobile nativo | Expo EAS (opcional) | `eas build` con perfiles de `mobile/eas.json` |
+| Actualizaciones OTA | Expo EAS (opcional) | `eas update`; no hay servidor OTA propio en Docker |
 
 ---
 
@@ -557,7 +602,7 @@ cd web && npm test
 
 ---
 
-## Estado de Calidad (2026-07-31)
+## Estado de Calidad (2026-08-04)
 
 ### Tests
 
@@ -570,7 +615,7 @@ cd web && npm test
 ### Verificación
 
 - **TypeScript:** Compila sin errores en backend, web y mobile
-- **Docker:** Todos los servicios corriendo y saludables
+- **Docker:** Los cuatro servicios definidos en `docker-compose.yml` corriendo y saludables en la verificación local
 - **Lint web:** 0 warnings
 - **Seguridad:** 0 pendientes críticos (CSRF estable, URLs externas fuera del frontend)
 - **Infra:** Métricas Prometheus, PWA con iconos PNG

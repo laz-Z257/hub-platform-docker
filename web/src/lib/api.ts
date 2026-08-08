@@ -23,14 +23,21 @@ function getCsrfToken(): string | null {
   return match?.[1] || null;
 }
 
+function getCurrentScope(): "admin" | "user" | null {
+  if (currentScope) return currentScope;
+  if (typeof window === "undefined") return null;
+  return window.location.pathname.startsWith("/user") ? "user" : "admin";
+}
+
 function requestHeaders(options: RequestInit): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (currentScope) {
-    headers["X-Auth-Scope"] = currentScope;
+  const scope = getCurrentScope();
+  if (scope) {
+    headers["X-Auth-Scope"] = scope;
   }
 
   const csrf = getCsrfToken();
@@ -45,7 +52,8 @@ async function tryRefresh(): Promise<boolean> {
   if (isRefreshing) return refreshPromise ?? false;
   isRefreshing = true;
   const headers: Record<string, string> = {};
-  if (currentScope) headers["X-Auth-Scope"] = currentScope;
+  const scope = getCurrentScope();
+  if (scope) headers["X-Auth-Scope"] = scope;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers,

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, sql, and, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
-import { setTokenCookies, clearTokenCookies, verifyToken, verifyRefreshToken, extractToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
+import { setTokenCookies, clearTokenCookies, verifyRefreshToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
 import { getOrCreateCsrfToken } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
@@ -226,19 +226,19 @@ export async function refresh(req: Request, res: Response): Promise<void> {
     const payload = verifyRefreshToken(refreshToken);
 
     const [user] = await db
-      .select({ token_version: users.token_version })
+      .select({ token_version: users.token_version, estado: users.estado })
       .from(users)
       .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)))
       .limit(1);
 
-    if (!user || user.token_version !== payload.tokenVersion) {
+    if (!user || user.estado === "bloqueado" || user.token_version !== payload.tokenVersion) {
       // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
       clearTokenCookies(res, scope);
       res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
       return;
     }
 
-    setTokenCookies(res, {
+    const tokens = setTokenCookies(res, {
       userId: payload.userId,
       documento: payload.documento,
       rol: payload.rol,
@@ -247,7 +247,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
     const csrfToken = getOrCreateCsrfToken(req, res);
 
-    res.json({ ok: true, csrfToken });
+    res.json({ ok: true, token: tokens.token, csrfToken });
   } catch {
     // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
     clearTokenCookies(res, scope);

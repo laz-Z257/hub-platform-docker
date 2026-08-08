@@ -50,10 +50,16 @@ paths:
     get:
       tags: [Health]
       summary: Health check con base de datos
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: API y DB están funcionando
-        '500':
+        '401':
+          description: No autenticado
+        '403':
+          description: Requiere rol administrativo
+        '503':
           description: Error de conexión a la base de datos
 
   /auth/register:

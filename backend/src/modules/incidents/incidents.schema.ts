@@ -3,8 +3,6 @@ import { z } from "zod";
 export const uuidParamsSchema = z.object({ id: z.string().uuid("ID inválido") });
 
 export const createIncidentSchema = z.object({
-  nombre: z.string().min(1, "El nombre es requerido").max(100),
-  documento: z.string().min(1, "El documento es requerido").max(20),
   punto_venta: z.string().min(1, "El punto de venta es requerido").max(150),
   telefono: z.string().regex(/^\d{6,20}$/, "El teléfono debe tener entre 6 y 20 dígitos").or(z.literal("")).optional().default(""),
   descripcion: z.string().min(1, "La descripción es requerida").max(2000),
@@ -39,6 +37,31 @@ export const listIncidentsQuerySchema = {
     search: z.string().optional(),
     estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
+    start: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "start debe ser una fecha válida"),
+    end: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), "end debe ser una fecha válida"),
+  }),
+};
+
+export const exportQuerySchema = {
+  query: z.object({
+    page: z
+      .string()
+      .optional()
+      .default("1")
+      .transform(Number)
+      .pipe(z.number().int().min(1)),
+    limit: z
+      .string()
+      .optional()
+      .default("5000")
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(10000)),
     start: z
       .string()
       .optional()

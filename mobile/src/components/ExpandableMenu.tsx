@@ -69,6 +69,17 @@ export default function ExpandableMenu({
   }));
 
   const handleSelect = useCallback((label: string) => {
+    if (selected === label) {
+      LayoutAnimation.configureNext(
+        LayoutAnimation.create(250, "easeInEaseOut", "opacity")
+      );
+      setSelected(null);
+      rotation.value = withTiming(0, { duration: 250, easing: Easing.ease });
+      submenuOpacity.value = withTiming(0, { duration: 200, easing: Easing.ease });
+      submenuHeight.value = withTiming(0, { duration: 250, easing: Easing.ease });
+      return;
+    }
+
     const option = MENU_OPTIONS.find((o) => o.label === label);
     if (!option) return;
 
@@ -96,7 +107,7 @@ export default function ExpandableMenu({
     } else {
       onMenuPress?.(label);
     }
-  }, [onMenuPress]);
+  }, [selected, onMenuPress]);
 
   const handleSubmenuPress = (label: string) => {
     onSubmenuPress?.(label);
@@ -178,7 +189,7 @@ export default function ExpandableMenu({
               alignItems: "center",
               justifyContent: "center",
               width: "100%",
-              marginTop: index > 0 || selected ? 8 : 0,
+              marginTop: index > 0 ? 8 : 0,
             }}
           >
             <Text

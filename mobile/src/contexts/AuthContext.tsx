@@ -68,7 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
-      } catch {
+      } catch (err) {
+        logger.warn("Auth restore error", { error: (err as Error).message });
         await clearToken();
       } finally {
         setInitializing(false);

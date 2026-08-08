@@ -47,8 +47,21 @@ describe("Incidents Controller", () => {
       };
       (db.insert as ReturnType<typeof vi.fn>).mockReturnValue(insertChain);
 
+      const userSelectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              nombre: "Test User",
+              documento: "123456789",
+            }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(userSelectChain);
+
       req.body = {
-        nombre: "Test Incident",
+        nombre: "Nombre ignorado",
+        documento: "Documento ignorado",
         punto_venta: "PV-001",
         descripcion: "Test description",
       };

@@ -169,7 +169,8 @@ export default function TicketsPage() {
     try {
       const data = await api.get<{ items: IncidentItem[] }>(`/incidents/export-data${qs}`);
       items = data.items || [];
-    } catch {
+    } catch (err) {
+      logger.error("Export incidents error", { error: (err as Error).message });
       return;
     }
 

@@ -24,11 +24,16 @@ export function middleware(request: NextRequest) {
 
   const adminToken = request.cookies.get("admin_token")?.value;
   const userToken = request.cookies.get("user_token")?.value;
-  const userRole = request.cookies.get("userRole")?.value;
+  const adminRole = request.cookies.get("admin_userRole")?.value;
+  const userRoleCookie = request.cookies.get("user_userRole")?.value;
 
   const adminValid = isTokenValid(adminToken);
   const userValid = isTokenValid(userToken);
-  const isAdminRole = userRole === "admin" || userRole === "tecnico";
+  const isAdminRole =
+    adminRole === "admin" ||
+    adminRole === "tecnico" ||
+    userRoleCookie === "admin" ||
+    userRoleCookie === "tecnico";
 
   if (isDashboard && !adminValid) {
     return NextResponse.redirect(new URL("/login", request.url));

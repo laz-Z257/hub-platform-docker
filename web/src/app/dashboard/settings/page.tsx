@@ -66,7 +66,18 @@ function loadSettings(): CompanySettings {
   if (typeof localStorage === "undefined") return defaultSettings;
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
-    return saved ? JSON.parse(saved) : defaultSettings;
+    if (!saved) return defaultSettings;
+    const parsed = JSON.parse(saved);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      typeof parsed.nombre === "string" &&
+      typeof parsed.contribuyente === "string" &&
+      typeof parsed.direccion === "string"
+    ) {
+      return parsed;
+    }
+    return defaultSettings;
   } catch {
     return defaultSettings;
   }
@@ -110,7 +121,8 @@ export default function SettingsPage() {
       await api.put("/settings", settings);
       setOriginalSettings({ ...settings });
       setSyncStatus("saved");
-    } catch {
+    } catch (err) {
+      logger.error("Save settings error", { error: (err as Error).message });
       setSyncStatus("error");
     } finally {
       setSyncing(false);

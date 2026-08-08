@@ -10,6 +10,7 @@ interface InputProps {
   isPassword?: boolean;
   error?: string;
   keyboardType?: "default" | "email-address" | "numeric";
+  autoComplete?: "off" | "username" | "password" | "new-password" | "current-password";
 }
 
 export default function Input({
@@ -20,6 +21,7 @@ export default function Input({
   isPassword = false,
   error,
   keyboardType = "default",
+  autoComplete = "off",
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -54,7 +56,7 @@ export default function Input({
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType={keyboardType}
-          autoComplete="new-password"
+          autoComplete={autoComplete}
           testID="password-field"
           editable={true}
         />

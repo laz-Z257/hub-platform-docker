@@ -8,7 +8,9 @@ import "dotenv/config";
 async function runMigrations() {
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
-    ssl: env.DB_SSL ? { rejectUnauthorized: false } : false,
+    ssl: env.DB_SSL
+      ? { rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED }
+      : false,
     connectionTimeoutMillis: 10000,
     query_timeout: 15000,
   });
@@ -16,18 +18,16 @@ async function runMigrations() {
   const db = drizzle(pool);
 
   logger.info("Running migrations...");
-  try {
-    await migrate(db, { migrationsFolder: "./drizzle" });
-    logger.info("Migrations completed.");
-  } catch (err) {
-    logger.warn("Migration warning", { error: (err as Error).message });
-    logger.info("Continuing anyway...");
-  }
+  await migrate(db, { migrationsFolder: "./drizzle" });
+  logger.info("Migrations completed.");
 
   await pool.end().catch(() => {});
   logger.info("Migrate script done.");
 }
 
 runMigrations().catch((err) => {
-  logger.warn("Migration warning", { error: err instanceof Error ? err.message : err });
+  logger.error("Migration failed", {
+    error: err instanceof Error ? err.message : err,
+  });
+  process.exit(1);
 });

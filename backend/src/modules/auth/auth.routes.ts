@@ -27,6 +27,6 @@ router.post("/register", authLimiter, validate(registerSchema), register);
 router.post("/login", authLimiter, validate(loginSchema), login);
 router.get("/me", authMiddleware, me);
 router.post("/refresh", refreshLimiter, refresh);
-router.post("/logout", authMiddleware, refreshLimiter, logout);
+router.post("/logout", refreshLimiter, logout);
 
 export default router;
