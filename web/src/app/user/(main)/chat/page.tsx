@@ -42,6 +42,7 @@ export default function ChatPage() {
   const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,9 +63,9 @@ export default function ChatPage() {
       ],
     };
 
-    api.get<{ id: string; content: string; is_bot: boolean; created_at: string }[]>("/chat/history?limit=30")
+    api.get<{ items: { id: string; content: string; is_bot: boolean; created_at: string }[] }>("/chat/history?limit=30")
       .then((history) => {
-        const historyMsgs: Message[] = history.map((msg) => ({
+        const historyMsgs: Message[] = history.items.map((msg) => ({
           id: msg.id,
           type: msg.is_bot ? "bot-card" : "user",
           text: msg.content,
@@ -140,11 +141,13 @@ export default function ChatPage() {
     try {
       await api.post(`/ratings/${id}`, { puntuacion, comentario });
       setRatingIncidentId(null);
+      setRatingError(null);
       setRatedIncidents((prev) => new Set(prev).add(id));
       setMessages((prev) => [...prev, { id: `bot-card-${Date.now()}`, type: "bot-card", text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`, timestamp: getTimeString() }]);
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "No se pudo enviar la calificación.";
       logger.error("Submit rating error", { error: (err as Error).message });
-      setRatingIncidentId(null);
+      setRatingError(errorMsg);
     }
   }, [ratingIncidentId, latestIncident]);
 
@@ -224,10 +227,22 @@ export default function ChatPage() {
                     alreadyRated={isRated}
                     onSuggestedAction={handleSuggestedAction}
                     onRateService={() => {
-                      if (latestIncident?.id) setRatingIncidentId(latestIncident.id);
-                      else api.get<{ items: { id: string; estado: string }[] }>("/incidents?limit=1&estado=resuelto")
-                        .then((d) => { if (d.items?.[0]) setRatingIncidentId(d.items[0].id); })
-                        .catch((err) => logger.error("Error fetching resolved incident", { error: err instanceof Error ? err.message : err }));
+                      const match = item.text?.match(/#TK-([A-Z0-9]+)/);
+                      api.get<{ items: { id: string; estado: string }[] }>(`/incidents?limit=1&estado=resuelto${match ? `&search=${match[1]}` : ""}`)
+                        .then((d) => {
+                          const resolved = d.items?.[0];
+                          if (resolved) {
+                            setRatingIncidentId(resolved.id);
+                            setRatingError(null);
+                          } else {
+                            setRatingError("No se encontró un ticket resuelto para calificar.");
+                          }
+                        })
+                        .catch((err) => {
+                          const errorMsg = err instanceof Error ? err.message : "No se pudo obtener el ticket para calificar.";
+                          logger.error("Error fetching resolved incident", { error: err instanceof Error ? err.message : err });
+                          setRatingError(errorMsg);
+                        });
                     }}
                     onSubmenuPress={handleSubmenuPress}
                     onMenuPress={handleMenuPress}
@@ -268,12 +283,29 @@ export default function ChatPage() {
       <ChatInput onSend={handleSend} />
 
       {ratingIncidentId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setRatingIncidentId(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => { setRatingIncidentId(null); setRatingError(null); }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
             <StarRating
               onSubmit={handleSubmitRating}
-              onCancel={() => setRatingIncidentId(null)}
+              onCancel={() => { setRatingIncidentId(null); setRatingError(null); }}
             />
+            {ratingError && (
+              <p className="mt-4 text-[13px] text-red-600 text-center">{ratingError}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {ratingIncidentId === null && ratingError && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setRatingError(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center" onClick={(e) => e.stopPropagation()}>
+            <p className="text-[14px] text-[#1F2937]">{ratingError}</p>
+            <button
+              onClick={() => setRatingError(null)}
+              className="mt-5 h-11 w-full rounded-lg bg-[#201A7A] text-white text-sm font-semibold hover:bg-[#16145e] transition-colors"
+            >
+              Aceptar
+            </button>
           </div>
         </div>
       )}
