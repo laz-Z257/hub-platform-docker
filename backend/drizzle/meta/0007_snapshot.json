@@ -1,6 +1,6 @@
 {
-  "id": "85493c28-919b-4284-960a-c36fdc8e4402",
-  "prevId": "00d0f54e-59cf-4562-af32-81d4cd6d62dd",
+  "id": "00d0f54e-59cf-4562-af32-81d4cd6d62dd",
+  "prevId": "c691f28b-5392-454b-b5f9-2089e3b8cd72",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -161,25 +161,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "cerrado_por": {
-          "name": "cerrado_por",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fecha_cierre": {
-          "name": "fecha_cierre",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visto_por_admin": {
-          "name": "visto_por_admin",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -193,6 +174,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "cerrado_por": {
+          "name": "cerrado_por",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_cierre": {
+          "name": "fecha_cierre",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -382,8 +375,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.puntos_venta": {
-      "name": "puntos_venta",
+    "public.users": {
+      "name": "users",
       "schema": "",
       "columns": {
         "id": {
@@ -392,83 +385,67 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "documento": {
+          "name": "documento",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
         },
         "nombre": {
           "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
           "type": "varchar(150)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "activo": {
-          "name": "activo",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "puntos_venta_nombre_idx": {
-          "name": "puntos_venta_nombre_idx",
-          "columns": [
-            {
-              "expression": "nombre",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "puntos_venta_nombre_unique": {
-          "name": "puntos_venta_nombre_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "nombre"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.push_tokens": {
-      "name": "push_tokens",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "name": "token",
+        "contrasena": {
+          "name": "contrasena",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
+        "rol": {
+          "name": "rol",
+          "type": "rol",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "estado": {
+          "name": "estado",
+          "type": "user_estado",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "ultima_actividad": {
+          "name": "ultima_actividad",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_version": {
+          "name": "token_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "intentos_fallidos": {
+          "name": "intentos_fallidos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -477,45 +454,15 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "push_tokens_user_id_idx": {
-          "name": "push_tokens_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "push_tokens_user_id_users_id_fk": {
-          "name": "push_tokens_user_id_users_id_fk",
-          "tableFrom": "push_tokens",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "push_tokens_token_unique": {
-          "name": "push_tokens_token_unique",
+        "users_documento_unique": {
+          "name": "users_documento_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "token"
+            "documento"
           ]
         }
       },
@@ -639,107 +586,6 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
-    },
-    "public.users": {
-      "name": "users",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "documento": {
-          "name": "documento",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "nombre": {
-          "name": "nombre",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(150)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contrasena": {
-          "name": "contrasena",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rol": {
-          "name": "rol",
-          "type": "rol",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'user'"
-        },
-        "estado": {
-          "name": "estado",
-          "type": "user_estado",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'activo'"
-        },
-        "ultima_actividad": {
-          "name": "ultima_actividad",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "token_version": {
-          "name": "token_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "intentos_fallidos": {
-          "name": "intentos_fallidos",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "bloqueado_por": {
-          "name": "bloqueado_por",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "users_documento_unique": {
-          "name": "users_documento_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "documento"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -758,8 +604,7 @@
       "values": [
         "user",
         "asesor",
-        "admin",
-        "tecnico"
+        "admin"
       ]
     },
     "public.urgencia": {

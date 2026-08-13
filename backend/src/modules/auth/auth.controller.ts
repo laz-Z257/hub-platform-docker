@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq, sql, and, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { users } from "../../db/schema";
-import { setTokenCookies, clearTokenCookies, verifyRefreshToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
+import { setTokenCookies, clearTokenCookies, verifyToken, extractToken, verifyRefreshToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
 import { getOrCreateCsrfToken } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
@@ -266,6 +266,22 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 export async function logout(req: Request, res: Response): Promise<void> {
   const headerScope = req.headers["x-auth-scope"];
   const scope: AuthScope | undefined = headerScope === "admin" || headerScope === "user" ? headerScope : undefined;
+
+  // Invalidar todos los tokens del usuario incrementando token_version
+  // (el logout limpia solo las cookies del scope, pero el bump invalida
+  // cualquier token Bearer/refresh aún en circulación)
+  try {
+    const token = extractToken(req);
+    if (token) {
+      const payload = verifyToken(token);
+      await db
+        .update(users)
+        .set({ token_version: sql`${users.token_version} + 1` })
+        .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)));
+    }
+  } catch (error) {
+    logger.warn("Logout token invalidate failed", { error: (error as Error).message });
+  }
 
   // Siempre limpiar solo las cookies del scope correspondiente
   // NUNCA clearAllTokenCookies — destruiría sesiones de otros scopes

@@ -13,6 +13,11 @@ export async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const { documento, nombre, contrasena, rol } = req.body;
 
+    if (rol === "admin" && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede crear usuarios con rol admin" });
+      return;
+    }
+
     const [existing] = await db
       .select()
       .from(users)
@@ -170,6 +175,22 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
     const { id } = req.params as { id: string };
     const { contrasena } = req.body;
 
+    const [target] = await db
+      .select({ rol: users.rol })
+      .from(users)
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
+      .limit(1);
+
+    if (!target) {
+      res.status(404).json({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    if (target.rol === "admin" && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede restablecer la contraseña de una cuenta admin" });
+      return;
+    }
+
     const hashed = await bcrypt.hash(contrasena, 10);
 
     const [updated] = await db
@@ -189,11 +210,6 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
         estado: users.estado,
       });
 
-    if (!updated) {
-      res.status(404).json({ error: "Usuario no encontrado" });
-      return;
-    }
-
     res.json({ message: "Contraseña restablecida exitosamente", user: updated });
   } catch (error) {
     logger.error("Reset password error", { error: (error as Error).message });
@@ -206,13 +222,23 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     const { id } = req.params as { id: string };
     const { rol, nombre, email, documento } = req.body;
 
-    if (rol !== undefined && rol !== "admin" && rol !== "tecnico") {
-      const [targetUser] = await db
-        .select({ rol: users.rol })
-        .from(users)
-        .where(and(eq(users.id, id), isNull(users.deleted_at)))
-        .limit(1);
+    const [targetUser] = await db
+      .select({ rol: users.rol })
+      .from(users)
+      .where(and(eq(users.id, id), isNull(users.deleted_at)))
+      .limit(1);
 
+    if (targetUser && targetUser.rol === "admin" && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede modificar una cuenta de administrador" });
+      return;
+    }
+
+    if (rol !== undefined && req.user!.rol !== "admin") {
+      res.status(403).json({ error: "Solo un administrador puede cambiar el rol de un usuario" });
+      return;
+    }
+
+    if (rol !== undefined && rol !== "admin" && rol !== "tecnico") {
       if (targetUser && targetUser.rol === "admin") {
         const [count] = await db
           .select({ total: sql<number>`count(*)`.mapWith(Number) })

@@ -1,6 +1,6 @@
 {
-  "id": "85493c28-919b-4284-960a-c36fdc8e4402",
-  "prevId": "00d0f54e-59cf-4562-af32-81d4cd6d62dd",
+  "id": "c691f28b-5392-454b-b5f9-2089e3b8cd72",
+  "prevId": "f6619f5c-e4af-4e44-9019-daf67fc85f02",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -161,25 +161,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "cerrado_por": {
-          "name": "cerrado_por",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fecha_cierre": {
-          "name": "fecha_cierre",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visto_por_admin": {
-          "name": "visto_por_admin",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -193,6 +174,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "cerrado_por": {
+          "name": "cerrado_por",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_cierre": {
+          "name": "fecha_cierre",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -382,264 +375,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.puntos_venta": {
-      "name": "puntos_venta",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "nombre": {
-          "name": "nombre",
-          "type": "varchar(150)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "activo": {
-          "name": "activo",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "puntos_venta_nombre_idx": {
-          "name": "puntos_venta_nombre_idx",
-          "columns": [
-            {
-              "expression": "nombre",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "puntos_venta_nombre_unique": {
-          "name": "puntos_venta_nombre_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "nombre"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.push_tokens": {
-      "name": "push_tokens",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "name": "token",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "push_tokens_user_id_idx": {
-          "name": "push_tokens_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "push_tokens_user_id_users_id_fk": {
-          "name": "push_tokens_user_id_users_id_fk",
-          "tableFrom": "push_tokens",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "push_tokens_token_unique": {
-          "name": "push_tokens_token_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.ratings": {
-      "name": "ratings",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "incident_id": {
-          "name": "incident_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "puntuacion": {
-          "name": "puntuacion",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "comentario": {
-          "name": "comentario",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "ratings_incident_id_idx": {
-          "name": "ratings_incident_id_idx",
-          "columns": [
-            {
-              "expression": "incident_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "ratings_user_id_idx": {
-          "name": "ratings_user_id_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "ratings_incident_id_incidents_id_fk": {
-          "name": "ratings_incident_id_incidents_id_fk",
-          "tableFrom": "ratings",
-          "tableTo": "incidents",
-          "columnsFrom": [
-            "incident_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "ratings_user_id_users_id_fk": {
-          "name": "ratings_user_id_users_id_fk",
-          "tableFrom": "ratings",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "ratings_incident_id_unique": {
-          "name": "ratings_incident_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "incident_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.users": {
       "name": "users",
       "schema": "",
@@ -711,12 +446,6 @@
           "notNull": true,
           "default": 0
         },
-        "bloqueado_por": {
-          "name": "bloqueado_por",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -758,8 +487,7 @@
       "values": [
         "user",
         "asesor",
-        "admin",
-        "tecnico"
+        "admin"
       ]
     },
     "public.urgencia": {
