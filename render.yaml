@@ -5,6 +5,13 @@ services:
     rootDir: backend
     buildCommand: npm install && npx tsc
     startCommand: node dist/db/migrate.js && node dist/index.js
+    plan: starter
+    healthCheckPath: /api/health
+    autoDeploy: false
+    disk:
+      name: uploads
+      mountPath: /app/uploads
+      sizeGB: 1
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -15,4 +22,14 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
+        sync: false
+      - key: PORT
+        value: "3001"
+      - key: JWT_EXPIRES_IN
+        value: "24h"
+      - key: MAX_LOGIN_ATTEMPTS
+        value: "5"
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: EXTERNAL_SYSTEMS_URL
         sync: false

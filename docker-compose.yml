@@ -12,6 +12,8 @@ services:
     #   - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-hub_platform}"]
       interval: 5s
@@ -21,8 +23,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
+          memory: 1G
+          cpus: '1.0'
 
   api:
     build: ./backend
@@ -39,6 +41,9 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       EXTERNAL_SYSTEMS_URL: ${EXTERNAL_SYSTEMS_URL:-}
+    networks:
+      - db
+      - app
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,8 +71,11 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/api}
       NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
       NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
+    networks:
+      - app
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
@@ -88,8 +96,11 @@ services:
     container_name: hub-mobile
     ports:
       - "127.0.0.1:8081:8081"
+    networks:
+      - app
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8081"]
@@ -102,6 +113,13 @@ services:
         limits:
           memory: 512M
           cpus: '0.5'
+
+networks:
+  db:
+    driver: bridge
+    internal: true
+  app:
+    driver: bridge
 
 volumes:
   pgdata:
