@@ -153,8 +153,8 @@ backend/src/
 | PATCH | `/api/users/:id/reset-password` | Sí | Sí | Reset password |
 | POST | `/api/push/register` | Sí | No | Registrar token push |
 | GET | `/api/puntos-venta` | Sí | No | Puntos de venta |
-| GET | `/api/settings` | Sí | Sí | Config empresa |
-| PATCH | `/api/settings` | Sí | Sí | Actualizar config |
+| GET | `/api/settings` | Sí | No | Config empresa (cualquier usuario autenticado) |
+| PUT | `/api/settings` | Sí | Sí | Actualizar config |
 | POST | `/api/upload` | Sí | Sí | Subir imagen |
 | GET | `/api/metrics` | Sí | Sí | Métricas (protegido) |
 | GET | `/api/external-systems/:module` | Sí | Sí | Redirect 302 al sistema externo |

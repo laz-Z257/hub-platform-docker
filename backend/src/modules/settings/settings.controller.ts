@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { sql } from "drizzle-orm";
 import { db } from "../../db";
 import { companySettings } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -30,22 +29,25 @@ export async function updateSettings(
   try {
     const { nombre, contribuyente, direccion } = req.body;
 
+    // Solo actualizar los campos presentes: un PUT parcial no debe borrar
+    // los campos omitidos (comportamiento anterior: los dejaba en "")
+    const [existing] = await db
+      .select()
+      .from(companySettings)
+      .limit(1);
+
+    const merged = {
+      nombre: nombre ?? existing?.nombre ?? "",
+      contribuyente: contribuyente ?? existing?.contribuyente ?? "",
+      direccion: direccion ?? existing?.direccion ?? "",
+    };
+
     const [result] = await db
       .insert(companySettings)
-      .values({
-        key: "default",
-        nombre: nombre ?? "",
-        contribuyente: contribuyente ?? "",
-        direccion: direccion ?? "",
-      })
+      .values({ key: "default", ...merged })
       .onConflictDoUpdate({
         target: companySettings.key,
-        set: {
-          nombre: sql`excluded.nombre`,
-          contribuyente: sql`excluded.contribuyente`,
-          direccion: sql`excluded.direccion`,
-          updated_at: new Date(),
-        },
+        set: { ...merged, updated_at: new Date() },
       })
       .returning();
 

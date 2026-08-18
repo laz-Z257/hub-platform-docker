@@ -30,10 +30,12 @@ export async function authMiddleware(
     req.user = payload;
 
     const [user] = await db
-      .select({ 
-        estado: users.estado, 
+      .select({
+        estado: users.estado,
         ultima_actividad: users.ultima_actividad,
-        token_version: users.token_version 
+        token_version: users.token_version,
+        bloqueado_hasta: users.bloqueado_hasta,
+        id: users.id,
       })
       .from(users)
       .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)))
@@ -45,8 +47,25 @@ export async function authMiddleware(
     }
 
     if (user.estado === "bloqueado") {
-      res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
-      return;
+      // Auto-unlock: bloqueo por intentos fallidos (con fecha) expira solo;
+      // bloqueo manual de admin (sin fecha) sigue permanente
+      if (user.bloqueado_hasta && user.bloqueado_hasta <= new Date()) {
+        // Guard CAS: solo desbloquea si sigue bloqueado por lockout temporal
+        // (evita pisar un bloqueo manual concurrente) y no está soft-deleted
+        await db
+          .update(users)
+          .set({ estado: "activo", intentos_fallidos: 0, bloqueado_hasta: null })
+          .where(
+            and(
+              eq(users.id, user.id),
+              eq(users.estado, "bloqueado"),
+              isNull(users.deleted_at)
+            )
+          );
+      } else {
+        res.status(403).json({ error: "Usuario bloqueado. No puedes realizar esta acción." });
+        return;
+      }
     }
 
     // Validar versión del token (invalidación tras logout)

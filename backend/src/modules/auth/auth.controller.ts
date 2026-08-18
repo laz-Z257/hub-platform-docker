@@ -13,6 +13,9 @@ const MAX_LOGIN_ATTEMPTS = env.MAX_LOGIN_ATTEMPTS;
 // Hash de relleno para igualar timing cuando el usuario no existe (anti-enumeración)
 const DUMMY_HASH = "$2a$12$xo2yWONym/BmrASiewX2luAQaaXLPGWevMtgLgJm3gbTrRajG5GNy";
 
+// Minutos de bloqueo automático tras agotar intentos (bloqueo manual de admin = permanente)
+const LOCKOUT_MINUTES = 15;
+
 /**
  * Formatea la respuesta del usuario para el cliente
  * @param user - Usuario de la base de datos
@@ -115,8 +118,19 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     if (user.estado === "bloqueado") {
-      res.status(403).json({ error: "Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador." });
-      return;
+      // Auto-unlock: bloqueo por intentos fallidos (con fecha) expira solo
+      if (user.bloqueado_hasta && user.bloqueado_hasta <= new Date()) {
+        await db
+          .update(users)
+          .set({ estado: "activo", intentos_fallidos: 0, bloqueado_hasta: null })
+          .where(and(eq(users.id, user.id), isNull(users.deleted_at)));
+      } else {
+        const msg = user.bloqueado_hasta
+          ? `Cuenta bloqueada temporalmente por intentos fallidos. Intenta de nuevo después de las ${user.bloqueado_hasta.toLocaleTimeString("es-CO", { timeZone: "America/Bogota" })}.`
+          : "Usuario bloqueado. Contacta al administrador.";
+        res.status(403).json({ error: msg });
+        return;
+      }
     }
 
     const valid = await bcrypt.compare(contrasena, user.contrasena);
@@ -131,9 +145,14 @@ export async function login(req: Request, res: Response): Promise<void> {
       if ((updated?.intentos_fallidos ?? 0) >= MAX_LOGIN_ATTEMPTS) {
         await db
           .update(users)
-          .set({ estado: "bloqueado" })
+          .set({
+            estado: "bloqueado",
+            bloqueado_hasta: new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000),
+          })
           .where(eq(users.id, user.id));
-        res.status(403).json({ error: `Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador.` });
+        res.status(403).json({
+          error: `Cuenta bloqueada temporalmente por ${LOCKOUT_MINUTES} minutos tras múltiples intentos fallidos.`,
+        });
         return;
       }
 

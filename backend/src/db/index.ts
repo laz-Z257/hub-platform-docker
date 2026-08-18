@@ -9,6 +9,7 @@ const pool = new Pool({
   max: 10,
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
+  statement_timeout: 30000, // una query colgada no acapara el pool (max 10)
   allowExitOnIdle: true,
 });
 

@@ -54,4 +54,8 @@ export const env = {
   MAX_LOGIN_ATTEMPTS: parsePositiveInt(process.env.MAX_LOGIN_ATTEMPTS, 5, "MAX_LOGIN_ATTEMPTS"),
   EXPO_ACCESS_TOKEN: process.env.EXPO_ACCESS_TOKEN || "",
   EXTERNAL_SYSTEMS_URL: process.env.EXTERNAL_SYSTEMS_URL || "",
+  ALLOWED_HOSTS: (process.env.ALLOWED_HOSTS || "")
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean),
 };

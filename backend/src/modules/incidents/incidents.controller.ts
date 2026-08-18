@@ -4,29 +4,61 @@ import { db } from "../../db";
 import { incidents, incidentComments, users, messages, pushTokens } from "../../db/schema";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
+import { escapeLike } from "../../lib/like";
 
-async function sendExpoPush(messages: unknown[]): Promise<void> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-    if (env.EXPO_ACCESS_TOKEN) {
-      headers["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
+type ExpoPushMessage = { to: string } & Record<string, unknown>;
+
+/**
+ * Envía push vía Expo en lotes de <=100 (límite de la API) y hace best-effort
+ * de limpieza: tokens que Expo reporta como DeviceNotRegistered se eliminan
+ * para no acumular tokens muertos ni desperdiciar cuota.
+ */
+async function sendExpoPush(messages: ExpoPushMessage[]): Promise<void> {
+  const CHUNK_SIZE = 100;
+  for (let offset = 0; offset < messages.length; offset += CHUNK_SIZE) {
+    const chunk = messages.slice(offset, offset + CHUNK_SIZE);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      if (env.EXPO_ACCESS_TOKEN) {
+        headers["Expo-Access-Token"] = env.EXPO_ACCESS_TOKEN;
+      }
+      const response = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(chunk),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        logger.warn("Push notification response", { status: response.status });
+        continue;
+      }
+      const body = (await response.json().catch(() => null)) as {
+        data?: Array<{ status?: string; message?: { details?: Array<{ errorCode?: string }> } }>;
+      } | null;
+      const tickets = body?.data;
+      if (!Array.isArray(tickets)) continue;
+      for (let i = 0; i < tickets.length; i++) {
+        const ticket = tickets[i];
+        const errorCodes = (ticket.message?.details ?? [])
+          .map((d) => d.errorCode)
+          .join(",");
+        if (errorCodes.includes("DeviceNotRegistered")) {
+          await db
+            .delete(pushTokens)
+            .where(eq(pushTokens.token, chunk[i].to))
+            .catch(() => {});
+        }
+      }
+    } catch (err) {
+      logger.warn("Push notification send error", { error: (err as Error).message });
+    } finally {
+      clearTimeout(timeout);
     }
-    const response = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(messages),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      logger.warn("Push notification response", { status: response.status });
-    }
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -97,12 +129,13 @@ export async function listIncidents(
 
     if (search) {
       const hexChars = search.replace(/[^A-Fa-f0-9]/g, "").toLowerCase();
+      const term = escapeLike(search);
       conditions.push(
         or(
-          hexChars.length >= 4 ? sql`replace(${incidents.id}::text, '-', '') ILIKE ${`%${hexChars}`}` : sql`1=0`,
-          ilike(incidents.nombre, `%${search}%`),
-          ilike(incidents.punto_venta, `%${search}%`),
-          ilike(incidents.descripcion, `%${search}%`)
+          hexChars.length >= 4 ? sql`replace(${incidents.id}::text, '-', '') ILIKE ${`%${escapeLike(hexChars)}`}` : sql`1=0`,
+          ilike(incidents.nombre, `%${term}%`),
+          ilike(incidents.punto_venta, `%${term}%`),
+          ilike(incidents.descripcion, `%${term}%`)
         ) ?? sql`1=0`
       );
     }

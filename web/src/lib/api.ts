@@ -149,11 +149,42 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    const msg =
+    const rawMsg =
       typeof data === "object" && data !== null && "error" in data
-        ? (data as { error: string }).error
-        : "Error en la petición";
-    throw new Error(msg);
+        ? String((data as { error: unknown }).error)
+        : "";
+    logger.warn("API error", { endpoint, status: res.status, detail: rawMsg });
+
+    // Mensajes conocidos del backend se muestran tal cual; el resto se
+    // generaliza para no exponer detalles internos al usuario
+    const KNOWN_ERRORS = [
+      "Documento o contraseña incorrectos",
+      "Datos inválidos",
+      "No autorizado",
+      "Token inválido o expirado",
+      "El registro ya existe",
+      "El documento ya está registrado",
+      "No tienes permisos",
+      "Usuario bloqueado",
+      "Cuenta bloqueada temporalmente",
+      "No se puede cambiar el estado de una cuenta de administrador",
+      "Solo un administrador",
+      "Ruta no encontrada",
+      "Demasiadas solicitudes",
+    ];
+    const isKnown = KNOWN_ERRORS.some((k) => rawMsg.startsWith(k));
+    if (isKnown) throw new Error(rawMsg);
+
+    const friendly: Record<number, string> = {
+      400: "Solicitud inválida. Revisa los datos e intenta de nuevo.",
+      401: "Tu sesión ha expirado. Inicia sesión nuevamente.",
+      403: "No tienes permisos para realizar esta acción.",
+      404: "No se encontró el recurso solicitado.",
+      409: "El registro ya existe o hay un conflicto con los datos actuales.",
+      413: "El archivo es demasiado grande.",
+      429: "Demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+    };
+    throw new Error(friendly[res.status] || "Ocurrió un error inesperado. Intenta de nuevo.");
   }
 
   if (schema) {

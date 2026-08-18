@@ -34,7 +34,17 @@ app.set("trust proxy", 1);
 
 app.use((req, res, next) => {
   if (env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
-    const host = req.headers.host || "";
+    const host = (req.headers.host || "").toLowerCase();
+
+    // Allowlist opcional: si está definida, solo se redirige a hosts conocidos
+    // (evita open redirect / cache poisoning vía Host header). Sin ALLOWED_HOSTS
+    // definida se mantiene el comportamiento anterior.
+    const hostname = host.replace(/:\d+$/, "").replace(/^\[|\]$/g, "");
+    if (env.ALLOWED_HOSTS.length > 0 && !env.ALLOWED_HOSTS.includes(hostname)) {
+      logger.warn("Host no permitido en redirect HTTPS", { host });
+      return next();
+    }
+
     return res.redirect(301, `https://${host}${req.originalUrl}`);
   }
   next();
@@ -205,6 +215,9 @@ app.use(
 );
 
 app.listen(env.PORT, () => {
+  if (process.env.NODE_ENV === undefined) {
+    logger.warn("NODE_ENV no está definida: se asume 'development' (CORS amplio, sin redirect HTTPS ni CSP estricta). Defínela en producción.");
+  }
   logger.info(`API running on port ${env.PORT}`, { environment: env.NODE_ENV });
 });
 

@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   ultima_actividad: timestamp("ultima_actividad"),
   token_version: integer("token_version").notNull().default(0),
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
+  bloqueado_hasta: timestamp("bloqueado_hasta"),
   bloqueado_por: uuid("bloqueado_por").references(
     (): AnyPgColumn => users.id,
     {

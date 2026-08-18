@@ -5,5 +5,5 @@ export const registerPushSchema = z.object({
     .string()
     .min(1, "Token requerido")
     .regex(/^[A-Za-z0-9_\-\[\]]+$/, "Token inválido")
-    .max(500, "Token demasiado largo"),
+    .max(255, "Token demasiado largo"), // alineado con varchar(255) de la columna
 });

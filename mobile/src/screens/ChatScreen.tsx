@@ -28,6 +28,12 @@ interface SuggestedAction {
   action: string;
 }
 
+// Secuencia para IDs de mensajes únicos (Date.now() solo colisiona en envíos rápidos)
+let msgSeq = 0;
+function nextMsgId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${++msgSeq}`;
+}
+
 interface Message {
   id: string;
   type: "bot-card" | "user" | "date" | "typing";
@@ -154,7 +160,7 @@ export default function ChatScreen() {
 
   const handleSend = useCallback(async (text: string, displayText?: string) => {
     const userMsg: Message = {
-      id: `user-${Date.now()}`,
+      id: nextMsgId("user"),
       type: "user",
       text: displayText || text,
       timestamp: getTimeString(),
@@ -203,7 +209,7 @@ export default function ChatScreen() {
       setTyping(false);
 
       const errorMsg: Message = {
-        id: `bot-card-${Date.now()}`,
+        id: nextMsgId("bot-card"),
         type: "bot-card",
         text: "Ocurrio un error al procesar el mensaje. Selecciona una opcion:",
         timestamp: getTimeString(),
@@ -277,7 +283,7 @@ export default function ChatScreen() {
         setRatingIncidentId(null);
         setRatedIncidents((prev) => new Set(prev).add(id));
         const thanksMsg: Message = {
-          id: `bot-card-${Date.now()}`,
+          id: nextMsgId("bot-card"),
           type: "bot-card",
           text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`,
           timestamp: getTimeString(),

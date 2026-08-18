@@ -3,6 +3,7 @@ import { ilike, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { puntosVenta } from "../../db/schema";
 import { logger } from "../../lib/logger";
+import { escapeLike } from "../../lib/like";
 import { PV_SEED_NAMES } from "../../db/constants";
 
 export async function seedPuntosVenta(
@@ -37,12 +38,12 @@ export async function listPuntosVenta(
   res: Response
 ): Promise<void> {
   try {
-    const search = req.query.search as string | undefined;
+    const search = String(req.query.search ?? "").slice(0, 100);
 
     const items = await db
       .select()
       .from(puntosVenta)
-      .where(search ? ilike(puntosVenta.nombre, `%${search}%`) : undefined)
+      .where(search ? ilike(puntosVenta.nombre, `%${escapeLike(search)}%`) : undefined)
       .orderBy(puntosVenta.nombre)
       .limit(100);
 

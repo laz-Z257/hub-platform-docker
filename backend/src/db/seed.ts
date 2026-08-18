@@ -10,6 +10,31 @@ import { PV_SEED_NAMES } from "./constants";
 import "dotenv/config";
 
 async function seed() {
+  // En producción, solo sembrar si la BD está vacía o si RUN_SEED=true explícitamente
+  // (evita correr el seed en cada deploy/restart de Render)
+  if (process.env.NODE_ENV === "production" && process.env.RUN_SEED !== "true") {
+    const pool0 = new Pool({
+      connectionString: env.DATABASE_URL,
+      ssl: env.DB_SSL ? { rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED } : false,
+      connectionTimeoutMillis: 10000,
+      query_timeout: 15000,
+    });
+    try {
+      const res = await pool0.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM users");
+      if (Number(res.rows[0]?.count ?? "0") > 0) {
+        logger.info("Seed skipped: la BD ya tiene usuarios (NODE_ENV=production, RUN_SEED!=true).");
+        await pool0.end().catch(() => {});
+        return;
+      }
+    } catch (err) {
+      logger.warn("Seed pre-check failed, continuando con seed normal", {
+        error: (err as Error).message,
+      });
+    } finally {
+      await pool0.end().catch(() => {});
+    }
+  }
+
   const pool = new Pool({
     connectionString: env.DATABASE_URL,
     ssl: env.DB_SSL

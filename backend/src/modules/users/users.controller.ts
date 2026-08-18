@@ -4,6 +4,7 @@ import { eq, ne, and, sql, ilike, or, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
+import { escapeLike } from "../../lib/like";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
@@ -73,11 +74,12 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
     }
 
     if (search) {
+      const term = escapeLike(search);
       conditions.push(
         or(
-          ilike(users.nombre, `%${search}%`),
-          ilike(users.documento, `%${search}%`),
-          ilike(users.email, `%${search}%`)
+          ilike(users.nombre, `%${term}%`),
+          ilike(users.documento, `%${term}%`),
+          ilike(users.email, `%${term}%`)
         ) as ReturnType<typeof eq>
       );
     }
@@ -147,9 +149,11 @@ export async function toggleUserStatus(
     updateData.token_version = sql`${users.token_version} + 1`;
     if (newEstado === "bloqueado") {
       updateData.bloqueado_por = req.user!.userId;
+      updateData.bloqueado_hasta = null; // bloqueo manual = permanente
     } else {
       updateData.bloqueado_por = null;
       updateData.intentos_fallidos = 0;
+      updateData.bloqueado_hasta = null;
     }
 
     const [updated] = await db

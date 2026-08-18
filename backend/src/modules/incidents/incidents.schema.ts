@@ -13,7 +13,14 @@ export const updateIncidentSchema = z.object({
   estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
   agente: z.string().min(1, "El agente no puede estar vacío").max(100).optional(),
   solucion: z.string().max(5000).optional(),
-  imagen_url: z.string().max(500).optional(),
+  imagen_url: z
+    .string()
+    .max(500)
+    .refine(
+      (v) => v === "" || v.startsWith("/uploads/") || /^https?:\/\//.test(v),
+      "imagen_url debe ser una URL http(s) o una ruta /uploads/"
+    )
+    .optional(),
 });
 
 export const commentSchema = z.object({
@@ -34,7 +41,7 @@ export const listIncidentsQuerySchema = {
       .default("20")
       .transform(Number)
       .pipe(z.number().int().min(1).max(100)),
-    search: z.string().optional(),
+    search: z.string().max(100).optional(),
     estado: z.enum(["pendiente", "en_proceso", "resuelto"]).optional(),
     urgencia: z.enum(["baja", "media", "alta"]).optional(),
     start: z
@@ -83,6 +90,6 @@ export const statsQuerySchema = {
       .string()
       .optional()
       .refine((val) => !val || !isNaN(Date.parse(val)), "end debe ser una fecha válida"),
-    agente: z.string().optional(),
+    agente: z.string().max(100).optional(),
   }),
 };

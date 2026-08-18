@@ -60,7 +60,7 @@ describe("api.get", () => {
     );
   });
 
-  it("throws on non-ok response", async () => {
+  it("throws generic (non-leaking) error on unknown backend message", async () => {
     const fetchMock = createFetch({
       ok: false,
       status: 400,
@@ -68,7 +68,20 @@ describe("api.get", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api.get("/test")).rejects.toThrow("Bad request");
+    await expect(api.get("/test")).rejects.toThrow("Solicitud inválida");
+  });
+
+  it("passes through known backend messages", async () => {
+    const fetchMock = createFetch({
+      ok: false,
+      status: 409,
+      json: vi.fn().mockResolvedValue({ error: "El documento ya está registrado" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.get("/test")).rejects.toThrow(
+      "El documento ya está registrado"
+    );
   });
 
   it("throws generic error when no error message", async () => {
@@ -79,7 +92,7 @@ describe("api.get", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api.get("/test")).rejects.toThrow("Error en la petición");
+    await expect(api.get("/test")).rejects.toThrow("Ocurrió un error inesperado");
   });
 
   it("throws on schema validation failure", async () => {

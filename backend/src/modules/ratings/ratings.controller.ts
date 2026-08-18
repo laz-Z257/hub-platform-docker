@@ -1,8 +1,12 @@
 import { Request, Response } from "express";
-import { eq, desc, and, isNull } from "drizzle-orm";
+import { eq, desc, and, isNull, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { ratings, incidents, users } from "../../db/schema";
 import { logger } from "../../lib/logger";
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
 
 export async function createRating(req: Request, res: Response): Promise<void> {
   try {
@@ -122,7 +126,66 @@ export async function getMyRatedIncidents(req: Request, res: Response): Promise<
 
 export async function getRatingStats(_req: Request, res: Response): Promise<void> {
   try {
-    const rows = await db
+    // Agregación en SQL (GROUP BY): no carga todas las filas en memoria.
+    // La forma de la respuesta es idéntica a la versión anterior.
+    const ratingsJoin = and(
+      eq(ratings.incident_id, incidents.id),
+      isNull(incidents.deleted_at)
+    );
+
+    const [agg] = await db
+      .select({
+        total: sql<number>`count(*)::int`,
+        sum: sql<number>`coalesce(sum(${ratings.puntuacion}), 0)::int`,
+      })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin);
+
+    const total = agg?.total ?? 0;
+    const sum = agg?.sum ?? 0;
+    const promedio = total > 0 ? round1(sum / total) : 0;
+
+    const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distRows = await db
+      .select({ puntuacion: ratings.puntuacion, count: sql<number>`count(*)::int` })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin)
+      .groupBy(ratings.puntuacion);
+    for (const r of distRows) {
+      distribucion[r.puntuacion] = r.count;
+    }
+
+    const timelineRows = await db
+      .select({
+        fecha: sql<string>`to_char(${ratings.created_at}, 'YYYY-MM-DD')`,
+        suma: sql<number>`coalesce(sum(${ratings.puntuacion}), 0)::int`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin)
+      .groupBy(sql`to_char(${ratings.created_at}, 'YYYY-MM-DD')`);
+    const timeline = timelineRows
+      .map((d) => ({ fecha: d.fecha, promedio: round1(d.suma / d.count), total: d.count }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    const pvRows = await db
+      .select({
+        punto_venta: incidents.punto_venta,
+        suma: sql<number>`coalesce(sum(${ratings.puntuacion}), 0)::int`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin)
+      .groupBy(incidents.punto_venta);
+    const promedioPv = pvRows
+      .map((d) => ({
+        punto_venta: d.punto_venta || "Sin especificar",
+        promedio: round1(d.suma / d.count),
+        total: d.count,
+      }))
+      .sort((a, b) => b.promedio - a.promedio);
+
+    const ultimas = await db
       .select({
         puntuacion: ratings.puntuacion,
         comentario: ratings.comentario,
@@ -133,38 +196,10 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
         ticket_descripcion: incidents.descripcion,
       })
       .from(ratings)
-      .innerJoin(incidents, and(eq(ratings.incident_id, incidents.id), isNull(incidents.deleted_at)))
+      .innerJoin(incidents, ratingsJoin)
       .innerJoin(users, and(eq(ratings.user_id, users.id), isNull(users.deleted_at)))
-      .orderBy(desc(ratings.created_at));
-
-    const total = rows.length;
-    const sum = rows.reduce((acc, r) => acc + r.puntuacion, 0);
-    const promedio = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
-
-    const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    const evolucion: Record<string, { suma: number; count: number }> = {};
-    for (const r of rows) {
-      distribucion[r.puntuacion] = (distribucion[r.puntuacion] || 0) + 1;
-      const day = new Date(r.created_at).toISOString().split("T")[0];
-      if (!evolucion[day]) evolucion[day] = { suma: 0, count: 0 };
-      evolucion[day].suma += r.puntuacion;
-      evolucion[day].count++;
-    }
-
-    const promedioPorPv: Record<string, { suma: number; count: number }> = {};
-    for (const r of rows) {
-      const pv = r.punto_venta || "Sin especificar";
-      if (!promedioPorPv[pv]) promedioPorPv[pv] = { suma: 0, count: 0 };
-      promedioPorPv[pv].suma += r.puntuacion;
-      promedioPorPv[pv].count++;
-    }
-    const promedioPv = Object.entries(promedioPorPv)
-      .map(([pv, d]) => ({ punto_venta: pv, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
-      .sort((a, b) => b.promedio - a.promedio);
-
-    const timeline = Object.entries(evolucion)
-      .map(([fecha, d]) => ({ fecha, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
-      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+      .orderBy(desc(ratings.created_at))
+      .limit(10);
 
     res.json({
       promedio,
@@ -172,7 +207,7 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
       distribucion,
       promedioPv,
       timeline,
-      ultimas: rows.slice(0, 10),
+      ultimas,
     });
   } catch (error) {
     logger.error("Get rating stats error", { error: (error as Error).message });
@@ -182,34 +217,49 @@ export async function getRatingStats(_req: Request, res: Response): Promise<void
 
 export async function getPublicRatingStats(_req: Request, res: Response): Promise<void> {
   try {
-    const rows = await db
+    // Agregación en SQL: no carga todas las filas en memoria
+    const ratingsJoin = and(
+      eq(ratings.incident_id, incidents.id),
+      isNull(incidents.deleted_at)
+    );
+
+    const [agg] = await db
       .select({
-        puntuacion: ratings.puntuacion,
-        created_at: ratings.created_at,
-        punto_venta: incidents.punto_venta,
+        total: sql<number>`count(*)::int`,
+        sum: sql<number>`coalesce(sum(${ratings.puntuacion}), 0)::int`,
       })
       .from(ratings)
-      .innerJoin(incidents, and(eq(ratings.incident_id, incidents.id), isNull(incidents.deleted_at)))
-      .orderBy(desc(ratings.created_at));
+      .innerJoin(incidents, ratingsJoin);
 
-    const total = rows.length;
-    const sum = rows.reduce((acc, r) => acc + r.puntuacion, 0);
-    const promedio = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
+    const total = agg?.total ?? 0;
+    const sum = agg?.sum ?? 0;
+    const promedio = total > 0 ? round1(sum / total) : 0;
 
     const distribucion: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const r of rows) {
-      distribucion[r.puntuacion] = (distribucion[r.puntuacion] || 0) + 1;
+    const distRows = await db
+      .select({ puntuacion: ratings.puntuacion, count: sql<number>`count(*)::int` })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin)
+      .groupBy(ratings.puntuacion);
+    for (const r of distRows) {
+      distribucion[r.puntuacion] = r.count;
     }
 
-    const promedioPorPv: Record<string, { suma: number; count: number }> = {};
-    for (const r of rows) {
-      const pv = r.punto_venta || "Sin especificar";
-      if (!promedioPorPv[pv]) promedioPorPv[pv] = { suma: 0, count: 0 };
-      promedioPorPv[pv].suma += r.puntuacion;
-      promedioPorPv[pv].count++;
-    }
-    const promedioPv = Object.entries(promedioPorPv)
-      .map(([pv, d]) => ({ punto_venta: pv, promedio: Math.round((d.suma / d.count) * 10) / 10, total: d.count }))
+    const pvRows = await db
+      .select({
+        punto_venta: incidents.punto_venta,
+        suma: sql<number>`coalesce(sum(${ratings.puntuacion}), 0)::int`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(ratings)
+      .innerJoin(incidents, ratingsJoin)
+      .groupBy(incidents.punto_venta);
+    const promedioPv = pvRows
+      .map((d) => ({
+        punto_venta: d.punto_venta || "Sin especificar",
+        promedio: round1(d.suma / d.count),
+        total: d.count,
+      }))
       .sort((a, b) => b.promedio - a.promedio);
 
     res.json({

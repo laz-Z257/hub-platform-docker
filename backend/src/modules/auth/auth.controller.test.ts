@@ -251,7 +251,73 @@ describe("Auth Controller", () => {
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
-        error: "Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador.",
+        error: "Usuario bloqueado. Contacta al administrador.",
+      });
+    });
+
+    it("should auto-unlock temp-blocked user when lockout expired", async () => {
+      const mockUser = {
+        id: "user-id",
+        documento: "123456789",
+        nombre: "Test User",
+        contrasena: "hashed",
+        estado: "bloqueado",
+        bloqueado_hasta: new Date(Date.now() - 60 * 1000), // expiró hace 1 min
+      };
+
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([mockUser]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+
+      req.body = {
+        documento: "123456789",
+        contrasena: "password123",
+      };
+
+      await login(req as Request, res as Response);
+
+      // Desbloquea y deja continuar el login
+      expect(db.update).toHaveBeenCalledWith(users);
+      expect(jsonMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.stringContaining("bloqueada") })
+      );
+    });
+
+    it("should reject temp-blocked user while lockout is active", async () => {
+      const mockUser = {
+        id: "user-id",
+        documento: "123456789",
+        nombre: "Test User",
+        contrasena: "hashed",
+        estado: "bloqueado",
+        bloqueado_hasta: new Date(Date.now() + 10 * 60 * 1000), // falta 10 min
+      };
+
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([mockUser]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+
+      req.body = {
+        documento: "123456789",
+        contrasena: "password123",
+      };
+
+      await login(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(jsonMock).toHaveBeenCalledWith({
+        error: expect.stringContaining("bloqueada temporalmente"),
       });
     });
   });
