@@ -20,6 +20,7 @@ export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [users, setUsers] = useState<ApiUser[]>([]);
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,6 +42,7 @@ export default function UsersPage() {
       .get<{ items: ApiUser[]; total: number }>("/users?limit=200")
       .then((data) => {
         if (Array.isArray(data?.items)) setUsers(data.items);
+        setServerTotal(typeof data?.total === "number" ? data.total : null);
       })
       .catch((err) => logger.error("Error fetching users", { error: err instanceof Error ? err.message : err }))
       .finally(() => setLoading(false));
@@ -48,7 +50,11 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-    const interval = setInterval(fetchUsers, 30000);
+    const interval = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) {
+        fetchUsers();
+      }
+    }, 30000);
     return () => clearInterval(interval);
   }, [fetchUsers]);
 
@@ -114,6 +120,12 @@ export default function UsersPage() {
       </div>
 
       <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
+
+      {serverTotal !== null && serverTotal > users.length && (
+        <div className="mt-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-[13px] text-amber-700 dark:text-amber-400 font-inter">
+          Mostrando los primeros {users.length} de {serverTotal} usuarios. Usa el buscador para encontrar usuarios específicos.
+        </div>
+      )}
 
       <Pagination
         page={page}

@@ -113,8 +113,11 @@ async function request<T>(
     }
 
     if (!refreshed || res.status === 401) {
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      if (typeof window !== "undefined") {
+        const loginPath = getCurrentScope() === "user" ? "/user/login" : "/login";
+        if (window.location.pathname !== loginPath && window.location.pathname !== "/login" && window.location.pathname !== "/user/login") {
+          window.location.href = loginPath;
+        }
       }
       throw new Error("Sesión expirada");
     }
@@ -135,8 +138,11 @@ async function request<T>(
         ? (data as { error: string }).error
         : "";
     if (msg.includes("bloqueado")) {
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      if (typeof window !== "undefined") {
+        const loginPath = getCurrentScope() === "user" ? "/user/login" : "/login";
+        if (window.location.pathname !== loginPath && window.location.pathname !== "/login" && window.location.pathname !== "/user/login") {
+          window.location.href = loginPath;
+        }
       }
       throw new Error("Usuario bloqueado");
     }

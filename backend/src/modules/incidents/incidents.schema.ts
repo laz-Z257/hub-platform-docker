@@ -59,9 +59,9 @@ export const exportQuerySchema = {
     limit: z
       .string()
       .optional()
-      .default("5000")
+      .default("1000")
       .transform(Number)
-      .pipe(z.number().int().min(1).max(10000)),
+      .pipe(z.number().int().min(1).max(2000)),
     start: z
       .string()
       .optional()

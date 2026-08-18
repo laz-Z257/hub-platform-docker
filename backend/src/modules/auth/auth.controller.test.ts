@@ -202,7 +202,9 @@ describe("Auth Controller", () => {
 
       const updateChain = {
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ intentos_fallidos: 1 }]),
+          }),
         }),
       };
       (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);

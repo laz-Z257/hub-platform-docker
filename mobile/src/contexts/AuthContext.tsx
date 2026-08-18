@@ -17,7 +17,7 @@ import {
   setForceLogoutHandler,
   setBlockedHandler,
 } from "../services/api";
-import { registerForPushNotifications, setupNotificationListeners } from "../services/notifications";
+import { registerForPushNotifications, unregisterForPushNotifications, setupNotificationListeners } from "../services/notifications";
 import { logger } from "../services/logger";
 import type { AuthUser } from "@hub/shared/types/auth";
 
@@ -56,15 +56,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
             router.replace("/chat");
           } catch (err) {
-            await clearToken();
-            setUser(null);
-            if (err instanceof Error && err.message === "bloqueado") {
-              const originalMsg = (err as { originalMsg?: string }).originalMsg;
-              Alert.alert(
-                "Cuenta bloqueada",
-                originalMsg || "Su cuenta ha sido bloqueada. Contacte al administrador."
-              );
-              router.replace("/");
+            const msg = err instanceof Error ? err.message : "";
+            if (msg === "Sesión expirada" || msg === "bloqueado") {
+              await clearToken();
+              setUser(null);
+              if (msg === "bloqueado") {
+                const originalMsg = (err as { originalMsg?: string }).originalMsg;
+                Alert.alert(
+                  "Cuenta bloqueada",
+                  originalMsg || "Su cuenta ha sido bloqueada. Contacte al administrador."
+                );
+                router.replace("/");
+              }
+            } else {
+              logger.warn("Auth restore: error no relacionado con sesión, se conserva la sesión local", { error: msg });
             }
           }
         }
@@ -131,6 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    await unregisterForPushNotifications().catch((err) => {
+      logger.warn("Push unregister failed on logout", { error: (err as Error).message });
+    });
     await api.post("/auth/logout").catch((err) => {
       logger.warn("Logout API call failed", { error: (err as Error).message });
     });

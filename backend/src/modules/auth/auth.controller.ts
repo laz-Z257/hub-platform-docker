@@ -27,7 +27,7 @@ function userResponse(user: typeof users.$inferSelect) {
 /**
  * Registra un nuevo usuario en el sistema
  * - Valida que el documento no exista
- * - Hashea la contraseña con bcrypt (10 rondas)
+ * - Hashea la contraseña con bcrypt (12 rondas)
  * - Genera email automático basado en documento
  * - Asigna rol "user" por defecto
  * 
@@ -52,7 +52,7 @@ export async function register(
       return;
     }
 
-    const hashed = await bcrypt.hash(contrasena, 10);
+    const hashed = await bcrypt.hash(contrasena, 12);
 
     const [user] = await db
       .insert(users)
@@ -117,21 +117,20 @@ export async function login(req: Request, res: Response): Promise<void> {
     const valid = await bcrypt.compare(contrasena, user.contrasena);
 
     if (!valid) {
-      const newCount = (user.intentos_fallidos || 0) + 1;
+      const [updated] = await db
+        .update(users)
+        .set({ intentos_fallidos: sql`${users.intentos_fallidos} + 1` })
+        .where(eq(users.id, user.id))
+        .returning({ intentos_fallidos: users.intentos_fallidos });
 
-      if (newCount >= MAX_LOGIN_ATTEMPTS) {
+      if ((updated?.intentos_fallidos ?? 0) >= MAX_LOGIN_ATTEMPTS) {
         await db
           .update(users)
-          .set({ intentos_fallidos: newCount, estado: "bloqueado" })
+          .set({ estado: "bloqueado" })
           .where(eq(users.id, user.id));
         res.status(403).json({ error: `Usuario bloqueado por múltiples intentos fallidos. Contacta al administrador.` });
         return;
       }
-
-      await db
-        .update(users)
-        .set({ intentos_fallidos: newCount })
-        .where(eq(users.id, user.id));
 
       res.status(401).json({ error: "Documento o contraseña incorrectos" });
       return;
@@ -271,13 +270,24 @@ export async function logout(req: Request, res: Response): Promise<void> {
   // (el logout limpia solo las cookies del scope, pero el bump invalida
   // cualquier token Bearer/refresh aún en circulación)
   try {
+    let userId: string | undefined;
     const token = extractToken(req);
     if (token) {
-      const payload = verifyToken(token);
+      try {
+        userId = verifyToken(token).userId;
+      } catch {
+        userId = undefined;
+      }
+    }
+    if (!userId) {
+      const refreshToken = extractRefreshToken(req);
+      if (refreshToken) userId = verifyRefreshToken(refreshToken).userId;
+    }
+    if (userId) {
       await db
         .update(users)
         .set({ token_version: sql`${users.token_version} + 1` })
-        .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)));
+        .where(and(eq(users.id, userId), isNull(users.deleted_at)));
     }
   } catch (error) {
     logger.warn("Logout token invalidate failed", { error: (error as Error).message });

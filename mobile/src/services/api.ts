@@ -7,6 +7,7 @@ import {
   deleteUser,
   saveCache,
   getCache,
+  clearApiCache,
 } from "./storage";
 import { logger } from "./logger";
 
@@ -233,6 +234,10 @@ async function request<T>(
 
   if (isGet && !endpoint.includes("/auth/") && !endpoint.includes("/users")) {
     saveCache(endpoint, data).catch(() => {});
+  }
+
+  if (!isGet && !endpoint.startsWith("/auth/")) {
+    clearApiCache().catch(() => {});
   }
 
   return data as T;

@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm install && npx tsc
-    startCommand: node dist/db/migrate.js && node dist/index.js
+    startCommand: node dist/db/migrate.js && node dist/db/seed.js && node dist/index.js
     plan: starter
     healthCheckPath: /api/health
     autoDeploy: false

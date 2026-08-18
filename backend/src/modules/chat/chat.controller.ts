@@ -307,7 +307,7 @@ async function lookupTicket(
       and(
         eq(incidents.user_id, userId),
         isNull(incidents.deleted_at),
-        sql`UPPER(RIGHT(REPLACE(${incidents.id}::text, '-', ''), 8)) LIKE ${'%' + shortId}`
+        sql`UPPER(RIGHT(REPLACE(${incidents.id}::text, '-', ''), 8)) = ${shortId}`
       )
     )
     .limit(1);

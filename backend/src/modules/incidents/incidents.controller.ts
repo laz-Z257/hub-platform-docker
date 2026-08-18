@@ -341,11 +341,15 @@ export async function addComment(
       const shortId = id.replace(/-/g, "").slice(-8).toUpperCase();
       const botMessage = `📝 Tu ticket #TK-${shortId} tiene un nuevo comentario de **${autor}**:\n\n${texto}\n\nPuedes ver el detalle en la app.`;
 
-      await db.insert(messages).values({
-        user_id: incident.user_id,
-        content: botMessage,
-        is_bot: true,
-      });
+      try {
+        await db.insert(messages).values({
+          user_id: incident.user_id,
+          content: botMessage,
+          is_bot: true,
+        });
+      } catch (err) {
+        logger.warn("Comment notification insert failed", { error: (err as Error).message });
+      }
 
       try {
         const userTokens = await db
@@ -383,7 +387,7 @@ export async function exportIncidents(
   try {
     const start = req.validatedQuery?.start as string | undefined;
     const end = req.validatedQuery?.end as string | undefined;
-    const limit = Number(req.validatedQuery?.limit ?? 5000);
+    const limit = Number(req.validatedQuery?.limit ?? 1000);
     const page = Number(req.validatedQuery?.page ?? 1);
     const offset = (page - 1) * limit;
     const conditions = [isNull(incidents.deleted_at)];
@@ -479,43 +483,42 @@ export async function getStats(
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const allIncidents = await db
+    const dayExpr = sql`date_trunc('day', ${incidents.created_at})`;
+
+    const timelineRows = await db
       .select({
-        created_at: incidents.created_at,
-        urgencia: incidents.urgencia,
-        estado: incidents.estado,
-        punto_venta: incidents.punto_venta,
+        day: sql<string>`to_char(${dayExpr}, 'YYYY-MM-DD')`,
+        total: sql<number>`count(*)::int`,
+        resueltos: sql<number>`(count(*) filter (where ${incidents.estado} = 'resuelto'))::int`,
       })
       .from(incidents)
-      .where(whereClause);
+      .where(whereClause)
+      .groupBy(dayExpr)
+      .orderBy(dayExpr);
 
-    // Group by day for area chart
-    const dayMap = new Map<string, { total: number; resueltos: number }>();
-    for (const inc of allIncidents) {
-      const day = new Date(inc.created_at).toISOString().split("T")[0];
-      const entry = dayMap.get(day) || { total: 0, resueltos: 0 };
-      entry.total++;
-      if (inc.estado === "resuelto") entry.resueltos++;
-      dayMap.set(day, entry);
-    }
+    const timeline = timelineRows.map(({ day, total, resueltos }) => ({
+      date: day,
+      fecha: new Date(day + "T00:00:00").toLocaleDateString("es-CO", {
+        day: "2-digit",
+        month: "short",
+      }),
+      incidentes: total,
+      resueltos,
+    }));
 
-    const timeline = Array.from(dayMap.entries())
-      .map(([date, counts]) => ({
-        date,
-        fecha: new Date(date + "T00:00:00").toLocaleDateString("es-CO", {
-          day: "2-digit",
-          month: "short",
-        }),
-        incidentes: counts.total,
-        resueltos: counts.resueltos,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const pvRows = await db
+      .select({
+        punto_venta: incidents.punto_venta,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(whereClause)
+      .groupBy(incidents.punto_venta);
 
-    // Distribution by punto de venta
     const pvCount = new Map<string, number>();
-    for (const inc of allIncidents) {
-      const pv = inc.punto_venta || "Sin especificar";
-      pvCount.set(pv, (pvCount.get(pv) || 0) + 1);
+    for (const row of pvRows) {
+      const pv = row.punto_venta || "Sin especificar";
+      pvCount.set(pv, (pvCount.get(pv) || 0) + row.total);
     }
 
     const colors = ["#25207E", "#7C3AED", "#3B82F6", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#14B8A6"];
@@ -523,7 +526,16 @@ export async function getStats(
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
 
-    const total = allIncidents.length;
+    const statusRows = await db
+      .select({
+        estado: incidents.estado,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(incidents)
+      .where(whereClause)
+      .groupBy(incidents.estado);
+
+    const total = statusRows.reduce((sum, row) => sum + row.total, 0);
     const distribution = total === 0
       ? [{ name: "Sin datos", value: 100, color: "#E5E7EB" }]
       : sorted.map(([name, count], i) => ({
@@ -532,16 +544,15 @@ export async function getStats(
           color: colors[i % colors.length],
         }));
 
-    // Status counts for bar chart
     const statusCounts = {
       pendientes: 0,
       enProceso: 0,
       resueltos: 0,
     };
-    for (const inc of allIncidents) {
-      if (inc.estado === "pendiente") statusCounts.pendientes++;
-      else if (inc.estado === "en_proceso") statusCounts.enProceso++;
-      else if (inc.estado === "resuelto") statusCounts.resueltos++;
+    for (const row of statusRows) {
+      if (row.estado === "pendiente") statusCounts.pendientes += row.total;
+      else if (row.estado === "en_proceso") statusCounts.enProceso += row.total;
+      else if (row.estado === "resuelto") statusCounts.resueltos += row.total;
     }
 
     res.json({ timeline, distribution, statusCounts });

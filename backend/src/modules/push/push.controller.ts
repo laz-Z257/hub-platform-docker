@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "../../db";
 import { pushTokens } from "../../db/schema";
 import { logger } from "../../lib/logger";
@@ -33,5 +33,23 @@ export async function registerToken(
   } catch (error) {
     logger.error("Register push token error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al registrar token" });
+  }
+}
+
+export async function unregisterToken(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { token } = req.body;
+
+    await db
+      .delete(pushTokens)
+      .where(and(eq(pushTokens.token, token), eq(pushTokens.user_id, req.user!.userId)));
+
+    res.json({ message: "Token eliminado" });
+  } catch (error) {
+    logger.error("Unregister push token error", { error: (error as Error).message });
+    res.status(500).json({ error: "Error al eliminar token" });
   }
 }

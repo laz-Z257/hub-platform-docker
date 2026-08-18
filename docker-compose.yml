@@ -20,6 +20,11 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
@@ -29,6 +34,8 @@ services:
   api:
     build: ./backend
     container_name: hub-api
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:3001:3001"
     environment:
@@ -41,6 +48,12 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       EXTERNAL_SYSTEMS_URL: ${EXTERNAL_SYSTEMS_URL:-}
+      EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN:-}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - db
       - app
@@ -64,10 +77,13 @@ services:
         NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
         NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
     container_name: hub-web
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/api}
       NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-https://wa.me/573000000000}
       NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-+57 300 000 0000}
@@ -77,6 +93,11 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
       interval: 30s
@@ -94,6 +115,8 @@ services:
       context: .
       dockerfile: mobile/Dockerfile.web
     container_name: hub-mobile
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:8081:8081"
     networks:
@@ -102,6 +125,11 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8081"]
       interval: 30s

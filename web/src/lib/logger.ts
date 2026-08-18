@@ -15,10 +15,10 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
   }
   switch (level) {
     case "error":
-      console.error(JSON.stringify(entry));
+      if (process.env.NODE_ENV !== "production") console.error(JSON.stringify(entry));
       break;
     case "warn":
-      console.warn(JSON.stringify(entry));
+      if (process.env.NODE_ENV !== "production") console.warn(JSON.stringify(entry));
       break;
     case "debug":
       if (process.env.NODE_ENV !== "production") console.debug(JSON.stringify(entry));

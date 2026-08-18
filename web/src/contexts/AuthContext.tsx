@@ -53,7 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (documento: string, contrasena: string) => {
       setLoading(true);
       try {
-        const scope = pathname.startsWith("/user") ? "user" : "admin";
+        const scope: "admin" | "user" =
+          typeof window !== "undefined" && window.location.pathname.startsWith("/user")
+            ? "user"
+            : "admin";
         const data = await api.post<{ user: AuthUser; csrfToken?: string }>(
           "/auth/login",
           { documento, contrasena, scope }
@@ -68,8 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [router]
   );
 
   const logout = useCallback(async () => {

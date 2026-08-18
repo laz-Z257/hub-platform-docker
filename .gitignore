@@ -25,6 +25,7 @@ mobile/dist/
 # Runtime data
 ota-server/data/
 backend/uploads/
+backups/
 
 # IDE
 .idea/

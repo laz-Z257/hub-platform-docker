@@ -228,7 +228,11 @@ export default function ChatPage() {
                     onSuggestedAction={handleSuggestedAction}
                     onRateService={() => {
                       const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-                      api.get<{ items: { id: string; estado: string }[] }>(`/incidents?limit=1&estado=resuelto${match ? `&search=${match[1]}` : ""}`)
+                      if (!match) {
+                        setRatingError("No se pudo identificar el ticket para calificar.");
+                        return;
+                      }
+                      api.get<{ items: { id: string; estado: string }[] }>(`/incidents?limit=1&estado=resuelto&search=${match[1]}`)
                         .then((d) => {
                           const resolved = d.items?.[0];
                           if (resolved) {

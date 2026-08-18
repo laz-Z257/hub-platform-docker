@@ -7,6 +7,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import { ZodError } from "zod";
 import { csrfProtection } from "./middlewares/csrf";
 import { requestId } from "./middlewares/requestId";
 import { metricsMiddleware, getMetrics, getMetricsContentType } from "./middlewares/metrics";
@@ -82,11 +83,12 @@ app.use(
   })
 );
 morgan.token("request-id", (req) => (req as Request).requestId);
+morgan.token("pathonly", (req) => (req as Request).path);
 app.use(
   morgan(
     env.NODE_ENV === "production"
-      ? ":remote-addr :method :url :status :response-time ms [:request-id]"
-      : ":method :url :status :response-time ms [:request-id]"
+      ? ":remote-addr :method :pathonly :status :response-time ms [:request-id]"
+      : ":method :pathonly :status :response-time ms [:request-id]"
   )
 );
 app.use(express.json({ limit: "1mb" }));
@@ -159,7 +161,7 @@ app.use(
     _next: express.NextFunction
   ) => {
     // Zod validation errors
-    if (err.message.includes("ZodError") || err.name === "ZodError") {
+    if (err instanceof ZodError || err.name === "ZodError") {
       logger.warn(`Validation error: ${err.message}`, { requestId: req.requestId });
       res.status(400).json({ error: "Datos inválidos", requestId: req.requestId });
       return;
@@ -182,12 +184,13 @@ app.use(
     // Multer file upload errors
     if (err.name === "MulterError") {
       logger.warn(`Upload error: ${err.message}`, { requestId: req.requestId });
-      res.status(400).json({ error: `Error al subir archivo: ${err.message}`, requestId: req.requestId });
+      res.status(400).json({ error: "Error al subir el archivo (tipo o tamaño no permitido)", requestId: req.requestId });
       return;
     }
 
     // Database errors
-    if (err.message.includes("unique constraint") || err.message.includes("duplicate key")) {
+    const pgCode = (err as Error & { code?: string }).code;
+    if (pgCode === "23505" || err.message.includes("unique constraint") || err.message.includes("duplicate key")) {
       logger.warn(`Database constraint error: ${err.message}`, { requestId: req.requestId });
       res.status(409).json({ error: "El registro ya existe", requestId: req.requestId });
       return;

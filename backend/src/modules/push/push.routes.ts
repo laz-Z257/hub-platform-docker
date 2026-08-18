@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { registerToken } from "./push.controller";
+import { registerToken, unregisterToken } from "./push.controller";
 import { validate } from "../../middlewares/validate";
 import { registerPushSchema } from "./push.schema";
 import { authMiddleware } from "../../middlewares/auth";
@@ -18,5 +18,6 @@ const pushLimiter = rateLimit({
 router.use(authMiddleware);
 
 router.post("/register", pushLimiter, validate({ body: registerPushSchema }), registerToken);
+router.post("/unregister", pushLimiter, validate({ body: registerPushSchema }), unregisterToken);
 
 export default router;

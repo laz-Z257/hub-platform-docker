@@ -146,7 +146,8 @@ EXPO_PUBLIC_API_URL=/api
 - **Todas las peticiones envían `X-Auth-Scope: user`** → Aislamiento completo
 - **Cookies httpOnly** con path `/` para que se envíen a `/api/*`
 - **CORS restringido** en nginx a `http://localhost:3000`
-- **No usa localStorage** en web (usa cookies como el dashboard)
+- **En web (PWA)** el access token y el usuario se guardan en `localStorage` (conocido: riesgo XSS, pendiente de migrar a memoria/cookie); la sesión de refresh vive en cookie httpOnly
+- **En nativo** tokens y usuario van en `expo-secure-store` (Keychain/Keystore)
 - **Logout aislado:** Cerrar sesión en mobile NO afecta dashboard
 
 ## Testing

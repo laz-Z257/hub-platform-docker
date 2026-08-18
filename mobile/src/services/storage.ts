@@ -112,6 +112,22 @@ export async function deleteUser(): Promise<void> {
 }
 
 const CACHE_PREFIX = "api_cache_";
+const PUSH_TOKEN_KEY = "push_token";
+
+export async function savePushToken(token: string): Promise<void> {
+  if (Platform.OS === "web") return;
+  await nativeSet(PUSH_TOKEN_KEY, token);
+}
+
+export async function getSavedPushToken(): Promise<string | null> {
+  if (Platform.OS === "web") return null;
+  return await nativeGet(PUSH_TOKEN_KEY);
+}
+
+export async function deleteSavedPushToken(): Promise<void> {
+  if (Platform.OS === "web") return;
+  await nativeDelete(PUSH_TOKEN_KEY);
+}
 
 export async function saveCache(key: string, data: unknown): Promise<void> {
   const value = JSON.stringify({ data, ts: Date.now() });
@@ -136,5 +152,34 @@ export async function getCache<T>(key: string, maxAgeMs = 60000): Promise<T | nu
     return parsed.data as T;
   } catch {
     return null;
+  }
+}
+
+export async function clearApiCache(): Promise<void> {
+  if (Platform.OS === "web") {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(CACHE_PREFIX)) keysToRemove.push(key);
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+    } catch {
+    }
+    return;
+  }
+  try {
+    const secureStore = SecureStore as typeof SecureStore & {
+      getAllKeysAsync?: () => Promise<string[]>;
+    };
+    const allKeys = await secureStore.getAllKeysAsync?.();
+    if (allKeys) {
+      await Promise.all(
+        allKeys
+          .filter((key) => key.startsWith(CACHE_PREFIX))
+          .map((key) => nativeDelete(key))
+      );
+    }
+  } catch {
   }
 }

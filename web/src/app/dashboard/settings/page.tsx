@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Save, X, RefreshCw, ShieldBan, Cloud, Server, Database } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -95,9 +95,11 @@ export default function SettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"local" | "saved" | "error">("local");
   const { modal, showAlert, showConfirm, closeModal } = useModal();
+  const userEditedRef = useRef(false);
 
   useEffect(() => {
     api.get<CompanySettings>("/settings").then((server) => {
+      if (userEditedRef.current) return;
       if (server.nombre || server.contribuyente || server.direccion) {
         setSettings(server);
         setOriginalSettings(server);
@@ -105,6 +107,11 @@ export default function SettingsPage() {
         setSyncStatus("saved");
       }
     }).catch((err) => logger.error("Error fetching settings", { error: (err as Error).message }));
+  }, []);
+
+  const handleSettingsChange = useCallback((next: CompanySettings) => {
+    userEditedRef.current = true;
+    setSettings(next);
   }, []);
 
   const hasChanges =
@@ -163,7 +170,7 @@ export default function SettingsPage() {
         <SettingsEmpresaTab
           settings={settings}
           isTecnico={isTecnico}
-          onSettingsChange={setSettings}
+          onSettingsChange={handleSettingsChange}
         />
       )}
 

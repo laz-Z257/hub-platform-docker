@@ -1,16 +1,16 @@
 import { Router } from "express";
 import { createUser, listUsers, updateUser, toggleUserStatus, resetPassword } from "./users.controller";
 import { authMiddleware } from "../../middlewares/auth";
-import { adminOnly } from "../../middlewares/admin";
+import { adminOnly, superAdminOnly } from "../../middlewares/admin";
 import { validate } from "../../middlewares/validate";
 import { createUserSchema, updateUserSchema, uuidParamsSchema, listUsersQuerySchema, resetPasswordSchema } from "./users.schema";
 
 const router = Router();
 
-router.post("/", authMiddleware, adminOnly, validate(createUserSchema), createUser);
+router.post("/", authMiddleware, superAdminOnly, validate(createUserSchema), createUser);
 router.get("/", authMiddleware, adminOnly, validate(listUsersQuerySchema), listUsers);
 router.patch("/:id", authMiddleware, adminOnly, validate({ body: updateUserSchema.body, params: uuidParamsSchema }), updateUser);
 router.patch("/:id/toggle-status", authMiddleware, adminOnly, validate({ params: uuidParamsSchema }), toggleUserStatus);
-router.patch("/:id/reset-password", authMiddleware, adminOnly, validate({ body: resetPasswordSchema, params: uuidParamsSchema }), resetPassword);
+router.patch("/:id/reset-password", authMiddleware, superAdminOnly, validate({ body: resetPasswordSchema, params: uuidParamsSchema }), resetPassword);
 
 export default router;

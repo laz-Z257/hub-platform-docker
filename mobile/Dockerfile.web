@@ -6,7 +6,7 @@ COPY shared/package.json ./shared/
 COPY mobile/package.json mobile/package-lock.json ./mobile/
 
 WORKDIR /app/mobile
-RUN npm install --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 COPY shared/ ./shared/
 COPY mobile/ ./

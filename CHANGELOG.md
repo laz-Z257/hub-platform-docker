@@ -1,5 +1,117 @@
 # Changelog
 
+## 2026-08-15 — Tercera ronda: 7 fixes residuales de la auditoría
+
+### Web / Mobile
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Rol leído del JWT verificado** | `web/src/middleware.ts` | `isAdminRole` ahora se deriva del payload del token firmado; las cookies sin firmar `admin_userRole`/`user_userRole` ya no influyen en redirects. Verificado: cookie de rol falsificada no altera comportamiento. |
+| **Rating nunca califica el ticket equivocado** | `web/.../user/(main)/chat/page.tsx`, `mobile/.../ChatScreen.tsx` | Si el mensaje no contiene `#TK-XXXXXXXX`, se muestra error en vez de calificar el último ticket resuelto del usuario. |
+| **Mobile: sin conexión ya no desloguea** | `mobile/src/contexts/AuthContext.tsx` | La restauración de sesión solo limpia el token ante errores de auth ("Sesión expirada"/"bloqueado"); los errores de red conservan la sesión local. |
+| **Push: baja del token al cerrar sesión** | `backend/.../push/` + `mobile` notifications/AuthContext | Nuevo `POST /api/push/unregister` (auth + rate limit + schema, borra solo tokens del propio usuario). El logout de mobile lo invoca. Verificado: 200, 401 sin auth, formato validado. |
+| **Aviso de usuarios truncados** | `web/.../dashboard/users/page.tsx` | Si el total server > 200 cargados, se muestra banner "Mostrando los primeros N de M". |
+
+### Infraestructura
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **sharp pineado** | `web/Dockerfile` | `npm install sharp@0.35.3` (versión exacta, builds reproducibles). |
+| **no-new-privileges** | `docker-compose.yml` | api y web (postgres usa gosu y nginx necesita setuid, se excluyen a propósito). |
+
+### Verificación
+
+- ✅ Backend 154/154, Web 46/46 + lint 0, Mobile 14/14
+- ✅ 4 contenedores reconstruidos y healthy
+- ✅ Smoke: push/unregister (200/401), middleware con rol falsificado, dashboard 200
+
+---
+
+## 2026-08-15 — Auditoría: 13 fixes de seguridad/infra aplicados (verificados)
+
+### Seguridad backend
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Técnico ya no puede crear usuarios ni resetear passwords** | `users.routes.ts` | `POST /users` y `PATCH /users/:id/reset-password` ahora usan `superAdminOnly` (solo admin). Listar, editar y bloquear siguen siendo admin+tecnico. Verificado con técnico de prueba: crear → 403, resetear password de user → 403, listar → 200. |
+| **Desbloquear usuario reinicia `intentos_fallidos`** | `users.controller.ts` (toggleUserStatus) | Antes quedaba en 5 y un solo fallo re-bloqueaba la cuenta. Ahora se pone a 0 al desbloquear. |
+| **Contador de intentos atómico** | `auth.controller.ts` | Incremento con `sql`intentos_fallidos + 1`` + `returning` (antes leer-modificar-escribir con race condition). Test actualizado. |
+| **Rating queda atribuido al dueño del ticket** | `ratings.controller.ts` | Cuando admin/técnico califica, `user_id` es el del dueño del incidente (antes quedaba con el id del admin). |
+| **Notificación de comentario no genera 500 post-persistencia** | `incidents.controller.ts` (addComment) | Insert del mensaje bot envuelto en try/catch con warn: el comentario ya persistido no se duplica por un 500 tardío. |
+
+### Web
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Middleware fail-closed** | `web/src/middleware.ts` | Sin `JWT_SECRET` definida, el middleware rechaza tokens en vez de validar solo estructura. Eliminado el fallback inseguro. |
+| **Redirect por scope al expirar sesión** | `web/src/lib/api.ts` | Usuario de `/user/*` expira → va a `/user/login` (antes siempre al login de admin). |
+| **Scope de login sin stale closure** | `AuthContext.tsx` | `login()` calcula scope con `window.location.pathname` en el momento de la llamada. |
+| **Password mínima 6 en web** | `login/page.tsx`, `user/login/page.tsx` | Consistente con backend y mobile (antes 4). |
+
+### Infraestructura
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **`npm ci` reproducible en Docker** | `backend/Dockerfile` (ci + prune), `web/Dockerfile`, `mobile/Dockerfile.web` | Lockfile de backend regenerado con npm 10 (node 22): el host usaba npm 11 y faltaban variantes de plataforma de esbuild en el lockfile. Prod stage: `npm ci && npm prune --omit=dev`. |
+| **Seed en Render** | `render.yaml` | startCommand ahora ejecuta migrate + seed (antes solo migrate: deploy de Render quedaba sin admin). |
+| **`EXPO_ACCESS_TOKEN` al contenedor api** | `docker-compose.yml` | Push notifications pueden activarse definiendo la variable. |
+| **Límites de log** | `docker-compose.yml` | `json-file` max-size 10m × 3 archivos en postgres/api/web/mobile (evita llenar disco). |
+| **Script de backup** | `scripts/backup-db.sh` | pg_dump vía docker exec + gzip + retención de 14 días (`BACKUP_DIR`/`KEEP_DAYS` configurables). Agregar a cron del host. |
+
+### Verificación
+
+- ✅ Backend: tsc OK, 154/154 tests
+- ✅ Web: tsc OK, 46/46 tests, lint 0 warnings
+- ✅ Contenedores api/web reconstruidos con npm ci y healthy
+- ✅ Smoke: login admin, técnico bloqueado (403 create/reset), stats, users, health
+- ✅ Middleware web: sin cookie → redirect, token válido → 200, JWT_SECRET presente en el contenedor
+- ✅ Técnicos de prueba soft-deleted tras la verificación
+
+### No aplicado (requiere decisiones de diseño o puede romper)
+
+- Host header allowlist (redirect HTTPS), logout por scope (bump global de token_version), rotación de refresh tokens, rating por contract (suggestedActions con ticket id), cookies de rol firmadas, pin de sharp, paginación de users >200, CSP nonces.
+
+---
+
+## 2026-08-15 — Fixes pendientes: 7 de 10 resueltos (verificados end-to-end)
+
+### Seguridad
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Verificación de firma JWT en middleware web** | `web/src/middleware.ts`, `web/package.json`, `docker-compose.yml` | El middleware de Next.js ahora verifica la firma HS256 con `jose` cuando `JWT_SECRET` está definida (nueva env del servicio `web`). Fallback a validación estructural si no hay secret. Verificado: token con firma falsa → redirect a `/login`; token válido → 200. |
+| **Export limit acotado** | `backend/src/modules/incidents/incidents.schema.ts`, `incidents.controller.ts` | Default 5000→1000, max 10000→2000. Verificado: `limit=3000` → 400. |
+| **Error handling robusto** | `backend/src/index.ts` | `instanceof ZodError` y `err.code === '23505'` en vez de string matching (fallback conservado). |
+| **Chat ticket lookup exacto** | `backend/src/modules/chat/chat.controller.ts` | `LIKE '%shortId'` → `= shortId` (equivalente, los shortId son 8 chars exactos). |
+
+### Performance
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **getStats sin cargar todas las filas** | `backend/src/modules/incidents/incidents.controller.ts` | Agregación en SQL con GROUP BY (día, punto_venta, estado) en vez de traer todas las filas a memoria. Respuesta idéntica, verificado contra API real. |
+
+### Frontend
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Settings race condition** | `web/src/app/dashboard/settings/page.tsx` | `userEditedRef` evita que la respuesta del server sobrescriba ediciones locales en curso. |
+| **Mobile: invalidación de caché tras mutaciones** | `mobile/src/services/storage.ts`, `mobile/src/services/api.ts` | `clearApiCache()` limpia la caché offline (web y nativo) tras mutaciones exitosas no-auth. |
+
+### Verificación
+
+- ✅ Backend: tsc OK, 154/154 tests
+- ✅ Web: tsc OK, 46/46 tests, lint 0 warnings
+- ✅ Mobile: tsc OK, 14/14 tests
+- ✅ Contenedores api/web/mobile reconstruidos y healthy
+- ✅ Smoke test: login, stats (default y con rango), export (default y límite), kpis, health
+- ✅ Middleware web: cookie válida 200, firma falsa redirect, sin cookie redirect, /login 200
+
+### No aplicado
+
+- **#6 CSP unsafe-inline**: requiere auditar estilos inline del frontend (riesgo de romper UI).
+
+---
+
 ## 2026-08-05 — Dashboard: módulos externos vacíos
 
 - Se agregaron 10 tarjetas vacías adicionales en Sistemas Externos para futuras integraciones.

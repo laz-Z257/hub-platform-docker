@@ -2,7 +2,7 @@ FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb
 WORKDIR /app
 COPY shared/ ./shared/
 COPY web/package.json web/package-lock.json ./
-RUN npm install
+RUN npm ci
 
 FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS build
 WORKDIR /app
@@ -26,7 +26,7 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
-RUN npm install sharp && chown -R nodejs:nodejs /app
+RUN npm install sharp@0.35.3 && chown -R nodejs:nodejs /app
 
 USER nodejs
 

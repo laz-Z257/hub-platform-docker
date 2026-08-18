@@ -50,7 +50,7 @@ export async function createRating(req: Request, res: Response): Promise<void> {
       .insert(ratings)
       .values({
         incident_id: id,
-        user_id: req.user!.userId,
+        user_id: incident.user_id,
         puntuacion,
         comentario: comentario || null,
       })

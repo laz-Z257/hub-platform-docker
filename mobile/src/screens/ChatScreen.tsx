@@ -354,10 +354,14 @@ export default function ChatScreen() {
             alreadyRated={isRated}
             onRateService={async () => {
               const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-              logger.info("[Rating] Botón presionado", { tk: match?.[1] });
+              if (!match) {
+                Alert.alert("Ticket no identificado", "No se pudo identificar el ticket para calificar.");
+                return;
+              }
+              logger.info("[Rating] Botón presionado", { tk: match[1] });
               try {
                 const data = await api.get<{ items: { id: string; estado: string }[] }>(
-                  `/incidents?limit=1&estado=resuelto${match ? `&search=${match[1]}` : ""}`
+                  `/incidents?limit=1&estado=resuelto&search=${match[1]}`
                 );
                 const resolved = data.items?.[0];
                 if (resolved) {

@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { api } from "./api";
 import { logger } from "./logger";
+import { savePushToken, getSavedPushToken, deleteSavedPushToken } from "./storage";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,6 +14,8 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+let lastKnownToken: string | null = null;
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === "web") {
@@ -39,12 +42,28 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
     const tokenData = await Notifications.getExpoPushTokenAsync();
     const token = tokenData.data;
+    lastKnownToken = token;
+    await savePushToken(token).catch(() => {});
 
     await api.post("/push/register", { token });
     return token;
   } catch (err) {
     logger.error("Error registering push token", { error: (err as Error).message });
     return null;
+  }
+}
+
+export async function unregisterForPushNotifications(): Promise<void> {
+  if (Platform.OS === "web") return;
+
+  const token = lastKnownToken ?? (await getSavedPushToken());
+  lastKnownToken = null;
+  if (!token) return;
+  await deleteSavedPushToken().catch(() => {});
+  try {
+    await api.post("/push/unregister", { token });
+  } catch (err) {
+    logger.warn("Error unregistering push token", { error: (err as Error).message });
   }
 }
 

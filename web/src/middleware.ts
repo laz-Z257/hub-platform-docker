@@ -1,21 +1,41 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-function isTokenValid(token: string | undefined): boolean {
-  if (!token) return false;
+const JWT_SECRET = process.env.JWT_SECRET ?? "";
+
+interface TokenPayload {
+  rol?: unknown;
+}
+
+async function verifyToken(
+  token: string | undefined
+): Promise<TokenPayload | null> {
+  if (!token || !JWT_SECRET) return null;
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return null;
+
   try {
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (typeof payload.exp !== "number") return false;
-    return payload.exp > Math.floor(Date.now() / 1000);
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
+    return typeof payload === "object" && payload !== null
+      ? (payload as TokenPayload)
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+function isAdminRol(rol: unknown): boolean {
+  return rol === "admin" || rol === "tecnico";
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (!JWT_SECRET && pathname !== "/login" && pathname !== "/user/login") {
+    console.error("[middleware] JWT_SECRET no está definido: las rutas protegidas están bloqueadas (fail-closed). Configura la variable en el entorno del servicio web.");
+  }
 
   const isLoginPage = pathname === "/login";
   const isUserLogin = pathname === "/user/login";
@@ -24,16 +44,16 @@ export function middleware(request: NextRequest) {
 
   const adminToken = request.cookies.get("admin_token")?.value;
   const userToken = request.cookies.get("user_token")?.value;
-  const adminRole = request.cookies.get("admin_userRole")?.value;
-  const userRoleCookie = request.cookies.get("user_userRole")?.value;
 
-  const adminValid = isTokenValid(adminToken);
-  const userValid = isTokenValid(userToken);
+  const [adminPayload, userPayload] = await Promise.all([
+    verifyToken(adminToken),
+    verifyToken(userToken),
+  ]);
+
+  const adminValid = adminPayload !== null;
+  const userValid = userPayload !== null;
   const isAdminRole =
-    adminRole === "admin" ||
-    adminRole === "tecnico" ||
-    userRoleCookie === "admin" ||
-    userRoleCookie === "tecnico";
+    isAdminRol(adminPayload?.rol) || isAdminRol(userPayload?.rol);
 
   if (isDashboard && !adminValid) {
     return NextResponse.redirect(new URL("/login", request.url));

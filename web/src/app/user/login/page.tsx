@@ -18,7 +18,7 @@ export default function UserLoginPage() {
     const e: typeof errors = {};
     if (!doc.trim()) e.documento = "El documento es requerido";
     if (!pass.trim()) e.contrasena = "La contraseña es requerida";
-    else if (pass.length < 4) e.contrasena = "Mínimo 4 caracteres";
+    else if (pass.length < 6) e.contrasena = "Mínimo 6 caracteres";
     setErrors(e);
     return Object.keys(e).length === 0;
   };

@@ -29,7 +29,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const hashed = await bcrypt.hash(contrasena, 10);
+    const hashed = await bcrypt.hash(contrasena, 12);
 
     const [user] = await db
       .insert(users)
@@ -149,6 +149,7 @@ export async function toggleUserStatus(
       updateData.bloqueado_por = req.user!.userId;
     } else {
       updateData.bloqueado_por = null;
+      updateData.intentos_fallidos = 0;
     }
 
     const [updated] = await db
@@ -191,7 +192,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const hashed = await bcrypt.hash(contrasena, 10);
+    const hashed = await bcrypt.hash(contrasena, 12);
 
     const [updated] = await db
       .update(users)

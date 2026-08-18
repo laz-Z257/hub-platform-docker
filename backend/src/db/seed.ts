@@ -30,7 +30,7 @@ async function seed() {
     logger.info("Seed: SEED_ADMIN_PASSWORD no definida. Se usó password autogenerada (solo para desarrollo).");
   }
 
-  const password = await bcrypt.hash(seedPassword, 10);
+  const password = await bcrypt.hash(seedPassword, 12);
 
   const seedUsers = [
     { documento: "123456789", nombre: "Admin Principal", email: `admin@${env.EMAIL_DOMAIN}`, rol: "admin" as const },

@@ -60,14 +60,6 @@ export function setTokenCookies(
     maxAge: 7 * 24 * 3600 * 1000,
   });
 
-  res.cookie(getCookieName("userRole", scope), payload.rol, {
-    httpOnly: false,
-    secure: isSecure,
-    sameSite: isSecure ? ("none" as const) : ("lax" as const),
-    path,
-    maxAge: 3600 * 1000,
-  });
-
   return { token, refreshToken };
 }
 

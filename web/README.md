@@ -121,8 +121,8 @@ Servido en `http://localhost:3000`.
 ### Pendiente
 - ❌ Dark mode en área de usuario (6 pantallas)
 - ❌ Responsive en dashboard (sidebar fijo 250px)
-- ❌ Reemplazar `alert()`/`confirm()` nativos con modales
-- ❌ Middleware no valida JWT, solo existencia de cookie
+- ✅ ~~Reemplazar `alert()`/`confirm()` nativos con modales~~ (hecho: `useModal` + `Modal`)
+- ✅ ~~Middleware no valida JWT~~ (hecho: verifica firma HS256 con `jose` en `middleware.ts`, fail-closed sin `JWT_SECRET`)
 
 ### Sesiones Aisladas (2026-07-24)
 - ✅ `setAuthScope()` antes de cada request

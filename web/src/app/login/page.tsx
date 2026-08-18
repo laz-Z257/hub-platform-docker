@@ -27,8 +27,8 @@ export default function LoginPage() {
 
     if (!contrasena.trim()) {
       newErrors.contrasena = "La contraseña es requerida";
-    } else if (contrasena.length < 4) {
-      newErrors.contrasena = "Mínimo 4 caracteres";
+    } else if (contrasena.length < 6) {
+      newErrors.contrasena = "Mínimo 6 caracteres";
     }
 
     setErrors(newErrors);
