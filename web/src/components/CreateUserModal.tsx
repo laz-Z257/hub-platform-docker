@@ -101,8 +101,8 @@ export default function CreateUserModal({ onClose, onCreated }: CreateUserModalP
               value={contrasena}
               onChange={(e) => setContrasena(e.target.value)}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)]"
-              placeholder="Mínimo 6 caracteres"
-              minLength={6}
+              placeholder="Mínimo 8 caracteres"
+              minLength={8}
               required
             />
           </div>

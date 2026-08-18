@@ -10,6 +10,9 @@ import { env } from "../../config/env";
 
 const MAX_LOGIN_ATTEMPTS = env.MAX_LOGIN_ATTEMPTS;
 
+// Hash de relleno para igualar timing cuando el usuario no existe (anti-enumeración)
+const DUMMY_HASH = "$2a$12$xo2yWONym/BmrASiewX2luAQaaXLPGWevMtgLgJm3gbTrRajG5GNy";
+
 /**
  * Formatea la respuesta del usuario para el cliente
  * @param user - Usuario de la base de datos
@@ -105,6 +108,8 @@ export async function login(req: Request, res: Response): Promise<void> {
       .limit(1);
 
     if (!user) {
+      // Igualar timing con el caso de usuario existente (anti-enumeración)
+      await bcrypt.compare(contrasena, DUMMY_HASH).catch(() => {});
       res.status(401).json({ error: "Documento o contraseña incorrectos" });
       return;
     }

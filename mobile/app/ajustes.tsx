@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Updates from "expo-updates";
 import { logger } from "../src/services/logger";
+import { clearApiCache } from "../src/services/storage";
 import {
   Trash2,
   LogOut,
@@ -74,14 +75,7 @@ export default function SettingsScreen() {
     setClearing(true);
     try {
       await logout();
-      if (typeof localStorage !== "undefined") {
-        const toRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("api_cache_")) toRemove.push(key);
-        }
-        toRemove.forEach((key) => localStorage.removeItem(key));
-      }
+      await clearApiCache();
       if (Platform.OS === "web") {
         window.location.reload();
       } else {

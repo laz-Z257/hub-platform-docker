@@ -55,7 +55,9 @@ export async function middleware(request: NextRequest) {
   const isAdminRole =
     isAdminRol(adminPayload?.rol) || isAdminRol(userPayload?.rol);
 
-  if (isDashboard && !adminValid) {
+  // Dashboard exige token admin válido Y rol administrativo en el payload
+  // (defensa en profundidad: un user_token copiado a la cookie admin_ no pasa)
+  if (isDashboard && (!adminValid || !isAdminRol(adminPayload?.rol))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

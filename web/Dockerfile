@@ -26,7 +26,7 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
-RUN npm install sharp@0.35.3 && chown -R nodejs:nodejs /app
+RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 

@@ -17,5 +17,5 @@ export const registerSchema = z.object({
     .max(20)
     .regex(/^\d+$/, "El documento debe contener solo números"),
   nombre: z.string().min(1, "El nombre es requerido").max(100),
-  contrasena: z.string().min(6, "Mínimo 6 caracteres"),
+  contrasena: z.string().min(8, "Mínimo 8 caracteres"),
 });

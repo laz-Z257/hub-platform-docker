@@ -56,6 +56,7 @@ export async function clearToken() {
   } catch (err) {
     logger.error("clearToken error", { error: (err as Error).message });
   }
+  clearApiCache().catch(() => {});
 }
 
 export { saveUser, getSavedUser };
@@ -151,7 +152,12 @@ async function request<T>(
 
   clearTimeout(timeoutId);
 
-  if (res.status === 401) {
+  // 401 en login/register = credenciales incorrectas: mostrar el error real,
+  // no disparar refresh ni force-logout
+  const isAuthEntryPoint =
+    endpoint.startsWith("/auth/login") || endpoint.startsWith("/auth/register");
+
+  if (res.status === 401 && !isAuthEntryPoint) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       if (authToken) headers.Authorization = `Bearer ${authToken}`;
