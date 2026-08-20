@@ -296,6 +296,7 @@ export async function updateIncident(
           user_id: updated.user_id,
           content: botMessage,
           is_bot: true,
+          metadata: { ticketId: updated.id },
         });
 
         // Send push notification

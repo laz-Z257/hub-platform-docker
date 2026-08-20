@@ -1,9 +1,21 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { eq, sql, and, isNull } from "drizzle-orm";
+import { eq, sql, and, isNull, lt } from "drizzle-orm";
 import { db } from "../../db";
-import { users } from "../../db/schema";
-import { setTokenCookies, clearTokenCookies, verifyToken, extractToken, verifyRefreshToken, extractRefreshToken, detectRefreshScope, type AuthScope } from "../../lib/jwt";
+import { users, refreshTokens } from "../../db/schema";
+import {
+  setTokenCookies,
+  clearTokenCookies,
+  verifyToken,
+  verifyRefreshToken,
+  extractToken,
+  extractRefreshToken,
+  detectRefreshScope,
+  buildJwtPayload,
+  hashToken,
+  refreshExpiry,
+  type AuthScope,
+} from "../../lib/jwt";
 import { getOrCreateCsrfToken } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
@@ -15,6 +27,31 @@ const DUMMY_HASH = "$2a$12$xo2yWONym/BmrASiewX2luAQaaXLPGWevMtgLgJm3gbTrRajG5GNy
 
 // Minutos de bloqueo automático tras agotar intentos (bloqueo manual de admin = permanente)
 const LOCKOUT_MINUTES = 15;
+
+/**
+ * Persiste la sesión de refresh token (hash sha256, nunca el token en claro).
+ * Solo para sesiones con scope; las llamadas sin scope (API directa) siguen
+ * el flujo legacy sin rotación.
+ */
+async function persistRefreshSession(
+  userId: string,
+  scope: AuthScope | undefined,
+  tokens: { refreshToken: string; refreshJti: string }
+): Promise<void> {
+  if (!scope) return;
+  try {
+    await db.insert(refreshTokens).values({
+      id: tokens.refreshJti,
+      user_id: userId,
+      scope,
+      token_hash: hashToken(tokens.refreshToken),
+      expires_at: refreshExpiry(),
+    });
+  } catch (error) {
+    // No es fatal: el refresh seguirá funcionando vía validación de JWT
+    logger.warn("Persist refresh session failed", { error: (error as Error).message });
+  }
+}
 
 /**
  * Formatea la respuesta del usuario para el cliente
@@ -36,7 +73,7 @@ function userResponse(user: typeof users.$inferSelect) {
  * - Hashea la contraseña con bcrypt (12 rondas)
  * - Genera email automático basado en documento
  * - Asigna rol "user" por defecto
- * 
+ *
  * @throws 409 - Si el documento ya está registrado
  * @throws 500 - Error interno del servidor
  */
@@ -47,10 +84,12 @@ export async function register(
   try {
     const { documento, nombre, contrasena } = req.body;
 
+    // El unique constraint de documento es global (incluye soft-deleted):
+    // sin el filtro de deleted_at evitamos el 500 por duplicado invisible
     const [existing] = await db
-      .select()
+      .select({ id: users.id })
       .from(users)
-      .where(and(eq(users.documento, documento), isNull(users.deleted_at)))
+      .where(eq(users.documento, documento))
       .limit(1);
 
     if (existing) {
@@ -71,12 +110,8 @@ export async function register(
       })
       .returning();
 
-    setTokenCookies(res, {
-      userId: user.id,
-      documento: user.documento,
-      rol: user.rol,
-      tokenVersion: user.token_version,
-    }, "user");
+    const tokens = setTokenCookies(res, buildJwtPayload(user, "user"), "user");
+    await persistRefreshSession(user.id, "user", tokens);
 
     const csrfToken = getOrCreateCsrfToken(req, res);
 
@@ -95,7 +130,7 @@ export async function register(
  * - Valida permisos según scope (admin/user)
  * - Genera cookies httpOnly con scope aislado
  * - Genera token CSRF
- * 
+ *
  * @throws 401 - Credenciales incorrectas
  * @throws 403 - Usuario bloqueado o sin permisos
  * @throws 500 - Error interno del servidor
@@ -171,14 +206,8 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const payload = {
-      userId: user.id,
-      documento: user.documento,
-      rol: user.rol,
-      tokenVersion: user.token_version,
-    };
-
-    const tokens = setTokenCookies(res, payload, scope);
+    const tokens = setTokenCookies(res, buildJwtPayload(user, scope), scope);
+    await persistRefreshSession(user.id, scope, tokens);
 
     const csrfToken = getOrCreateCsrfToken(req, res);
 
@@ -193,7 +222,7 @@ export async function login(req: Request, res: Response): Promise<void> {
  * Obtiene el usuario autenticado actual
  * - Verifica token JWT del header/cookies
  * - Genera nuevo token CSRF
- * 
+ *
  * @throws 401 - Sesión inválida o token expirado
  * @throws 500 - Error interno del servidor
  */
@@ -227,12 +256,15 @@ export async function me(req: Request, res: Response): Promise<void> {
 
 /**
  * Renueva el token JWT usando refresh token
- * - Extrae refresh token de cookies
- * - Verifica versión del token (invalidación)
- * - Genera nuevos tokens en el mismo scope
- * - Limpia todas las cookies si el refresh es inválido
- * 
- * @throws 401 - Refresh token inválido o versión mismatch
+ *
+ * Sesiones con scope (frontends): rotación real — la fila de refresh_tokens
+ * se marca revocada de forma atómica y se emite un refresh nuevo. Si el JWT
+ * es válido pero su fila ya está revocada, hay reuso (robo): se revocan
+ * todas las sesiones del usuario y se bumpea la versión global.
+ *
+ * Tokens legacy (sin jti/scope): validación por token_version como antes.
+ *
+ * @throws 401 - Refresh token inválido, revocado o expirado
  * @throws 500 - Error interno del servidor
  */
 export async function refresh(req: Request, res: Response): Promise<void> {
@@ -248,6 +280,107 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
     const payload = verifyRefreshToken(refreshToken);
 
+    // ---- Flujo con sesión persistida (jti + scope) ----
+    if (payload.jti && payload.scope) {
+      const [user] = await db
+        .select({
+          id: users.id,
+          documento: users.documento,
+          rol: users.rol,
+          estado: users.estado,
+          token_version: users.token_version,
+          token_version_admin: users.token_version_admin,
+          token_version_user: users.token_version_user,
+        })
+        .from(users)
+        .where(and(eq(users.id, payload.userId), isNull(users.deleted_at)))
+        .limit(1);
+
+      const userValid =
+        !!user &&
+        user.estado !== "bloqueado" &&
+        user.token_version === payload.tokenVersion &&
+        (payload.scope === "admin"
+          ? user.token_version_admin
+          : user.token_version_user) === payload.scopeVersion;
+
+      if (!userValid) {
+        clearTokenCookies(res, scope);
+        res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
+        return;
+      }
+
+      // Rotación atómica: solo un portador del token puede ganar la carrera
+      const [claimed] = await db
+        .update(refreshTokens)
+        .set({ revoked_at: new Date() })
+        .where(
+          and(
+            eq(refreshTokens.id, payload.jti),
+            eq(refreshTokens.user_id, user.id),
+            isNull(refreshTokens.revoked_at)
+          )
+        )
+        .returning({ expires_at: refreshTokens.expires_at });
+
+      if (!claimed) {
+        // Reuso detectado: el refresh ya fue rotado pero alguien lo vuelve a
+        // usar. Señal de robo → revocar TODAS las sesiones del usuario.
+        logger.warn("Refresh token reuse detected", {
+          userId: payload.userId,
+          scope: payload.scope,
+        });
+        await db
+          .update(refreshTokens)
+          .set({ revoked_at: new Date() })
+          .where(and(eq(refreshTokens.user_id, user.id), isNull(refreshTokens.revoked_at)));
+        await db
+          .update(users)
+          .set({ token_version: sql`${users.token_version} + 1` })
+          .where(and(eq(users.id, user.id), isNull(users.deleted_at)));
+        clearTokenCookies(res, scope);
+        res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
+        return;
+      }
+
+      if (claimed.expires_at <= new Date()) {
+        // Expiración benigna: sin sesiones nuevas, solo cookies
+        clearTokenCookies(res, scope);
+        res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
+        return;
+      }
+
+      const newScope: AuthScope = payload.scope;
+      const tokens = setTokenCookies(res, buildJwtPayload(user, newScope), newScope);
+
+      try {
+        await db.insert(refreshTokens).values({
+          id: tokens.refreshJti,
+          user_id: user.id,
+          scope: newScope,
+          token_hash: hashToken(tokens.refreshToken),
+          expires_at: refreshExpiry(),
+        });
+        // Higiene: eliminar filas expiradas del usuario (incluye la recién revocada cuando venza)
+        await db
+          .delete(refreshTokens)
+          .where(
+            and(
+              eq(refreshTokens.user_id, user.id),
+              lt(refreshTokens.expires_at, new Date())
+            )
+          );
+      } catch (error) {
+        logger.warn("Refresh rotation persist failed", { error: (error as Error).message });
+      }
+
+      const csrfToken = getOrCreateCsrfToken(req, res);
+
+      res.json({ ok: true, token: tokens.token, csrfToken });
+      return;
+    }
+
+    // ---- Flujo legacy: refresh sin sesión persistida ----
     const [user] = await db
       .select({ token_version: users.token_version, estado: users.estado })
       .from(users)
@@ -280,38 +413,75 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
 /**
  * Cierra la sesión del usuario
- * - Detecta el scope (admin/user) desde header X-Auth-Scope
- * - Solo limpia las cookies del scope correspondiente
- * - NUNCA limpia cookies de otros scopes (sesiones aisladas)
- * 
- * Sesiones aisladas: logout en mobile no afecta dashboard y viceversa
+ * - Detecta el scope (admin/user) desde header X-Auth-Scope o el payload del token
+ * - Revoca las filas de refresh token del scope (rotación terminal)
+ * - Bumpea la versión de token SOLO del scope: logout aislado real
+ * - Limpia únicamente las cookies del scope correspondiente
+ *
+ * Sesiones aisladas: logout en mobile no afecta dashboard y viceversa.
+ * Sin scope conocido (API directa): fallback a invalidación global.
  */
 export async function logout(req: Request, res: Response): Promise<void> {
   const headerScope = req.headers["x-auth-scope"];
   const scope: AuthScope | undefined = headerScope === "admin" || headerScope === "user" ? headerScope : undefined;
 
-  // Invalidar todos los tokens del usuario incrementando token_version
-  // (el logout limpia solo las cookies del scope, pero el bump invalida
-  // cualquier token Bearer/refresh aún en circulación)
   try {
     let userId: string | undefined;
+    let tokenScope: AuthScope | undefined = scope;
+
     const token = extractToken(req);
     if (token) {
       try {
-        userId = verifyToken(token).userId;
+        const payload = verifyToken(token);
+        userId = payload.userId;
+        tokenScope = tokenScope ?? payload.scope;
       } catch {
         userId = undefined;
       }
     }
     if (!userId) {
       const refreshToken = extractRefreshToken(req);
-      if (refreshToken) userId = verifyRefreshToken(refreshToken).userId;
+      if (refreshToken) {
+        try {
+          const payload = verifyRefreshToken(refreshToken);
+          userId = payload.userId;
+          tokenScope = tokenScope ?? payload.scope;
+        } catch {
+          // refresh inválido: solo limpiar cookies
+        }
+      }
     }
+
     if (userId) {
+      // Revocar sesiones de refresh del scope (todas si no se conoce el scope)
+      const revokeConditions = [
+        eq(refreshTokens.user_id, userId),
+        isNull(refreshTokens.revoked_at),
+      ];
+      if (tokenScope) revokeConditions.push(eq(refreshTokens.scope, tokenScope));
       await db
-        .update(users)
-        .set({ token_version: sql`${users.token_version} + 1` })
-        .where(and(eq(users.id, userId), isNull(users.deleted_at)));
+        .update(refreshTokens)
+        .set({ revoked_at: new Date() })
+        .where(and(...revokeConditions));
+
+      // Invalidar access tokens SOLO del scope (logout aislado)
+      if (tokenScope === "admin") {
+        await db
+          .update(users)
+          .set({ token_version_admin: sql`${users.token_version_admin} + 1` })
+          .where(and(eq(users.id, userId), isNull(users.deleted_at)));
+      } else if (tokenScope === "user") {
+        await db
+          .update(users)
+          .set({ token_version_user: sql`${users.token_version_user} + 1` })
+          .where(and(eq(users.id, userId), isNull(users.deleted_at)));
+      } else {
+        // Scope desconocido: preservar comportamiento anterior (global)
+        await db
+          .update(users)
+          .set({ token_version: sql`${users.token_version} + 1` })
+          .where(and(eq(users.id, userId), isNull(users.deleted_at)));
+      }
     }
   } catch (error) {
     logger.warn("Logout token invalidate failed", { error: (error as Error).message });
@@ -320,6 +490,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
   // Siempre limpiar solo las cookies del scope correspondiente
   // NUNCA clearAllTokenCookies — destruiría sesiones de otros scopes
   clearTokenCookies(res, scope);
-  
+
   res.json({ ok: true });
 }

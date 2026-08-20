@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Request, Response } from "express";
-import { register, login, me, logout } from "./auth.controller";
+import { register, login, me, logout, refresh } from "./auth.controller";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import bcrypt from "bcryptjs";
@@ -12,6 +12,7 @@ vi.mock("../../db", () => ({
     select: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -30,6 +31,17 @@ vi.mock("../../lib/jwt", () => ({
   extractToken: vi.fn(),
   extractRefreshToken: vi.fn(),
   detectRefreshScope: vi.fn(),
+  buildJwtPayload: vi.fn(
+    (user: { id: string; documento: string; rol: string; token_version: number }, scope?: string) => ({
+      userId: user.id,
+      documento: user.documento,
+      rol: user.rol,
+      tokenVersion: user.token_version,
+      scope,
+    })
+  ),
+  hashToken: vi.fn((t: string) => `hash-${t}`),
+  refreshExpiry: vi.fn(() => new Date(Date.now() + 7 * 24 * 3600 * 1000)),
 }));
 
 vi.mock("../../middlewares/csrf", () => ({
@@ -330,6 +342,194 @@ describe("Auth Controller", () => {
 
       expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
       expect(jsonMock).toHaveBeenCalledWith({ ok: true });
+    });
+
+    it("should bump only the scope version (isolated logout)", async () => {
+      req.headers = { "x-auth-scope": "user" };
+      (jwt.extractToken as ReturnType<typeof vi.fn>).mockReturnValue("access-token");
+      (jwt.verifyToken as ReturnType<typeof vi.fn>).mockReturnValue({
+        userId: "user-id",
+        tokenVersion: 0,
+        scope: "user",
+        scopeVersion: 0,
+      });
+
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      };
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      await logout(req as Request, res as Response);
+
+      // 1) revoca refresh tokens del scope, 2) bumpea token_version_user
+      expect(db.update).toHaveBeenCalledTimes(2);
+      expect(updateChain.set).toHaveBeenCalledWith({ token_version_user: expect.anything() });
+      expect(updateChain.set).not.toHaveBeenCalledWith({ token_version: expect.anything() });
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+    });
+
+    it("should bump global version when scope is unknown", async () => {
+      req.headers = {};
+      (jwt.extractToken as ReturnType<typeof vi.fn>).mockReturnValue("access-token");
+      (jwt.verifyToken as ReturnType<typeof vi.fn>).mockReturnValue({
+        userId: "user-id",
+        tokenVersion: 0,
+      });
+
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      };
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      await logout(req as Request, res as Response);
+
+      expect(updateChain.set).toHaveBeenCalledWith({ token_version: expect.anything() });
+    });
+  });
+
+  describe("refresh", () => {
+    const mockUser = {
+      id: "user-id",
+      documento: "123456789",
+      rol: "user",
+      estado: "activo",
+      token_version: 0,
+      token_version_admin: 0,
+      token_version_user: 0,
+    };
+
+    function mockSelectUser(user: typeof mockUser) {
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([user]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+    }
+
+    beforeEach(() => {
+      (jwt.detectRefreshScope as ReturnType<typeof vi.fn>).mockReturnValue("user");
+      (jwt.extractRefreshToken as ReturnType<typeof vi.fn>).mockReturnValue("refresh-token");
+    });
+
+    it("should rotate the refresh token and issue new cookies", async () => {
+      (jwt.verifyRefreshToken as ReturnType<typeof vi.fn>).mockReturnValue({
+        userId: "user-id",
+        documento: "123456789",
+        rol: "user",
+        tokenVersion: 0,
+        scope: "user",
+        scopeVersion: 0,
+        jti: "jti-1",
+      });
+      mockSelectUser(mockUser);
+
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ expires_at: new Date(Date.now() + 86400000) }]),
+          }),
+        }),
+      };
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      const insertChain = {
+        values: vi.fn().mockResolvedValue(undefined),
+      };
+      (db.insert as ReturnType<typeof vi.fn>).mockReturnValue(insertChain);
+
+      const deleteChain = {
+        where: vi.fn().mockResolvedValue(undefined),
+      };
+      (db.delete as ReturnType<typeof vi.fn>).mockReturnValue(deleteChain);
+
+      (jwt.setTokenCookies as ReturnType<typeof vi.fn>).mockReturnValue({
+        token: "new-access",
+        refreshToken: "new-refresh",
+        refreshJti: "jti-2",
+      });
+      (csrf.getOrCreateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
+
+      await refresh(req as Request, res as Response);
+
+      expect(jsonMock).toHaveBeenCalledWith({ ok: true, token: "new-access", csrfToken: "csrf-token" });
+      // La nueva sesión se persiste con el jti nuevo
+      expect(insertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "jti-2", user_id: "user-id", scope: "user" })
+      );
+    });
+
+    it("should revoke all sessions on refresh token reuse", async () => {
+      (jwt.verifyRefreshToken as ReturnType<typeof vi.fn>).mockReturnValue({
+        userId: "user-id",
+        documento: "123456789",
+        rol: "user",
+        tokenVersion: 0,
+        scope: "user",
+        scopeVersion: 0,
+        jti: "jti-1",
+      });
+      mockSelectUser(mockUser);
+
+      // La rotación no reclama ninguna fila: el jti ya estaba revocado (reuso)
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      await refresh(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      // Revoca todas las sesiones + bumpea versión global
+      expect(db.update).toHaveBeenCalledTimes(3);
+    });
+
+    it("should reject expired refresh session without nuking others", async () => {
+      (jwt.verifyRefreshToken as ReturnType<typeof vi.fn>).mockReturnValue({
+        userId: "user-id",
+        documento: "123456789",
+        rol: "user",
+        tokenVersion: 0,
+        scope: "user",
+        scopeVersion: 0,
+        jti: "jti-1",
+      });
+      mockSelectUser(mockUser);
+
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ expires_at: new Date(Date.now() - 1000) }]),
+          }),
+        }),
+      };
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      await refresh(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      // Solo la rotación (claim); sin revocación masiva
+      expect(db.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return 401 when no refresh token is provided", async () => {
+      (jwt.extractRefreshToken as ReturnType<typeof vi.fn>).mockReturnValue(null);
+
+      await refresh(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(401);
     });
   });
 });

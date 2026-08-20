@@ -7,6 +7,7 @@ import {
   timestamp,
   boolean,
   integer,
+  jsonb,
   pgEnum,
   index,
   check,
@@ -32,6 +33,8 @@ export const users = pgTable("users", {
   estado: userEstadoEnum("estado").notNull().default("activo"),
   ultima_actividad: timestamp("ultima_actividad"),
   token_version: integer("token_version").notNull().default(0),
+  token_version_admin: integer("token_version_admin").notNull().default(0),
+  token_version_user: integer("token_version_user").notNull().default(0),
   intentos_fallidos: integer("intentos_fallidos").notNull().default(0),
   bloqueado_hasta: timestamp("bloqueado_hasta"),
   bloqueado_por: uuid("bloqueado_por").references(
@@ -93,6 +96,7 @@ export const messages = pgTable(
       .notNull(),
     content: text("content").notNull(),
     is_bot: boolean("is_bot").notNull().default(false),
+    metadata: jsonb("metadata"),
     created_at: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -171,5 +175,29 @@ export const pushTokens = pgTable(
   },
   (table) => [
     index("push_tokens_user_id_idx").on(table.user_id),
+  ]
+);
+
+// Sesiones de refresh token: una fila por refresh emitido.
+// id = jti del JWT; token_hash = sha256 (nunca el token en claro).
+// La rotación marca revoked_at y crea una nueva fila; un JWT válido cuya
+// fila está revocada indica reuso (robo) y revoca todas las sesiones.
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid("id").primaryKey(),
+    user_id: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    scope: varchar("scope", { length: 5 }).notNull(),
+    token_hash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    expires_at: timestamp("expires_at").notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    revoked_at: timestamp("revoked_at"),
+  },
+  (table) => [
+    index("refresh_tokens_user_id_idx").on(table.user_id),
+    index("refresh_tokens_user_scope_idx").on(table.user_id, table.scope),
+    index("refresh_tokens_expires_at_idx").on(table.expires_at),
   ]
 );

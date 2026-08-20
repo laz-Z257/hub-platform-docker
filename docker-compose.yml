@@ -114,6 +114,8 @@ services:
     build:
       context: .
       dockerfile: mobile/Dockerfile.web
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-/api}
     container_name: hub-mobile
     security_opt:
       - no-new-privileges:true

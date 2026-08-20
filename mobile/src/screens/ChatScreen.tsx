@@ -40,6 +40,8 @@ interface Message {
   text?: string;
   timestamp: string;
   suggestedActions?: SuggestedAction[];
+  /** ID del incidente cuando el mensaje del bot es sobre un ticket concreto */
+  ticketId?: string;
 }
 
 const INITIAL_MESSAGES: Message[] = [
@@ -102,7 +104,7 @@ export default function ChatScreen() {
     };
 
     api
-      .get<{ items: { id: string; content: string; is_bot: boolean; created_at: string }[] }>("/chat/history?limit=30")
+      .get<{ items: { id: string; content: string; is_bot: boolean; created_at: string; metadata?: { ticketId?: string } | null }[] }>("/chat/history?limit=30")
       .then((history) => {
         const historyMsgs: Message[] = (history.items ?? []).map((msg) => ({
           id: msg.id,
@@ -113,6 +115,7 @@ export default function ChatScreen() {
             minute: "2-digit",
             hour12: true,
           }),
+          ticketId: msg.metadata?.ticketId ?? undefined,
         }));
 
         if (historyMsgs.length === 0) {
@@ -175,6 +178,7 @@ export default function ChatScreen() {
         botMessage: { id: string; content: string };
         suggestedActions?: SuggestedAction[];
         autoAction?: string;
+        ticketId?: string | null;
       }>("/chat/message", { content: text });
 
       setTyping(false);
@@ -185,6 +189,7 @@ export default function ChatScreen() {
         text: data.botMessage.content,
         timestamp: getTimeString(),
         suggestedActions: data.suggestedActions,
+        ticketId: data.ticketId ?? undefined,
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -340,12 +345,16 @@ export default function ChatScreen() {
         const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
         let isRated = false;
         if (isResolved) {
-          const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-          if (match) {
-            const shortId = match[1];
-            isRated = Array.from(ratedIncidents).some(
-              (id) => id.replace(/-/g, "").slice(-8).toUpperCase() === shortId
-            );
+          if (item.ticketId) {
+            isRated = Array.from(ratedIncidents).includes(item.ticketId);
+          } else {
+            const match = item.text?.match(/#TK-([A-Z0-9]+)/);
+            if (match) {
+              const shortId = match[1];
+              isRated = Array.from(ratedIncidents).some(
+                (id) => id.replace(/-/g, "").slice(-8).toUpperCase() === shortId
+              );
+            }
           }
         }
         return (
@@ -359,6 +368,12 @@ export default function ChatScreen() {
             isResolvedNotification={isResolved}
             alreadyRated={isRated}
             onRateService={async () => {
+              // ticketId estructurado; fallback a #TK solo para mensajes antiguos
+              if (item.ticketId) {
+                logger.info("[Rating] Abriendo modal de rating", { id: item.ticketId });
+                setRatingIncidentId(item.ticketId);
+                return;
+              }
               const match = item.text?.match(/#TK-([A-Z0-9]+)/);
               if (!match) {
                 Alert.alert("Ticket no identificado", "No se pudo identificar el ticket para calificar.");

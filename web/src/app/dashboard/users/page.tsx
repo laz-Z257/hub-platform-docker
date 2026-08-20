@@ -15,12 +15,24 @@ import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@hub/shared/types/user";
 
 const PER_PAGE = 10;
+const SEARCH_DEBOUNCE_MS = 350;
+
+interface UsersResponse {
+  items: ApiUser[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  counts: { total: number; admin: number; user: number; tecnico: number; asesor: number };
+}
 
 export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [users, setUsers] = useState<ApiUser[]>([]);
-  const [serverTotal, setServerTotal] = useState<number | null>(null);
+  const [counts, setCounts] = useState({ total: 0, admin: 0, user: 0, tecnico: 0, asesor: 0 });
+  const [serverTotal, setServerTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,65 +48,69 @@ export default function UsersPage() {
     }
   }, [searchParams, router]);
 
-  const fetchUsers = useCallback(() => {
+  const fetchPage = useCallback((targetPage: number, search: string) => {
     setLoading(true);
+    const params = new URLSearchParams({ page: String(targetPage), limit: String(PER_PAGE) });
+    if (search.trim()) params.set("search", search.trim());
     api
-      .get<{ items: ApiUser[]; total: number }>("/users?limit=200")
+      .get<UsersResponse>(`/users?${params.toString()}`)
       .then((data) => {
-        if (Array.isArray(data?.items)) setUsers(data.items);
-        setServerTotal(typeof data?.total === "number" ? data.total : null);
+        setUsers(Array.isArray(data?.items) ? data.items : []);
+        setServerTotal(typeof data?.total === "number" ? data.total : 0);
+        setTotalPages(Math.max(1, data?.totalPages ?? 1));
+        if (data?.counts) setCounts(data.counts);
+        // La búsqueda puede reducir el total de páginas: volver a la última válida
+        if (data?.items?.length === 0 && targetPage > 1) {
+          setPage(Math.max(1, data?.totalPages ?? 1));
+        }
       })
       .catch((err) => logger.error("Error fetching users", { error: err instanceof Error ? err.message : err }))
       .finally(() => setLoading(false));
   }, []);
 
+  // Búsqueda con debounce contra el servidor: al cambiar, vuelve a la página 1
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
-    fetchUsers();
+    const t = setTimeout(() => {
+      setPage(1);
+      setDebouncedSearch(searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchPage(page, debouncedSearch);
     const interval = setInterval(() => {
       if (typeof document === "undefined" || !document.hidden) {
-        fetchUsers();
+        fetchPage(page, debouncedSearch);
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchUsers]);
+  }, [page, debouncedSearch, fetchPage]);
 
   const handleToggleStatus = useCallback(async (user: ApiUser) => {
     setActionLoading(user.id);
     try {
       await api.patch(`/users/${user.id}/toggle-status`);
-      fetchUsers();
+      fetchPage(page, debouncedSearch);
     } catch (err) {
       logger.error("Toggle status error", { error: err instanceof Error ? err.message : err });
     } finally {
       setActionLoading(null);
     }
-  }, [fetchUsers]);
+  }, [page, debouncedSearch, fetchPage]);
 
-  const totalUsers = users.length;
-  const adminCount = users.filter((u) => u.rol === "admin").length;
-  const userCount = users.filter((u) => u.rol === "user").length;
-
-  let filteredUsers = users;
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    filteredUsers = filteredUsers.filter(
-      (u) =>
-        u.nombre.toLowerCase().includes(term) ||
-        (u.email || "").toLowerCase().includes(term) ||
-        u.documento.includes(term)
-    );
-  }
-
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PER_PAGE));
-  const pagedUsers = filteredUsers.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const handleRefresh = useCallback(() => {
+    fetchPage(page, debouncedSearch);
+  }, [page, debouncedSearch, fetchPage]);
 
   return (
     <div className="bg-[#F8F8FC] dark:bg-gray-950 min-h-[calc(100vh-72px)] p-8">
       <UserSummaryCards
-        totalUsers={totalUsers}
-        adminCount={adminCount}
-        userCount={userCount}
-        loading={loading}
+        totalUsers={counts.total}
+        adminCount={counts.admin}
+        userCount={counts.user}
+        loading={loading && counts.total === 0}
       />
 
       <div className="flex items-center justify-between mb-5">
@@ -104,7 +120,7 @@ export default function UsersPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchUsers}
+            onClick={handleRefresh}
             disabled={loading}
             className="flex items-center gap-2 h-10 px-4 bg-[#25207E] border-none rounded-lg cursor-pointer text-[13px] font-semibold font-inter text-white"
           >
@@ -114,25 +130,19 @@ export default function UsersPage() {
 
           <UserFilters
             searchTerm={searchTerm}
-            onSearchChange={(term) => { setSearchTerm(term); setPage(1); }}
+            onSearchChange={setSearchTerm}
           />
         </div>
       </div>
 
-      <UsersTable users={pagedUsers} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
-
-      {serverTotal !== null && serverTotal > users.length && (
-        <div className="mt-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-[13px] text-amber-700 dark:text-amber-400 font-inter">
-          Mostrando los primeros {users.length} de {serverTotal} usuarios. Usa el buscador para encontrar usuarios específicos.
-        </div>
-      )}
+      <UsersTable users={users} onEdit={setEditingUser} onToggleStatus={handleToggleStatus} onResetPassword={setResetPasswordUser} />
 
       <Pagination
         page={page}
         totalPages={totalPages}
-        total={filteredUsers.length}
-        from={Math.min((page - 1) * PER_PAGE + 1, filteredUsers.length)}
-        to={Math.min(page * PER_PAGE, filteredUsers.length)}
+        total={serverTotal}
+        from={serverTotal === 0 ? 0 : Math.min((page - 1) * PER_PAGE + 1, serverTotal)}
+        to={Math.min(page * PER_PAGE, serverTotal)}
         itemLabel="usuarios"
         onPageChange={setPage}
       />
@@ -140,8 +150,9 @@ export default function UsersPage() {
       {showCreateModal && (
         <CreateUserModal
           onClose={() => setShowCreateModal(false)}
-          onCreated={(created) => {
-            setUsers((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+          onCreated={() => {
+            setPage(1);
+            fetchPage(1, debouncedSearch);
           }}
         />
       )}
@@ -163,7 +174,7 @@ export default function UsersPage() {
           userDocument={resetPasswordUser.documento}
           onClose={() => setResetPasswordUser(null)}
           onSuccess={() => {
-            fetchUsers();
+            fetchPage(page, debouncedSearch);
           }}
         />
       )}

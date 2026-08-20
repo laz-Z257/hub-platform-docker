@@ -127,6 +127,13 @@
       "when": 1787084871673,
       "tag": "0017_auto_unlock",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787169796275,
+      "tag": "0018_sessions_and_ticket_metadata",
+      "breakpoints": true
     }
   ]
 }

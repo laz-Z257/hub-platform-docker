@@ -11,6 +11,12 @@ RUN npm ci --legacy-peer-deps
 COPY shared/ ./shared/
 COPY mobile/ ./
 
+# .env queda excluido por el .dockerignore raíz (**/.env), la URL se inyecta por build arg
+ARG EXPO_PUBLIC_API_URL=/api
+ENV EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL}
+# Fail-fast: si la variable llega vacía, romper el build y no producir un bundle roto
+RUN test -n "$EXPO_PUBLIC_API_URL"
+
 RUN npx expo export --platform web
 
 FROM nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa

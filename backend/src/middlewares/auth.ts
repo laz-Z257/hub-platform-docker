@@ -34,6 +34,8 @@ export async function authMiddleware(
         estado: users.estado,
         ultima_actividad: users.ultima_actividad,
         token_version: users.token_version,
+        token_version_admin: users.token_version_admin,
+        token_version_user: users.token_version_user,
         bloqueado_hasta: users.bloqueado_hasta,
         id: users.id,
       })
@@ -72,6 +74,16 @@ export async function authMiddleware(
     if (user.token_version !== payload.tokenVersion) {
       res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
       return;
+    }
+
+    // Validar versión por scope: logout aislado (dashboard no mata mobile y
+    // viceversa). Los tokens legacy sin scope solo validan la versión global.
+    if (payload.scope === "admin" || payload.scope === "user") {
+      const current = payload.scope === "admin" ? user.token_version_admin : user.token_version_user;
+      if (current !== payload.scopeVersion) {
+        res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
+        return;
+      }
     }
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);

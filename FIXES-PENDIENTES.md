@@ -1,66 +1,37 @@
 # 🔧 FIXES PENDIENTES
 
-Última actualización: 2026-08-15 (post-auditoría completa)
+Última actualización: 2026-08-19
 
-## ✅ RESUELTOS (2026-08-15, verificados)
+## ✅ RESUELTOS (2026-08-19)
 
-### Primera ronda (FIXES-PENDIENTES original)
+- **Rotación de refresh tokens** — Nueva tabla `refresh_tokens` (migración 0018): cada refresh emitido se persiste con `jti` + hash sha256. `POST /auth/refresh` rota de forma atómica (`UPDATE ... WHERE revoked_at IS NULL`); si un JWT válido presenta una fila ya revocada → reuso detectado (robo) y se revocan TODAS las sesiones del usuario + bump de `token_version` global. Higiene: limpieza de filas expiradas en cada rotación.
+- **Logout aislado real** — Columnas `token_version_admin` / `token_version_user` en `users`. El JWT lleva `scope` + `scopeVersion`; el logout bumpea SOLO la versión del scope y revoca las filas de refresh de ese scope. Cerrar sesión en mobile ya no mata el dashboard (y viceversa). Los bumps globales (bloqueo, reset password, cambio de rol) siguen matando ambos scopes.
+- **Rating con `ticketId` estructurado** — Columna `metadata` jsonb en `messages`: la notificación de "Resuelto" y las respuestas sobre tickets guardan `{ ticketId }`. `POST /chat/message` devuelve `ticketId` y `GET /chat/history` expone `metadata`. Web y mobile usan `ticketId` directo; el parseo `#TK` queda como fallback solo para mensajes antiguos.
+- **Paginación server-side de usuarios (web)** — `dashboard/users` ahora pagina en el servidor (`page`/`limit`/`search`) con búsqueda debounced. Nuevo campo `counts` en `GET /users` (distribución por rol sin filtros) para las tarjetas de resumen. El banner de ">200 usuarios" se eliminó por innecesario.
+- **Registro con documento soft-deleted (bug preexistente)** — El check de duplicados filtraba `deleted_at` pero el unique constraint de la BD es global → 500. Ahora devuelve 409.
 
-- **#1 Middleware JWT (web)** — Firma HS256 verificada con `jose`; ahora fail-closed (sin `JWT_SECRET` rechaza).
-- **#2 Settings race condition** — `userEditedRef` evita pisar ediciones locales.
-- **#3 getStats memory** — Agregación SQL con GROUP BY.
-- **#4 Export limit** — Default 1000, max 2000.
-- **#5 Error handling** — `instanceof ZodError` + `err.code === '23505'`.
-- **#7 Mobile cache invalidation** — `clearApiCache()` tras mutaciones.
-- **#8 Chat ticket lookup** — `LIKE` → `=`.
-- **#9, #10** — Ya estaban resueltos (verificados sin cambios).
+## ✅ RESUELTOS (rondas anteriores, verificados)
 
-### Segunda ronda (auditoría completa)
+- Middleware JWT web fail-closed, settings race condition, getStats en SQL, export limit, error handling Zod/23505, cache invalidation mobile, chat ticket lookup `=`.
+- Técnico no crea usuarios ni resetea passwords; desbloquear reinicia intentos; contador atómico; rating al dueño del ticket; notificación sin 500 tardío; redirects por scope; stale closure; password mínima; npm ci; seed en Render; EXPO token y logs; script de backup.
+- Rol desde JWT firmado (sin cookies de rol); mobile sin conexión no desloguea; rating requiere `#TK`; push unregister en logout; sharp pineado; no-new-privileges.
+- Host header allowlist (`ALLOWED_HOSTS`), anti-enumeración login, bcrypt 12, índice `users.documento`, escalación de privilegios cerrada, métricas acotadas, auto-unlock.
 
-- **Técnico ya no crea usuarios ni resetea passwords** — `superAdminOnly` en `POST /users` y `reset-password`. Verificado con técnico de prueba (403).
-- **Desbloquear reinicia `intentos_fallidos`** — toggleUserStatus.
-- **Contador de intentos atómico** — `sql\`+1\`` con returning.
-- **Rating atribuido al dueño del ticket** — user_id correcto.
-- **Notificación de comentario sin 500 tardío** — try/catch post-persistencia.
-- **Redirect por scope al expirar sesión** — `/user/*` → `/user/login`.
-- **Stale closure del scope en login()** — calculado en el momento de la llamada.
-- **Password mínima 6 en web** — consistente con backend/mobile.
-- **npm ci en Docker** — lockfiles regenerados (bug npm 10 vs 11), `ci + prune --omit=dev`.
-- **Seed en Render** — startCommand ejecuta migrate + seed.
-- **EXPO_ACCESS_TOKEN + límites de log** — docker-compose.
-- **Script de backup** — `scripts/backup-db.sh` (pg_dump + gzip + retención).
+## 🔴 PENDIENTES — Requieren decisión de diseño
 
-### Tercera ronda (residuales)
-
-- **Cookies de rol → JWT** — El middleware web lee el rol del payload del JWT firmado; cookies de rol sin firmar eliminadas del flujo. **Resuelto sin firmar cookies** (era el fix pendiente "requiere decisión": resultó más simple leer el rol del JWT ya verificado).
-- **Mobile sin conexión no desloguea** — Solo limpia sesión ante errores de auth.
-- **Rating sin ticket equivocado** — Requiere `#TK` en el mensaje.
-- **Push unregister en logout** — `POST /api/push/unregister` + integración mobile.
-- **sharp pineado** a 0.35.3.
-- **no-new-privileges** en api y web.
-- **Banner usuarios >200** en dashboard.
-
-## 🔴 PENDIENTES — Requieren decisión de diseño (pueden cambiar comportamiento)
-
-- **CSP unsafe-inline** — `backend/src/index.ts` styleSrc + `mobile/nginx.conf`. Requiere auditar estilos inline del frontend.
-- **Logout global vs aislado** — El bump de `token_version` en logout mata TODAS las sesiones del usuario (dashboard+mobile). Decidir semántica real; fix requiere scope en el payload del JWT.
-- **Rotación de refresh tokens** — Sin `jti` ni detección de reuso; un refresh robado vive 7 días. Requiere tabla de sesiones o JWT con tiempos más cortos.
-- **Rating por contrato** — La detección de "resuelto" sigue parseando texto del bot (ahora con guard: si no hay `#TK` no califica). Fix completo: `ticketId` en `suggestedActions` (cambia contrato API).
-- **Host header allowlist** — `index.ts` redirect HTTPS usa `req.headers.host` sin validar. Requiere conocer los dominios finales de producción.
+- **CSP unsafe-inline** — `backend/src/index.ts` styleSrc + `mobile/nginx.conf` (script-src y style-src). Requiere auditar estilos inline del frontend y verificar visualmente; riesgo de romper la UI.
 
 ## 🟡 PENDIENTES — Mejoras no urgentes
 
-- **Paginación server-side de usuarios** — El banner avisa, pero la solución real es paginar en el servidor (el backend ya soporta page/limit).
-- **`getRatingStats` sin paginar** — Carga todas las ratings en memoria (endpoint admin). Cambia el contrato de respuesta usado por el frontend.
-- **Hardening extra de contenedores** — `cap_drop: [ALL]`, `read_only` + tmpfs (requiere probar cada servicio).
+- **Hardening extra de contenedores** — `cap_drop: [ALL]`, `read_only` + tmpfs en `docker-compose.yml` (requiere probar cada servicio; postgres usa gosu y nginx necesita setuid, quedan excluidos a propósito).
 
 ## 🟢 OPERATIVOS (fuera del código)
 
 - **Cron de backup** — `scripts/backup-db.sh` existe pero nadie lo ejecuta. Agregar al cron del host: `0 3 * * * cd /ruta && ./scripts/backup-db.sh`.
-- **Rotar secrets locales** — `.env` local usa `SEED_ADMIN_PASSWORD=admin123` (débil). Si ese entorno fue accesible, rotar todos los secrets. Permisos de `.env*` a `600`.
-- **Commitear** — ~30 archivos modificados sin commit (tres rondas de fixes).
+- **Rotar secrets locales** — `.env` local usa `SEED_ADMIN_PASSWORD` débil. Si ese entorno fue accesible, rotar todos los secrets. Permisos de `.env*` ya en `600`.
+- **Commitear** — Cambios de esta ronda sin commit.
 
 ## Refutado durante auditoría (no es problema)
 
-- PWA móvil en Docker funciona: el bundle tiene `/api` inline correctamente (los patrones de `.dockerignore` sin `**` solo aplican a la raíz del contexto, `mobile/.env` sí entra al build).
+- PWA móvil en Docker: ~~"el bundle tiene `/api` inline"~~ **REFUTACIÓN INCORRECTA** — `**/.env` del `.dockerignore` raíz SÍ excluye `mobile/.env` del contexto de build (verificado con build de prueba), por lo que el bundle se generaba sin la variable y fallaba en runtime. Corregido (2026-08-20): `Dockerfile.web` recibe `EXPO_PUBLIC_API_URL` como build arg (default `/api`), igual que hace `web` con `NEXT_PUBLIC_*`.
 - La imagen del API NO contiene secrets (`/app` sin `.env`).

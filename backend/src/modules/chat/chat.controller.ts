@@ -19,6 +19,8 @@ interface ChatResponse {
   text: string;
   actions: SuggestedAction[];
   autoAction?: string;
+  /** ID del incidente cuando la respuesta es sobre un ticket concreto */
+  ticketId?: string;
 }
 
 const PROBLEM_OPTIONS: SuggestedAction[] = [
@@ -329,6 +331,7 @@ async function lookupTicket(
     actions: [
       { label: "Volver al menu principal", action: "menu_principal" },
     ],
+    ticketId: incident.id,
   };
 }
 
@@ -360,6 +363,7 @@ export async function sendMessage(
         user_id: req.user!.userId,
         content: response.text,
         is_bot: true,
+        metadata: response.ticketId ? { ticketId: response.ticketId } : null,
       })
       .returning();
 
@@ -368,6 +372,7 @@ export async function sendMessage(
       botMessage: botMsg,
       suggestedActions: response.actions,
       autoAction: response.autoAction,
+      ticketId: response.ticketId ?? null,
     });
   } catch (error) {
     logger.error("Send message error", { error: (error as Error).message });

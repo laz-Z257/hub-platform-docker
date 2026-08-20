@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-08-19 — Rotación de refresh tokens, logout por scope, ticketId estructurado y paginación real de usuarios
+
+### Seguridad backend
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Rotación de refresh tokens** | `db/schema.ts`, migración `0018`, `lib/jwt.ts`, `auth.controller.ts` | Nueva tabla `refresh_tokens` (id = jti del JWT, hash sha256 del token, scope, expires_at, revoked_at). Cada login/registro persiste su sesión; `POST /auth/refresh` rota atómicamente (`UPDATE ... WHERE revoked_at IS NULL RETURNING`). Un JWT válido cuya fila está revocada = reuso → se revocan todas las sesiones del usuario + bump global de `token_version`. Un refresh robado ya no vive 7 días: muere al primer uso legítimo. |
+| **Logout aislado real** | `db/schema.ts`, `middlewares/auth.ts`, `auth.controller.ts` | Columnas `token_version_admin`/`token_version_user`; el JWT lleva `scope` + `scopeVersion`. El logout bumpea solo la versión del scope y revoca las filas de refresh de ese scope. Cerrar sesión en mobile no mata el dashboard y viceversa. Bloqueo/reset-password/cambio de rol siguen siendo invalidación global. Tokens legacy (sin scope) siguen validando solo la versión global hasta expirar (≤1h). |
+| **Registro con documento soft-deleted** | `auth.controller.ts` | El check de duplicados ahora es global (sin filtro `deleted_at`), alineado con el unique constraint de la BD. Antes: 500 por duplicado invisible. |
+
+### Chat / Rating
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **`ticketId` estructurado** | `chat.controller.ts`, `incidents.controller.ts`, migración `0018` | Columna `metadata` jsonb en `messages`. La notificación de "Resuelto" y las respuestas sobre tickets guardan `{ ticketId }`. `POST /chat/message` devuelve `ticketId`; `GET /chat/history` expone `metadata`. Contrato aditivo: nada se rompe. |
+| **Web + Mobile usan `ticketId`** | `web/.../chat/page.tsx`, `mobile/.../ChatScreen.tsx` | El botón de calificar usa el `ticketId` del mensaje (sin búsqueda `#TK`); el parseo queda como fallback para mensajes previos a esta versión. `alreadyRated` también compara por id directo. |
+
+### Dashboard web
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Paginación server-side de usuarios** | `web/.../dashboard/users/page.tsx`, `users.controller.ts` | La tabla pagina en el servidor (`page`/`limit`/`search`) con búsqueda debounced (350ms) y auto-ajuste cuando la búsqueda reduce las páginas. `GET /users` devuelve `counts` (distribución por rol sin filtros) para las tarjetas de resumen. Eliminado el banner de truncado >200. |
+
+### Verificación
+
+- ✅ Backend 163/163 (nuevos tests: rotación, reuso, logout por scope), Web 47/47 + lint 0, Mobile 14/14, TypeScript sin errores en los tres
+- ✅ 26/26 smoke tests end-to-end sobre Docker: rotación + reuso + cascada, logout aislado (admin sobrevive al logout de user), ticketId en mensaje e historial, counts y búsqueda server-side
+- ✅ Migración 0018 aplicada en el stack local; 4 contenedores healthy
+
+---
+
 ## 2026-08-15 — Tercera ronda: 7 fixes residuales de la auditoría
 
 ### Web / Mobile

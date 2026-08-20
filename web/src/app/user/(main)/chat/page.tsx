@@ -21,6 +21,8 @@ interface Message {
   text?: string;
   timestamp: string;
   suggestedActions?: SuggestedAction[];
+  /** ID del incidente cuando el mensaje del bot es sobre un ticket concreto */
+  ticketId?: string;
 }
 
 function getTimeString(): string {
@@ -63,13 +65,14 @@ export default function ChatPage() {
       ],
     };
 
-    api.get<{ items: { id: string; content: string; is_bot: boolean; created_at: string }[] }>("/chat/history?limit=30")
+    api.get<{ items: { id: string; content: string; is_bot: boolean; created_at: string; metadata?: { ticketId?: string } | null }[] }>("/chat/history?limit=30")
       .then((history) => {
         const historyMsgs: Message[] = history.items.map((msg) => ({
           id: msg.id,
           type: msg.is_bot ? "bot-card" : "user",
           text: msg.content,
           timestamp: new Date(msg.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true }),
+          ticketId: msg.metadata?.ticketId ?? undefined,
         }));
         setMessages(historyMsgs.length === 0 ? [{ id: "date-1", type: "date", text: "Hoy", timestamp: "" }, welcome] : [{ id: "date-1", type: "date", text: "Hoy", timestamp: "" }, ...historyMsgs]);
       })
@@ -93,10 +96,10 @@ export default function ChatPage() {
     setTyping(true);
 
     try {
-      const data = await api.post<{ userMessage: { id: string; content: string }; botMessage: { id: string; content: string }; suggestedActions?: SuggestedAction[]; autoAction?: string }>("/chat/message", { content: text });
+      const data = await api.post<{ userMessage: { id: string; content: string }; botMessage: { id: string; content: string }; suggestedActions?: SuggestedAction[]; autoAction?: string; ticketId?: string | null }>("/chat/message", { content: text });
       setTyping(false);
 
-      const botMsg: Message = { id: data.botMessage.id, type: "bot-card", text: data.botMessage.content, timestamp: getTimeString(), suggestedActions: data.suggestedActions };
+      const botMsg: Message = { id: data.botMessage.id, type: "bot-card", text: data.botMessage.content, timestamp: getTimeString(), suggestedActions: data.suggestedActions, ticketId: data.ticketId ?? undefined };
       setMessages((prev) => [...prev, botMsg]);
 
       if (data.autoAction) {
@@ -212,9 +215,14 @@ export default function ChatPage() {
                 const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
                 let isRated = false;
                 if (isResolved) {
-                  const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-                  if (match) {
-                    isRated = Array.from(ratedIncidents).some((id) => id.replace(/-/g, "").slice(-8).toUpperCase() === match[1]);
+                  const ratedSet = Array.from(ratedIncidents);
+                  if (item.ticketId) {
+                    isRated = ratedSet.includes(item.ticketId);
+                  } else {
+                    const match = item.text?.match(/#TK-([A-Z0-9]+)/);
+                    if (match) {
+                      isRated = ratedSet.some((id) => id.replace(/-/g, "").slice(-8).toUpperCase() === match[1]);
+                    }
                   }
                 }
                 return (
@@ -227,6 +235,12 @@ export default function ChatPage() {
                     alreadyRated={isRated}
                     onSuggestedAction={handleSuggestedAction}
                     onRateService={() => {
+                      // ticketId estructurado; fallback a #TK solo para mensajes antiguos
+                      if (item.ticketId) {
+                        setRatingIncidentId(item.ticketId);
+                        setRatingError(null);
+                        return;
+                      }
                       const match = item.text?.match(/#TK-([A-Z0-9]+)/);
                       if (!match) {
                         setRatingError("No se pudo identificar el ticket para calificar.");

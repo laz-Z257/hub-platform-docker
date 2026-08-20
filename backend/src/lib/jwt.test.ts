@@ -14,9 +14,9 @@ vi.mock("../config/env", () => ({
 }));
 
 let signToken: (payload: JwtPayload) => string;
-let signRefreshToken: (payload: JwtPayload) => string;
 let verifyToken: (token: string) => JwtPayload;
 let verifyRefreshToken: (token: string) => JwtPayload;
+let signRefreshToken: (payload: JwtPayload) => { token: string; jti: string };
 
 beforeAll(async () => {
   const mod = await import("./jwt");
@@ -53,12 +53,22 @@ describe("signToken", () => {
 });
 
 describe("signRefreshToken", () => {
-  it("returns a JWT string", () => {
-    const token = signRefreshToken(TEST_PAYLOAD);
+  it("returns a JWT string with a unique jti", () => {
+    const { token, jti } = signRefreshToken(TEST_PAYLOAD);
     expect(token).toBeTruthy();
     expect(typeof token).toBe("string");
     const parts = token.split(".");
     expect(parts).toHaveLength(3);
+    expect(jti).toMatch(/^[0-9a-f-]{36}$/i);
+
+    const second = signRefreshToken(TEST_PAYLOAD);
+    expect(second.jti).not.toBe(jti);
+  });
+
+  it("embeds the jti in the token payload", () => {
+    const { token, jti } = signRefreshToken(TEST_PAYLOAD);
+    const decoded = jwt.verify(token, TEST_REFRESH_SECRET) as Record<string, unknown>;
+    expect(decoded.jti).toBe(jti);
   });
 });
 
@@ -89,9 +99,10 @@ describe("verifyToken", () => {
 
 describe("verifyRefreshToken", () => {
   it("returns the payload for a valid refresh token", () => {
-    const token = signRefreshToken(TEST_PAYLOAD);
+    const { token } = signRefreshToken(TEST_PAYLOAD);
     const decoded = verifyRefreshToken(token);
     expect(decoded.userId).toBe(TEST_PAYLOAD.userId);
+    expect(decoded.jti).toBeTruthy();
   });
 
   it("throws for an invalid refresh token", () => {

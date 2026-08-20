@@ -88,6 +88,16 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
 
     const totalResult = await db.$count(users, whereClause);
 
+    // Distribución por rol SIN filtros: alimenta las tarjetas de resumen
+    // aunque la página esté filtrada o paginada
+    const roleCounts = await db
+      .select({ rol: users.rol, count: sql<number>`count(*)::int` })
+      .from(users)
+      .where(isNull(users.deleted_at))
+      .groupBy(users.rol);
+
+    const countsMap = Object.fromEntries(roleCounts.map((r) => [r.rol, r.count]));
+
     const items = await db
       .select({
         id: users.id,
@@ -113,6 +123,13 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
       page,
       limit,
       totalPages: Math.ceil(totalResult / limit),
+      counts: {
+        total: roleCounts.reduce((acc, r) => acc + r.count, 0),
+        admin: countsMap.admin ?? 0,
+        user: countsMap.user ?? 0,
+        tecnico: countsMap.tecnico ?? 0,
+        asesor: countsMap.asesor ?? 0,
+      },
     });
   } catch (error) {
     logger.error("List users error", { error: (error as Error).message });
