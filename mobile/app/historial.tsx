@@ -24,36 +24,68 @@ interface Incident {
   created_at: string;
 }
 
+interface IncidentsResponse {
+  items: Incident[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+const LIMIT = 20;
+
 export default function HistorialScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchIncidents = useCallback(() => {
+  const fetchIncidents = useCallback((targetPage: number, isRefresh = false) => {
     setError(null);
+    if (isRefresh) setRefreshing(true);
+    else if (targetPage > 1) setLoadingMore(true);
+
     api
-      .get<{ items: Incident[] }>("/incidents?limit=50")
-      .then((data) => setIncidents(data.items))
+      .get<IncidentsResponse>(`/incidents?page=${targetPage}&limit=${LIMIT}`)
+      .then((data) => {
+        if (targetPage === 1) {
+          setIncidents(data.items);
+        } else {
+          setIncidents((prev) => [...prev, ...data.items]);
+        }
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+        setHasMore(data.page < data.totalPages);
+      })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Error al cargar el historial");
       })
       .finally(() => {
         setLoading(false);
         setRefreshing(false);
+        setLoadingMore(false);
       });
   }, []);
 
   useEffect(() => {
-    fetchIncidents();
+    fetchIncidents(1);
   }, [fetchIncidents]);
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchIncidents();
+    fetchIncidents(1, true);
   }, [fetchIncidents]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    fetchIncidents(page + 1);
+  }, [page, hasMore, loadingMore, fetchIncidents]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -86,7 +118,7 @@ export default function HistorialScreen() {
             Historial
           </Text>
           <TouchableOpacity
-              onPress={() => router.push("/chat")}
+            onPress={() => router.push("/chat")}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <MessageSquare size={22} color="#1F2366" strokeWidth={2} />
@@ -278,6 +310,21 @@ export default function HistorialScreen() {
                 </>
               )}
             </View>
+          }
+          ListFooterComponent={
+            hasMore && !loadingMore && (
+              <TouchableOpacity
+                onPress={loadMore}
+                style={{
+                  padding: 16,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 14, color: "#3B348B", fontFamily: "Inter_600SemiBold" }}>
+                  Cargar más
+                </Text>
+              </TouchableOpacity>
+            )
           }
         />
       )}

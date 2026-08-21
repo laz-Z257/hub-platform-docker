@@ -1,5 +1,70 @@
 # Changelog
 
+## 2026-08-20 — Ronda 8: ticket a nombre del usuario + feedback visible + cron
+
+### Fixes
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Ticket atribuido al usuario real** | `incidents.controller/schema.ts`, `CreateTicketModal.tsx` | `createIncident` admite `documento` (solo admins/técnicos). El ticket se crea a nombre del dueño del documento → él lo ve en su historial y recibe notificaciones. Documento inexistente → 404. Un usuario normal que envıe `documento` ajeno lo ignora (no roba identidad). |
+| **Feedback visible en dashboard** | `dashboard/tickets/page.tsx` | `handleStatusChange`/`handleAssignAgent`/`handleViewDetail` usan `showAlert` + recargan la tabla al fallar (409 de estado concurrente). |
+| **Cron de backup instalable** | `scripts/backup-db.sh` | `--install-cron` (idempotente) / `--status`; backup diario 3 AM. |
+
+### Verificación
+
+- ✅ Backend 180/180 (3 tests nuevos de aislamiento de ownership); Web 47/47 + lint 0; Mobile 14/14
+- ✅ End-to-end: admin crea ticket para documento 777666555 → aparece en su historial; password inexistente → 404; usuario normal con documento ajeno → queda suyo; smoke test OK
+
+---
+
+## 2026-08-20 — Ronda 7: aislamiento real de sesiones PWA/dashboard
+
+### Problema
+
+Las sesiones de la PWA mobile aparecían en el dashboard (y viceversa). Causa raíz: **las cookies del navegador se comparten entre puertos** — `localhost:3000` (web) y `localhost:8081` (PWA) son el mismo dominio para el navegador, así que el login de la PWA seteaba `user_token` que también llegaba al web.
+
+### Fixes
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Scope siempre del path** | `web/src/lib/api.ts` | `getCurrentScope()` ya no usa la variable de módulo (staleda: los efectos de los componentes corrían antes que la actualización del AuthProvider) — siempre deriva de `window.location.pathname`. Un request del dashboard ya no puede salir con scope "user". |
+| **Sin fallback cross-scope** | `backend/src/lib/jwt.ts` | `extractToken`/`extractRefreshToken`: Bearer → cookie del scope/cliente EXPLÍCITO → cookie legacy sin scope. Se eliminó el escaneo admin→user→legacy que hacía que un request sin header tomara cualquier sesión disponible. |
+| **Cookies propias para la PWA** | `backend/lib/jwt.ts`, `mobile/services/api.ts`, `auth.controller.ts` | Nuevo header `X-Auth-Client: mobile` (lo envían todos los requests de la PWA); sus cookies pasan a ser `mobile_token`/`mobile_refreshToken`. El web user-area mantiene `user_*` y el dashboard `admin_*`. Tres sesiones totalmente aisladas en el mismo navegador. |
+
+### Verificación
+
+- ✅ 13 tests nuevos de aislamiento en `jwt.test.ts`; backend 176/176, web lint 0 + 47/47, mobile 14/14
+- ✅ End-to-end sobre Docker: cookies de la PWA NO autentican requests del dashboard (401), cliente mobile NO lee cookies del web (401), rotación de refresh por cliente OK, smoke test OK
+
+---
+
+## 2026-08-20 — Ronda 6: 8 fixes de auditoría (auth, duplicados, TZ, UX)
+
+### Seguridad / corrección de bugs
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Falso robo de refresh token** | `auth.controller.ts` | Persistencia de sesión obligatoria: si el INSERT en `refresh_tokens` falla, login/registro limpian cookies + 500 y la rotación cierra sesión con 401. Antes se entregaba la cookie igual y el próximo refresh disparaba detección de reuso → revocación de TODAS las sesiones por un fallo transitorio. |
+| **23505 → 409 en duplicados** | `lib/pg.ts` (nuevo), `users/ratings/push.controller.ts` | Helper `isUniqueViolation`; createUser/updateUser devuelven 409 al perder la carrera con el unique global de documento, createRating 409 por duplicado, registerToken idempotente. |
+| **Filtros de fecha en TZ Colombia** | `lib/dates.ts` (nuevo), `incidents/dashboard.controller.ts` | `colombiaDayStart/End` con offset fijo -05:00. "Hoy" ya no arrastra tickets de 19:00–23:59 del día anterior por interpretar fechas en UTC. |
+| **TOCTOU en cambio de estado** | `incidents.controller.ts` | UPDATE condicionado por `WHERE estado = <leído>`; PATCH concurrentes a "resuelto" no duplican bot+push (el perdedor recibe 409). |
+
+### UX / configuración
+
+| Cambio | Archivo | Detalle |
+|--------|---------|---------|
+| **Debounce en búsqueda de tickets** | `web/dashboard/tickets` | 350ms + reset de página (mismo patrón que users); sin request por tecla. |
+| **Rating duplicado en mobile** | `ChatScreen.tsx` | Matchea el string real del backend ("Este ticket ya fue calificado"); marca el ticket como calificado en vez de dejar el botón activo. |
+| **`ALLOWED_HOSTS` en compose** | `docker-compose.yml` | Passthrough al api; antes la allowlist quedaba vacía aunque se definiera. |
+| **`JWT_EXPIRES_IN` funcional** | `config/env.ts`, `lib/jwt.ts`, `docker-compose.yml` | Se lee y usa (default 1h); cookie sincronizada con el `exp` real. Default de compose corregido 24h → 1h para preservar el comportamiento existente. |
+
+### Verificación
+
+- ✅ Backend tsc + 163/163 tests; Web lint 0 + 47/47; Mobile 14/14
+- ✅ API rebuildada en Docker, 4 contenedores healthy, smoke test OK
+
+---
+
 ## 2026-08-19 — Rotación de refresh tokens, logout por scope, ticketId estructurado y paginación real de usuarios
 
 ### Seguridad backend

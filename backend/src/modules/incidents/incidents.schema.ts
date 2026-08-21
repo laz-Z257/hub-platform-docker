@@ -7,6 +7,8 @@ export const createIncidentSchema = z.object({
   telefono: z.string().regex(/^\d{6,20}$/, "El teléfono debe tener entre 6 y 20 dígitos").or(z.literal("")).optional().default(""),
   descripcion: z.string().min(1, "La descripción es requerida").max(2000),
   urgencia: z.enum(["baja", "media", "alta"]).default("media"),
+  // Solo admins: atribuir el ticket a otro usuario por documento
+  documento: z.string().max(20).optional(),
 });
 
 export const updateIncidentSchema = z.object({

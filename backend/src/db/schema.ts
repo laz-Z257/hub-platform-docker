@@ -10,7 +10,6 @@ import {
   jsonb,
   pgEnum,
   index,
-  check,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -119,27 +118,7 @@ export const incidentComments = pgTable(
   (table) => [index("incident_comments_incident_id_idx").on(table.incident_id)]
 );
 
-export const ratings = pgTable(
-  "ratings",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    incident_id: uuid("incident_id")
-      .references(() => incidents.id, { onDelete: "cascade" })
-      .notNull()
-      .unique(),
-    user_id: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .notNull(),
-    puntuacion: integer("puntuacion").notNull(),
-    comentario: text("comentario"),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-  },
-  (table) => [
-    index("ratings_incident_id_idx").on(table.incident_id),
-    index("ratings_user_id_idx").on(table.user_id),
-    check("ratings_puntuacion_check", sql`${table.puntuacion} >= 1 AND ${table.puntuacion} <= 5`),
-  ]
-);
+
 
 export const puntosVenta = pgTable(
   "puntos_venta",

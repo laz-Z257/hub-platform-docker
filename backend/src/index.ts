@@ -22,7 +22,6 @@ import chatRoutes from "./modules/chat/chat.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import usersRoutes from "./modules/users/users.routes";
 import uploadRoutes from "./modules/upload/upload.routes";
-import ratingsRoutes from "./modules/ratings/ratings.routes";
 import pushRoutes from "./modules/push/push.routes";
 import puntosVentaRoutes from "./modules/puntos-venta/puntos-venta.routes";
 import settingsRoutes from "./modules/settings/settings.routes";
@@ -35,17 +34,12 @@ app.set("trust proxy", 1);
 app.use((req, res, next) => {
   if (env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
     const host = (req.headers.host || "").toLowerCase();
-
-    // Allowlist opcional: si está definida, solo se redirige a hosts conocidos
-    // (evita open redirect / cache poisoning vía Host header). Sin ALLOWED_HOSTS
-    // definida se mantiene el comportamiento anterior.
     const hostname = host.replace(/:\d+$/, "").replace(/^\[|\]$/g, "");
     if (env.ALLOWED_HOSTS.length > 0 && !env.ALLOWED_HOSTS.includes(hostname)) {
       logger.warn("Host no permitido en redirect HTTPS", { host });
-      return next();
+      return res.status(400).json({ error: "Host header no permitido" });
     }
-
-    return res.redirect(301, `https://${host}${req.originalUrl}`);
+    if (hostname) return res.redirect(301, `https://${host}${req.originalUrl}`);
   }
   next();
 });
@@ -152,7 +146,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/ratings", ratingsRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/puntos-venta", puntosVentaRoutes);
 app.use("/api/settings", settingsRoutes);

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { formatDate, ESTADO_LABELS, ESTADO_COLORS } from "@/lib/utils";
 import { URGENCIA_COLORS } from "@/lib/styles";
-import { MessageSquare, History, AlertCircle, RefreshCw } from "lucide-react";
+import { MessageSquare, History, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Incident {
   id: string; nombre: string; punto_venta: string;
@@ -13,6 +13,15 @@ interface Incident {
   estado: "pendiente" | "en_proceso" | "resuelto"; created_at: string;
 }
 
+interface IncidentsResponse {
+  items: Incident[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+const LIMIT = 20;
 
 export default function HistorialPage() {
   const router = useRouter();
@@ -20,18 +29,30 @@ export default function HistorialPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const fetchIncidents = useCallback(() => {
     setError(null);
-    api.get<{ items: Incident[] }>("/incidents?limit=50")
-      .then((data) => setIncidents(data.items))
+    api.get<{ items: Incident[]; total: number; page: number; limit: number; totalPages: number }>(
+      `/incidents?page=${page}&limit=${LIMIT}`
+    )
+      .then((data) => {
+        setIncidents(data.items);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar el historial"))
       .finally(() => { setLoading(false); setRefreshing(false); });
-  }, []);
+  }, [page]);
 
   useEffect(() => { fetchIncidents(); }, [fetchIncidents]);
 
   const handleRefresh = () => { setRefreshing(true); fetchIncidents(); };
+
+  const goPrev = () => setPage(p => Math.max(1, p - 1));
+  const goNext = () => setPage(p => Math.min(totalPages, p + 1));
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
@@ -75,33 +96,57 @@ export default function HistorialPage() {
               )}
             </div>
           ) : (
-            incidents.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => router.push(`/user/incidente/${item.id}`)}
-                className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left hover:border-[#DCD4FF] transition-colors"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-base font-semibold text-[#1F2937] truncate flex-1">{item.punto_venta}</h3>
-                  <span
-                    className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full ml-2"
-                    style={{ backgroundColor: URGENCIA_COLORS[item.urgencia] + "20", color: URGENCIA_COLORS[item.urgencia] }}
-                  >
-                    {item.urgencia.toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-sm text-[#6B7280] line-clamp-2 mb-2.5">{item.descripcion}</p>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ESTADO_COLORS[item.estado] }} />
-                    <span className="text-[13px] text-[#374151]">{ESTADO_LABELS[item.estado]}</span>
+            <>
+              {incidents.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => router.push(`/user/incidente/${item.id}`)}
+                  className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left hover:border-[#DCD4FF] transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-base font-semibold text-[#1F2937] truncate flex-1">{item.punto_venta}</h3>
+                    <span
+                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full ml-2"
+                      style={{ backgroundColor: URGENCIA_COLORS[item.urgencia] + "20", color: URGENCIA_COLORS[item.urgencia] }}
+                    >
+                      {item.urgencia.toUpperCase()}
+                    </span>
                   </div>
-                  <span className="text-xs text-[#9CA3AF]">
-                    {new Date(item.created_at).toLocaleDateString("es-CO")}
+                  <p className="text-sm text-[#6B7280] line-clamp-2 mb-2.5">{item.descripcion}</p>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ESTADO_COLORS[item.estado] }} />
+                      <span className="text-[13px] text-[#374151]">{ESTADO_LABELS[item.estado]}</span>
+                    </div>
+                    <span className="text-xs text-[#9CA3AF]">
+                      {new Date(item.created_at).toLocaleDateString("es-CO")}
+                    </span>
+                  </div>
+                </button>
+              ))}
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 pt-4">
+                  <button
+                    onClick={goPrev}
+                    disabled={page === 1}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#3B348B] bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={16} /> Anterior
+                  </button>
+                  <span className="text-sm text-[#6B7280] px-2">
+                    Página {page} de {totalPages} ({total} total)
                   </span>
+                  <button
+                    onClick={goNext}
+                    disabled={page === totalPages}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#3B348B] bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Siguiente <ChevronRight size={16} />
+                  </button>
                 </div>
-              </button>
-            ))
+              )}
+            </>
           )}
         </div>
       )}

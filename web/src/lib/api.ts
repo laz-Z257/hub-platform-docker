@@ -24,9 +24,15 @@ function getCsrfToken(): string | null {
 }
 
 function getCurrentScope(): "admin" | "user" | null {
-  if (currentScope) return currentScope;
-  if (typeof window === "undefined") return null;
-  return window.location.pathname.startsWith("/user") ? "user" : "admin";
+  // SIEMPRE derivar del path en el navegador: la variable de módulo puede
+  // quedar staleda (los efectos de los componentes hijos corren antes que
+  // el del AuthProvider) y un request del dashboard con scope "user" haría
+  // que el backend lea la cookie user_token — mezclando la sesión de la PWA
+  // con el dashboard.
+  if (typeof window !== "undefined") {
+    return window.location.pathname.startsWith("/user") ? "user" : "admin";
+  }
+  return currentScope;
 }
 
 function requestHeaders(options: RequestInit): Record<string, string> {
@@ -54,11 +60,19 @@ async function tryRefresh(): Promise<boolean> {
   const headers: Record<string, string> = {};
   const scope = getCurrentScope();
   if (scope) headers["X-Auth-Scope"] = scope;
+  // /auth/refresh exige CSRF (cookie + header): sin esto el refresh del web
+  // siempre fallaba con 403 y la sesión se perdía en vez de rotar
+  const csrf = getCsrfToken();
+  if (csrf) headers["x-csrf-token"] = csrf;
   refreshPromise = fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     headers,
     credentials: "include",
   }).then(async (r) => {
+    if (r.status === 401 || r.status === 403) {
+      // Refresh inválido o sesión bloqueada → no reintentar, sino redirigir al login
+      return false;
+    }
     if (r.ok) {
       const body = await r.json().catch(() => ({}));
       if (body.csrfToken) setCsrfToken(body.csrfToken);
@@ -96,7 +110,14 @@ async function request<T>(
     );
   }
 
-  if (res.status === 401) {
+  // Un 401 de login/registro NO es una sesión expirada: son credenciales
+  // incorrectas. No hay nada que refrescar ni a dónde redirigir — dejar que
+  // el manejo de errores de abajo muestre el mensaje real del backend.
+  const isAuthEndpoint =
+    endpoint === "/auth/login" || endpoint === "/auth/register" ||
+    endpoint === "/auth/refresh";
+
+  if (res.status === 401 && !isAuthEndpoint) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       const retryHeaders = requestHeaders(options);

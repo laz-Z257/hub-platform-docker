@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import { eq, and, gte, lte, sql, desc, isNull } from "drizzle-orm";
 import { db } from "../../db";
-import { incidents, users, ratings, puntosVenta, messages } from "../../db/schema";
+import { incidents, users, puntosVenta, messages } from "../../db/schema";
 import { logger } from "../../lib/logger";
+import { colombiaDayStart, colombiaDayEnd } from "../../lib/dates";
 
 function getColombiaNow(): Date {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -43,12 +44,10 @@ export async function getKpis(req: Request, res: Response): Promise<void> {
     }
 
     if (typeof start === "string" && start) {
-      conditions.push(gte(incidents.created_at, new Date(start)));
+      conditions.push(gte(incidents.created_at, colombiaDayStart(start)));
     }
     if (typeof end === "string" && end) {
-      const endDate = new Date(end);
-      endDate.setHours(23, 59, 59, 999);
-      conditions.push(lte(incidents.created_at, endDate));
+      conditions.push(lte(incidents.created_at, colombiaDayEnd(end)));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -139,13 +138,6 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
       })
       .from(users)
       .where(isNull(users.deleted_at));
-
-    const [ratingStats] = await db
-      .select({
-        promedio: sql<string>`COALESCE(AVG(${ratings.puntuacion}), 0)`.mapWith(String),
-        total: sql<number>`count(*)`.mapWith(Number),
-      })
-      .from(ratings);
 
     const [pvStats] = await db
       .select({
@@ -247,10 +239,6 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
         total: userStats.total,
         activos: userStats.activos,
         bloqueados: userStats.bloqueados,
-      },
-      calificaciones: {
-        promedio: parseFloat(parseFloat(ratingStats.promedio).toFixed(1)),
-        total: ratingStats.total,
       },
       puntosVenta: {
         total: pvStats.total,

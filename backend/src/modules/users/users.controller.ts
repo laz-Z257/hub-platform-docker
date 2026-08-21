@@ -5,6 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { escapeLike } from "../../lib/like";
+import { isUniqueViolation } from "../../lib/pg";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
@@ -53,6 +54,12 @@ export async function createUser(req: Request, res: Response): Promise<void> {
       created_at: user.created_at,
     });
   } catch (error) {
+    // El unique de documento es global (incluye soft-deleted): una carrera
+    // entre el check y el INSERT termina aquí → 409, no 500
+    if (isUniqueViolation(error)) {
+      res.status(409).json({ error: "El documento ya está registrado" });
+      return;
+    }
     logger.error("Create user error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al crear usuario" });
   }
@@ -324,6 +331,10 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
 
     res.json(updated);
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      res.status(409).json({ error: "El documento ya está registrado por otro usuario" });
+      return;
+    }
     logger.error("Update user error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al actualizar usuario" });
   }

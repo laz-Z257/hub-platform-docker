@@ -43,7 +43,16 @@ export function csrfProtection(
     return next();
   }
 
-  if (["/api/auth/login", "/api/auth/register"].includes(req.path)) {
+  // Login/registro: aún no hay sesión ni token CSRF disponible.
+  // Refresh: protegido por cookies httpOnly sameSite; rotar la sesión del
+  // propio usuario no beneficia a un atacante (no entrega nada) y el cliente
+  // puede necesitarlo justo tras un reload, cuando aún no tiene token CSRF
+  // en memoria (la cookie es httpOnly e ilegible para JS).
+  if (
+    ["/api/auth/login", "/api/auth/register", "/api/auth/refresh"].includes(
+      req.path
+    )
+  ) {
     return next();
   }
 

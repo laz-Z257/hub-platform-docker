@@ -5,6 +5,7 @@ import { incidents, incidentComments, users, messages, pushTokens } from "../../
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 import { escapeLike } from "../../lib/like";
+import { colombiaDayStart, colombiaDayEnd } from "../../lib/dates";
 
 type ExpoPushMessage = { to: string } & Record<string, unknown>;
 
@@ -67,23 +68,49 @@ export async function createIncident(
   res: Response
 ): Promise<void> {
   try {
-    const [user] = await db
-      .select({ nombre: users.nombre, documento: users.documento })
-      .from(users)
-      .where(and(eq(users.id, req.user!.userId), isNull(users.deleted_at)))
-      .limit(1);
+    // Un admin puede abrir un ticket A NOMBRE DE un usuario (documento en el
+    // body); para usuarios normales el documento se ignora y el ticket es suyo
+    const targetDocumento =
+      (req.user!.rol === "admin" || req.user!.rol === "tecnico") &&
+      typeof req.body.documento === "string" &&
+      req.body.documento.trim().length > 0
+        ? req.body.documento.trim()
+        : undefined;
 
-    if (!user) {
-      res.status(401).json({ error: "Usuario no encontrado" });
-      return;
+    let owner: { id: string; nombre: string; documento: string } | undefined;
+
+    if (targetDocumento) {
+      const [targetUser] = await db
+        .select({ id: users.id, nombre: users.nombre, documento: users.documento })
+        .from(users)
+        .where(and(eq(users.documento, targetDocumento), isNull(users.deleted_at)))
+        .limit(1);
+
+      if (!targetUser) {
+        res.status(404).json({ error: "No existe un usuario con ese documento" });
+        return;
+      }
+      owner = targetUser;
+    } else {
+      const [self] = await db
+        .select({ id: users.id, nombre: users.nombre, documento: users.documento })
+        .from(users)
+        .where(and(eq(users.id, req.user!.userId), isNull(users.deleted_at)))
+        .limit(1);
+
+      if (!self) {
+        res.status(401).json({ error: "Usuario no encontrado" });
+        return;
+      }
+      owner = self;
     }
 
     const [incident] = await db
       .insert(incidents)
       .values({
-        user_id: req.user!.userId,
-        nombre: user.nombre,
-        documento: user.documento,
+        user_id: owner.id,
+        nombre: owner.nombre,
+        documento: owner.documento,
         punto_venta: req.body.punto_venta,
         telefono: req.body.telefono || "",
         descripcion: req.body.descripcion,
@@ -121,10 +148,8 @@ export async function listIncidents(
     }
 
     if (q.start && q.end) {
-      const endDate = new Date(q.end as string);
-      endDate.setHours(23, 59, 59, 999);
-      conditions.push(gte(incidents.created_at, new Date(q.start as string)));
-      conditions.push(lte(incidents.created_at, endDate));
+      conditions.push(gte(incidents.created_at, colombiaDayStart(q.start as string)));
+      conditions.push(lte(incidents.created_at, colombiaDayEnd(q.end as string)));
     }
 
     if (search) {
@@ -242,7 +267,7 @@ export async function updateIncident(
     const { id } = req.params as { id: string };
     const { estado, agente, solucion, imagen_url } = req.body;
 
-    let previousEstado: string | undefined;
+    let previousEstado: "pendiente" | "en_proceso" | "resuelto" | undefined;
 
     if (estado) {
       const [current] = await db
@@ -275,13 +300,35 @@ export async function updateIncident(
       updateData.fecha_cierre = new Date();
     }
 
+    // Condicionar el UPDATE por el estado leído: cierra la carrera entre el
+    // SELECT de validación y el UPDATE (dos PATCH concurrentes a "resuelto"
+    // ya no pueden ganar ambos y duplicar mensaje bot + push)
+    const updateConditions = [eq(incidents.id, id), isNull(incidents.deleted_at)];
+    if (estado && previousEstado !== undefined) {
+      updateConditions.push(eq(incidents.estado, previousEstado));
+    }
+
     const [updated] = await db
       .update(incidents)
       .set(updateData)
-      .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
+      .where(and(...updateConditions))
       .returning();
 
     if (!updated) {
+      // Distinguir: ¿no existe, o cambió el estado debajo nuestro?
+      if (estado && previousEstado !== undefined) {
+        const [still] = await db
+          .select({ estado: incidents.estado })
+          .from(incidents)
+          .where(and(eq(incidents.id, id), isNull(incidents.deleted_at)))
+          .limit(1);
+        if (still) {
+          res.status(409).json({
+            error: `El estado del ticket cambió concurrentemente (ahora "${still.estado}"). Refresca e intenta de nuevo.`,
+          });
+          return;
+        }
+      }
       res.status(404).json({ error: "Incidente no encontrado" });
       return;
     }
@@ -427,12 +474,10 @@ export async function exportIncidents(
     const conditions = [isNull(incidents.deleted_at)];
 
     if (start) {
-      conditions.push(gte(incidents.created_at, new Date(start)));
+      conditions.push(gte(incidents.created_at, colombiaDayStart(start)));
     }
     if (end) {
-      const endDate = new Date(end);
-      endDate.setHours(23, 59, 59, 999);
-      conditions.push(lte(incidents.created_at, endDate));
+      conditions.push(lte(incidents.created_at, colombiaDayEnd(end)));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -507,12 +552,10 @@ export async function getStats(
     }
 
     if (start) {
-      conditions.push(gte(incidents.created_at, new Date(start)));
+      conditions.push(gte(incidents.created_at, colombiaDayStart(start)));
     }
     if (end) {
-      const endDate = new Date(end);
-      endDate.setHours(23, 59, 59, 999);
-      conditions.push(lte(incidents.created_at, endDate));
+      conditions.push(lte(incidents.created_at, colombiaDayEnd(end)));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

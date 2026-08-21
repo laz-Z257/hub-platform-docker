@@ -15,7 +15,7 @@ const updateSchema = {
 
 const router = Router();
 
-router.get("/", authMiddleware, getSettings);
+router.get("/", authMiddleware, adminOnly, getSettings);
 router.put("/", authMiddleware, adminOnly, validate(updateSchema), updateSettings);
 
 export default router;

@@ -11,6 +11,7 @@ import CreateUserModal from "@/components/CreateUserModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { useToast } from "@/contexts/ToastContext";
 import Pagination from "@/components/Pagination";
 import type { ApiUser } from "@hub/shared/types/user";
 
@@ -29,6 +30,7 @@ interface UsersResponse {
 export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [counts, setCounts] = useState({ total: 0, admin: 0, user: 0, tecnico: 0, asesor: 0 });
   const [serverTotal, setServerTotal] = useState(0);
@@ -91,14 +93,15 @@ export default function UsersPage() {
   const handleToggleStatus = useCallback(async (user: ApiUser) => {
     setActionLoading(user.id);
     try {
-      await api.patch(`/users/${user.id}/toggle-status`);
+      const updated = await api.patch<ApiUser>(`/users/${user.id}/toggle-status`);
       fetchPage(page, debouncedSearch);
+      showToast(updated.estado === "activo" ? "Usuario activado" : "Usuario bloqueado");
     } catch (err) {
       logger.error("Toggle status error", { error: err instanceof Error ? err.message : err });
     } finally {
       setActionLoading(null);
     }
-  }, [page, debouncedSearch, fetchPage]);
+  }, [page, debouncedSearch, fetchPage, showToast]);
 
   const handleRefresh = useCallback(() => {
     fetchPage(page, debouncedSearch);
@@ -153,6 +156,7 @@ export default function UsersPage() {
           onCreated={() => {
             setPage(1);
             fetchPage(1, debouncedSearch);
+            showToast("Usuario creado");
           }}
         />
       )}
@@ -164,6 +168,7 @@ export default function UsersPage() {
           onSaved={(updated) => {
             setUsers((prev) => (Array.isArray(prev) ? prev : []).map((u) => (u.id === updated.id ? updated : u)));
             setEditingUser(null);
+            showToast("Usuario actualizado");
           }}
         />
       )}
@@ -175,6 +180,7 @@ export default function UsersPage() {
           onClose={() => setResetPasswordUser(null)}
           onSuccess={() => {
             fetchPage(page, debouncedSearch);
+            showToast("Contraseña restablecida");
           }}
         />
       )}

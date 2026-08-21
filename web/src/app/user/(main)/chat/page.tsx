@@ -9,7 +9,6 @@ import { BotMessageCard } from "@/components/user/BotMessageCard";
 import { ExpandableMenu } from "@/components/user/ExpandableMenu";
 import ChatBubble from "@/components/user/ChatBubble";
 import ChatInput from "@/components/user/ChatInput";
-import { StarRating } from "@/components/user/StarRating";
 import { FaqModal } from "@/components/user/FaqModal";
 import { Ticket, ArrowRight, ChevronDown } from "lucide-react";
 
@@ -40,11 +39,8 @@ export default function ChatPage() {
   const [typing, setTyping] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [latestIncident, setLatestIncident] = useState<{ id: string; descripcion: string; estado: string } | null>(null);
-  const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
-  const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [ratingError, setRatingError] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,10 +78,6 @@ export default function ChatPage() {
     api.get<{ items: { id: string; descripcion: string; estado: string }[] }>("/incidents?limit=1")
       .then((data) => { if (data.items.length > 0) setLatestIncident(data.items[0]); })
       .catch((err) => logger.error("Error fetching latest incident", { error: err instanceof Error ? err.message : err }));
-
-    api.get<{ ratedIncidentIds: string[] }>("/ratings/my-ratings")
-      .then((data) => setRatedIncidents(new Set(data.ratedIncidentIds)))
-      .catch((err) => logger.error("Error fetching my ratings", { error: err instanceof Error ? err.message : err }));
   }, [initializing, user, router]);
 
   useEffect(() => { if (!loadingHistory) scrollToBottom(); }, [messages, loadingHistory]);
@@ -137,22 +129,6 @@ export default function ChatPage() {
     else handleSend(label);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleSend]);
-
-  const handleSubmitRating = useCallback(async (puntuacion: number, comentario: string) => {
-    const id = ratingIncidentId || latestIncident?.id;
-    if (!id) { setRatingIncidentId(null); return; }
-    try {
-      await api.post(`/ratings/${id}`, { puntuacion, comentario });
-      setRatingIncidentId(null);
-      setRatingError(null);
-      setRatedIncidents((prev) => new Set(prev).add(id));
-      setMessages((prev) => [...prev, { id: `bot-card-${Date.now()}`, type: "bot-card", text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`, timestamp: getTimeString() }]);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "No se pudo enviar la calificación.";
-      logger.error("Submit rating error", { error: (err as Error).message });
-      setRatingError(errorMsg);
-    }
-  }, [ratingIncidentId, latestIncident]);
 
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
@@ -213,18 +189,6 @@ export default function ChatPage() {
               }
               if (item.type === "bot-card") {
                 const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
-                let isRated = false;
-                if (isResolved) {
-                  const ratedSet = Array.from(ratedIncidents);
-                  if (item.ticketId) {
-                    isRated = ratedSet.includes(item.ticketId);
-                  } else {
-                    const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-                    if (match) {
-                      isRated = ratedSet.some((id) => id.replace(/-/g, "").slice(-8).toUpperCase() === match[1]);
-                    }
-                  }
-                }
                 return (
                   <BotMessageCard
                     key={item.id}
@@ -232,36 +196,7 @@ export default function ChatPage() {
                     timestamp={item.timestamp}
                     suggestedActions={item.suggestedActions}
                     isResolvedNotification={isResolved}
-                    alreadyRated={isRated}
                     onSuggestedAction={handleSuggestedAction}
-                    onRateService={() => {
-                      // ticketId estructurado; fallback a #TK solo para mensajes antiguos
-                      if (item.ticketId) {
-                        setRatingIncidentId(item.ticketId);
-                        setRatingError(null);
-                        return;
-                      }
-                      const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-                      if (!match) {
-                        setRatingError("No se pudo identificar el ticket para calificar.");
-                        return;
-                      }
-                      api.get<{ items: { id: string; estado: string }[] }>(`/incidents?limit=1&estado=resuelto&search=${match[1]}`)
-                        .then((d) => {
-                          const resolved = d.items?.[0];
-                          if (resolved) {
-                            setRatingIncidentId(resolved.id);
-                            setRatingError(null);
-                          } else {
-                            setRatingError("No se encontró un ticket resuelto para calificar.");
-                          }
-                        })
-                        .catch((err) => {
-                          const errorMsg = err instanceof Error ? err.message : "No se pudo obtener el ticket para calificar.";
-                          logger.error("Error fetching resolved incident", { error: err instanceof Error ? err.message : err });
-                          setRatingError(errorMsg);
-                        });
-                    }}
                     onSubmenuPress={handleSubmenuPress}
                     onMenuPress={handleMenuPress}
                   />
@@ -299,34 +234,6 @@ export default function ChatPage() {
       )}
 
       <ChatInput onSend={handleSend} />
-
-      {ratingIncidentId !== null && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => { setRatingIncidentId(null); setRatingError(null); }}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <StarRating
-              onSubmit={handleSubmitRating}
-              onCancel={() => { setRatingIncidentId(null); setRatingError(null); }}
-            />
-            {ratingError && (
-              <p className="mt-4 text-[13px] text-red-600 text-center">{ratingError}</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {ratingIncidentId === null && ratingError && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setRatingError(null)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[14px] text-[#1F2937]">{ratingError}</p>
-            <button
-              onClick={() => setRatingError(null)}
-              className="mt-5 h-11 w-full rounded-lg bg-[#201A7A] text-white text-sm font-semibold hover:bg-[#16145e] transition-colors"
-            >
-              Aceptar
-            </button>
-          </div>
-        </div>
-      )}
 
       {showFaq && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setShowFaq(false)}>

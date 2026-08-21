@@ -44,6 +44,7 @@ export const env = {
   DATABASE_URL: requireEnv("DATABASE_URL"),
   JWT_SECRET: requireStrongSecret("JWT_SECRET", 32),
   JWT_REFRESH_SECRET: requireStrongSecret("JWT_REFRESH_SECRET", 32),
+  JWT_EXPIRES_IN: (process.env.JWT_EXPIRES_IN || "1h").trim() || "1h",
   PORT: parsePort(process.env.PORT, 3001),
   NODE_ENV: process.env.NODE_ENV || "development",
   LOG_LEVEL: (process.env.LOG_LEVEL as string) || (process.env.NODE_ENV === "production" ? "info" : "debug"),

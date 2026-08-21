@@ -6,6 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { useToast } from "@/contexts/ToastContext";
 import Modal from "@/components/Modal";
 import { useModal } from "@/hooks/useModal";
 import { getCacheStats } from "@/lib/utils";
@@ -95,6 +96,7 @@ export default function SettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"local" | "saved" | "error">("local");
   const { modal, showAlert, showConfirm, closeModal } = useModal();
+  const { showToast } = useToast();
   const userEditedRef = useRef(false);
 
   useEffect(() => {
@@ -128,6 +130,7 @@ export default function SettingsPage() {
       await api.put("/settings", settings);
       setOriginalSettings({ ...settings });
       setSyncStatus("saved");
+      showToast("Configuración guardada");
     } catch (err) {
       logger.error("Save settings error", { error: (err as Error).message });
       setSyncStatus("error");

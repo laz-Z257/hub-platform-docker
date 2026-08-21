@@ -25,8 +25,12 @@ COPY --from=build /app/drizzle ./drizzle
 COPY drizzle.config.json ./
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 COPY scripts/migrate-and-seed.sh /migrate-and-seed.sh
+COPY scripts/gc-uploads.sh /gc-uploads.sh
 
-RUN chown -R nodejs:nodejs /app && chmod +x /docker-entrypoint.sh /migrate-and-seed.sh
+RUN chown -R nodejs:nodejs /app && chmod +x /docker-entrypoint.sh /migrate-and-seed.sh /gc-uploads.sh
+
+# Instalar cron semanal de GC uploads (domingos 03:15) como root antes de cambiar de usuario
+RUN mkdir -p /etc/cron.d && echo "15 3 * * 0 root DATABASE_URL=\${DATABASE_URL} UPLOAD_DIR=/app/uploads /gc-uploads.sh >> /var/log/gc-uploads.log 2>&1" > /etc/cron.d/gc-uploads && chmod 644 /etc/cron.d/gc-uploads
 
 USER nodejs
 

@@ -48,14 +48,19 @@ describe("createIncidentSchema", () => {
     expect(result.urgencia).toBe("alta");
   });
 
-  it("strips nombre and documento (ignored, taken from authenticated user)", () => {
+  it("strips nombre (siempre del usuario autenticado) pero acepta documento (admins lo usan para atribuir)", () => {
     const result = createIncidentSchema.parse({
       ...validData,
       nombre: "Nombre ignorado",
       documento: "12345678",
     });
     expect(result).not.toHaveProperty("nombre");
-    expect(result).not.toHaveProperty("documento");
+    expect(result.documento).toBe("12345678");
+  });
+
+  it("sin documento: el campo queda ausente (ticket propio)", () => {
+    const result = createIncidentSchema.parse(validData);
+    expect(result.documento).toBeUndefined();
   });
 
   it("rejects empty punto_venta", () => {

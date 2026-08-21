@@ -15,12 +15,18 @@ import {
   hashToken,
   refreshExpiry,
   type AuthScope,
+  type AuthClient,
 } from "../../lib/jwt";
 import { getOrCreateCsrfToken } from "../../middlewares/csrf";
 import { logger } from "../../lib/logger";
 import { env } from "../../config/env";
 
 const MAX_LOGIN_ATTEMPTS = env.MAX_LOGIN_ATTEMPTS;
+
+/** Cliente de la sesión: la PWA mobile envía X-Auth-Client: mobile */
+function getClientFromRequest(req: Request): AuthClient {
+  return req.headers?.["x-auth-client"] === "mobile" ? "mobile" : undefined;
+}
 
 // Hash de relleno para igualar timing cuando el usuario no existe (anti-enumeración)
 const DUMMY_HASH = "$2a$12$xo2yWONym/BmrASiewX2luAQaaXLPGWevMtgLgJm3gbTrRajG5GNy";
@@ -32,6 +38,10 @@ const LOCKOUT_MINUTES = 15;
  * Persiste la sesión de refresh token (hash sha256, nunca el token en claro).
  * Solo para sesiones con scope; las llamadas sin scope (API directa) siguen
  * el flujo legacy sin rotación.
+ *
+ * Si el INSERT falla, PROPAGA el error: entregar un refresh con jti sin fila
+ * persistida haría que el próximo refresh lo interprete como reuso (robo)
+ * y revocara TODAS las sesiones del usuario por un fallo transitorio.
  */
 async function persistRefreshSession(
   userId: string,
@@ -39,18 +49,13 @@ async function persistRefreshSession(
   tokens: { refreshToken: string; refreshJti: string }
 ): Promise<void> {
   if (!scope) return;
-  try {
-    await db.insert(refreshTokens).values({
-      id: tokens.refreshJti,
-      user_id: userId,
-      scope,
-      token_hash: hashToken(tokens.refreshToken),
-      expires_at: refreshExpiry(),
-    });
-  } catch (error) {
-    // No es fatal: el refresh seguirá funcionando vía validación de JWT
-    logger.warn("Persist refresh session failed", { error: (error as Error).message });
-  }
+  await db.insert(refreshTokens).values({
+    id: tokens.refreshJti,
+    user_id: userId,
+    scope,
+    token_hash: hashToken(tokens.refreshToken),
+    expires_at: refreshExpiry(),
+  });
 }
 
 /**
@@ -110,8 +115,16 @@ export async function register(
       })
       .returning();
 
-    const tokens = setTokenCookies(res, buildJwtPayload(user, "user"), "user");
-    await persistRefreshSession(user.id, "user", tokens);
+    const tokens = setTokenCookies(res, buildJwtPayload(user, "user"), "user", getClientFromRequest(req));
+    try {
+      await persistRefreshSession(user.id, "user", tokens);
+    } catch (error) {
+      // Las cookies ya se setearon: limpiarlas antes de fallar
+      logger.error("Register persist session failed", { error: (error as Error).message });
+      clearTokenCookies(res, "user", getClientFromRequest(req));
+      res.status(500).json({ error: "Error al registrar usuario" });
+      return;
+    }
 
     const csrfToken = getOrCreateCsrfToken(req, res);
 
@@ -206,12 +219,20 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const tokens = setTokenCookies(res, buildJwtPayload(user, scope), scope);
-    await persistRefreshSession(user.id, scope, tokens);
+    const tokens = setTokenCookies(res, buildJwtPayload(user, scope), scope, getClientFromRequest(req));
+    try {
+      await persistRefreshSession(user.id, scope, tokens);
+    } catch (error) {
+      // Las cookies ya se setearon: limpiarlas antes de fallar
+      logger.error("Login persist session failed", { error: (error as Error).message });
+      clearTokenCookies(res, scope, getClientFromRequest(req));
+      res.status(500).json({ error: "Error interno del servidor" });
+      return;
+    }
 
+    const client = getClientFromRequest(req);
     const csrfToken = getOrCreateCsrfToken(req, res);
-
-    res.json({ user: userResponse(user), token: tokens.token, csrfToken });
+    res.json({ user: userResponse(user), ...(client === "mobile" ? { token: tokens.token } : {}), csrfToken });
   } catch (error) {
     logger.error("Login error", { error: (error as Error).message });
     res.status(500).json({ error: "Error interno del servidor" });
@@ -269,11 +290,16 @@ export async function me(req: Request, res: Response): Promise<void> {
  */
 export async function refresh(req: Request, res: Response): Promise<void> {
   const scope = detectRefreshScope(req);
+  const client = getClientFromRequest(req);
 
   try {
     const refreshToken = extractRefreshToken(req);
 
     if (!refreshToken) {
+      // Sin refresh token la sesión no puede renovarse: limpiar también el
+      // access token para no dejar una cookie "muerta" que el middleware del
+      // web considera válida por firma (bucle /login ↔ /dashboard)
+      clearTokenCookies(res, scope, client);
       res.status(401).json({ error: "Refresh token no proporcionado" });
       return;
     }
@@ -305,7 +331,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
           : user.token_version_user) === payload.scopeVersion;
 
       if (!userValid) {
-        clearTokenCookies(res, scope);
+        clearTokenCookies(res, scope, client);
         res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
         return;
       }
@@ -338,20 +364,20 @@ export async function refresh(req: Request, res: Response): Promise<void> {
           .update(users)
           .set({ token_version: sql`${users.token_version} + 1` })
           .where(and(eq(users.id, user.id), isNull(users.deleted_at)));
-        clearTokenCookies(res, scope);
+        clearTokenCookies(res, scope, client);
         res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
         return;
       }
 
       if (claimed.expires_at <= new Date()) {
         // Expiración benigna: sin sesiones nuevas, solo cookies
-        clearTokenCookies(res, scope);
+        clearTokenCookies(res, scope, client);
         res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
         return;
       }
 
       const newScope: AuthScope = payload.scope;
-      const tokens = setTokenCookies(res, buildJwtPayload(user, newScope), newScope);
+      const tokens = setTokenCookies(res, buildJwtPayload(user, newScope), newScope, client);
 
       try {
         await db.insert(refreshTokens).values({
@@ -361,7 +387,18 @@ export async function refresh(req: Request, res: Response): Promise<void> {
           token_hash: hashToken(tokens.refreshToken),
           expires_at: refreshExpiry(),
         });
-        // Higiene: eliminar filas expiradas del usuario (incluye la recién revocada cuando venza)
+      } catch (error) {
+        // Sin fila persistida, el próximo refresh dispararía detección de
+        // reuso (falso robo) y revocaría todas las sesiones del usuario.
+        // Mejor cerrar esta sesión limpiamente y pedir re-login.
+        logger.error("Refresh rotation persist failed", { error: (error as Error).message });
+        clearTokenCookies(res, scope, client);
+        res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
+        return;
+      }
+
+      // Higiene: eliminar filas expiradas del usuario (incluye la recién revocada cuando venza)
+      try {
         await db
           .delete(refreshTokens)
           .where(
@@ -371,14 +408,15 @@ export async function refresh(req: Request, res: Response): Promise<void> {
             )
           );
       } catch (error) {
-        logger.warn("Refresh rotation persist failed", { error: (error as Error).message });
+        // No fatal: solo acumula filas expiradas que la próxima rotación limpiará
+        logger.warn("Refresh hygiene failed", { error: (error as Error).message });
       }
 
       const csrfToken = getOrCreateCsrfToken(req, res);
-
-      res.json({ ok: true, token: tokens.token, csrfToken });
+      res.json({ ok: true, ...(client === "mobile" ? { token: tokens.token } : {}), csrfToken });
       return;
     }
+
 
     // ---- Flujo legacy: refresh sin sesión persistida ----
     const [user] = await db
@@ -389,7 +427,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
     if (!user || user.estado === "bloqueado" || user.token_version !== payload.tokenVersion) {
       // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
-      clearTokenCookies(res, scope);
+      clearTokenCookies(res, scope, client);
       res.status(401).json({ error: "Sesión inválida, inicia sesión nuevamente" });
       return;
     }
@@ -399,14 +437,13 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       documento: payload.documento,
       rol: payload.rol,
       tokenVersion: user.token_version,
-    }, scope);
+    }, scope, client);
 
     const csrfToken = getOrCreateCsrfToken(req, res);
-
-    res.json({ ok: true, token: tokens.token, csrfToken });
+    res.json({ ok: true, ...(client === "mobile" ? { token: tokens.token } : {}), csrfToken });
   } catch {
     // Solo limpiar cookies del scope — NO todas (sesiones aisladas)
-    clearTokenCookies(res, scope);
+    clearTokenCookies(res, scope, client);
     res.status(401).json({ error: "Sesión expirada, inicia sesión nuevamente" });
   }
 }
@@ -425,9 +462,10 @@ export async function logout(req: Request, res: Response): Promise<void> {
   const headerScope = req.headers["x-auth-scope"];
   const scope: AuthScope | undefined = headerScope === "admin" || headerScope === "user" ? headerScope : undefined;
 
+  let tokenScope: AuthScope | undefined = scope;
+
   try {
     let userId: string | undefined;
-    let tokenScope: AuthScope | undefined = scope;
 
     const token = extractToken(req);
     if (token) {
@@ -487,9 +525,9 @@ export async function logout(req: Request, res: Response): Promise<void> {
     logger.warn("Logout token invalidate failed", { error: (error as Error).message });
   }
 
-  // Siempre limpiar solo las cookies del scope correspondiente
+  // Siempre limpiar solo las cookies del scope/cliente correspondiente
   // NUNCA clearAllTokenCookies — destruiría sesiones de otros scopes
-  clearTokenCookies(res, scope);
+  clearTokenCookies(res, tokenScope ?? scope, getClientFromRequest(req));
 
   res.json({ ok: true });
 }

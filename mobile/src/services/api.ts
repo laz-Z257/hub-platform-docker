@@ -81,6 +81,7 @@ async function tryRefresh(): Promise<boolean> {
         credentials: "include",
         headers: {
           "X-Auth-Scope": "user",
+          "X-Auth-Client": "mobile",
           ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
         signal: controller.signal,
@@ -120,6 +121,10 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Auth-Scope": "user",
+    // Cookies propias (mobile_*): sin esto, la PWA y el web compartirían
+    // user_token/user_refreshToken en localhost (las cookies no distinguen puertos)
+    // y sus sesiones se pisarían entre sí
+    "X-Auth-Client": "mobile",
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(csrfToken && !isGet ? { "X-CSRF-Token": csrfToken } : {}),
     ...((options.headers as Record<string, string>) || {}),

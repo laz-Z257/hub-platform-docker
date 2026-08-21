@@ -180,6 +180,7 @@ describe("Auth Controller", () => {
         contrasena: "password123",
         scope: "user",
       };
+      req.headers = { "x-auth-client": "mobile" };
 
       await login(req as Request, res as Response);
 
@@ -340,7 +341,7 @@ describe("Auth Controller", () => {
 
       await logout(req as Request, res as Response);
 
-      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user", undefined);
       expect(jsonMock).toHaveBeenCalledWith({ ok: true });
     });
 
@@ -367,7 +368,7 @@ describe("Auth Controller", () => {
       expect(db.update).toHaveBeenCalledTimes(2);
       expect(updateChain.set).toHaveBeenCalledWith({ token_version_user: expect.anything() });
       expect(updateChain.set).not.toHaveBeenCalledWith({ token_version: expect.anything() });
-      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user", undefined);
     });
 
     it("should bump global version when scope is unknown", async () => {
@@ -455,6 +456,7 @@ describe("Auth Controller", () => {
         refreshJti: "jti-2",
       });
       (csrf.getOrCreateCsrfToken as ReturnType<typeof vi.fn>).mockReturnValue("csrf-token");
+      req.headers = { "x-auth-client": "mobile" };
 
       await refresh(req as Request, res as Response);
 
@@ -490,7 +492,7 @@ describe("Auth Controller", () => {
       await refresh(req as Request, res as Response);
 
       expect(statusMock).toHaveBeenCalledWith(401);
-      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user", undefined);
       // Revoca todas las sesiones + bumpea versión global
       expect(db.update).toHaveBeenCalledTimes(3);
     });
@@ -519,7 +521,7 @@ describe("Auth Controller", () => {
       await refresh(req as Request, res as Response);
 
       expect(statusMock).toHaveBeenCalledWith(401);
-      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user");
+      expect(jwt.clearTokenCookies).toHaveBeenCalledWith(res, "user", undefined);
       // Solo la rotación (claim); sin revocación masiva
       expect(db.update).toHaveBeenCalledTimes(1);
     });

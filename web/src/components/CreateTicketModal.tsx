@@ -25,23 +25,29 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
   const handleSubmit = async () => {
     const errs: Record<string, string> = {};
     if (!newTicket.nombre.trim()) errs.nombre = "Requerido";
+    if (!newTicket.documento.trim()) errs.documento = "Requerido";
     if (!newTicket.descripcion.trim()) errs.descripcion = "Requerido";
     if (!newTicket.punto_venta.trim()) errs.punto_venta = "Requerido";
-    
+
     if (Object.keys(errs).length > 0) {
       setTicketErrors(errs);
       return;
     }
-    
+
     setTicketErrors({});
     setCreating(true);
-    
+
     try {
       await api.post("/incidents", newTicket);
       onCreated();
     } catch (err) {
-      logger.error("Create ticket error", { error: err instanceof Error ? err.message : err });
-      showAlert("Error", "Error al crear ticket", "error");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("No existe un usuario con ese documento")) {
+        setTicketErrors((p) => ({ ...p, documento: "No existe un usuario con ese documento" }));
+      } else {
+        logger.error("Create ticket error", { error: msg });
+        showAlert("Error", "Error al crear ticket", "error");
+      }
     } finally {
       setCreating(false);
     }
@@ -85,10 +91,11 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
             <input
               type="text"
               value={newTicket.documento}
-              onChange={(e) => setNewTicket({ ...newTicket, documento: e.target.value })}
-              className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none"
+              onChange={(e) => { setNewTicket({ ...newTicket, documento: e.target.value }); setTicketErrors((p) => ({ ...p, documento: "" })); }}
+              className={`w-full h-11 px-3.5 rounded-lg border ${ticketErrors.documento ? "border-red-500" : "border-gray-300 dark:border-gray-600"} bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter outline-none`}
               placeholder="123456789"
             />
+            {ticketErrors.documento && <p className="text-xs text-red-500 mt-1 font-inter">{ticketErrors.documento}</p>}
           </div>
         </div>
 
@@ -114,6 +121,12 @@ export default function CreateTicketModal({ onClose, onCreated, showAlert }: Cre
               placeholder="Número de contacto"
             />
           </div>
+        </div>
+
+        <div className="mb-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-inter">
+            El ticket se atribuirá al usuario con ese documento (él lo verá en su historial y recibirá las notificaciones).
+          </p>
         </div>
 
         <div className="mb-4">

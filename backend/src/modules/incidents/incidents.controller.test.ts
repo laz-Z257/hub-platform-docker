@@ -51,6 +51,7 @@ describe("Incidents Controller", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([{
+              id: "user-123",
               nombre: "Test User",
               documento: "123456789",
             }]),
@@ -75,6 +76,111 @@ describe("Incidents Controller", () => {
           estado: "pendiente",
         })
       );
+    });
+
+    it("un usuario normal con documento en el body: SIEMPRE crea a su nombre (no roba identidad)", async () => {
+      const insertChain = {
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{
+            id: "incident-id",
+            user_id: "user-123",
+            nombre: "Test User",
+            estado: "pendiente",
+          }]),
+        }),
+      };
+      (db.insert as ReturnType<typeof vi.fn>).mockReturnValue(insertChain);
+
+      const userSelectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: "user-123",
+              nombre: "Test User",
+              documento: "123456789",
+            }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(userSelectChain);
+
+      // Usuario rol "user" intenta atribuir a otro documento: se ignora
+      req.body = {
+        documento: "999999999",
+        punto_venta: "PV-001",
+        descripcion: "Test description",
+      };
+
+      await createIncident(req as Request, res as Response);
+
+      const insertValues = insertChain.values.mock.calls[0][0];
+      expect(insertValues.user_id).toBe("user-123");
+      expect(insertValues.documento).toBe("123456789");
+    });
+
+    it("admin con documento en el body: atribuye el ticket al usuario dueño del documento", async () => {
+      const insertChain = {
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{
+            id: "incident-id",
+            user_id: "target-user",
+            nombre: "Target User",
+            estado: "pendiente",
+          }]),
+        }),
+      };
+      (db.insert as ReturnType<typeof vi.fn>).mockReturnValue(insertChain);
+
+      const targetSelectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: "target-user",
+              nombre: "Target User",
+              documento: "999999999",
+            }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(targetSelectChain);
+
+      req.user = { userId: "admin-1", rol: "admin" } as any;
+      req.body = {
+        documento: "999999999",
+        punto_venta: "PV-001",
+        descripcion: "Ticket para otro usuario",
+      };
+
+      await createIncident(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(201);
+      const insertValues = insertChain.values.mock.calls[0][0];
+      expect(insertValues.user_id).toBe("target-user");
+      expect(insertValues.nombre).toBe("Target User");
+      expect(insertValues.documento).toBe("999999999");
+    });
+
+    it("admin con documento inexistente: 404", async () => {
+      const targetSelectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(targetSelectChain);
+
+      req.user = { userId: "admin-1", rol: "admin" } as any;
+      req.body = {
+        documento: "000000000",
+        punto_venta: "PV-001",
+        descripcion: "Ticket para usuario fantasma",
+      };
+
+      await createIncident(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(404);
+      expect(jsonMock).toHaveBeenCalledWith({ error: "No existe un usuario con ese documento" });
     });
   });
 

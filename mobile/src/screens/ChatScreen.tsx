@@ -16,7 +16,6 @@ import BotMessageCard from "../components/BotMessageCard";
 import ChatBubble from "../components/ChatBubble";
 import TypingIndicator from "../components/TypingIndicator";
 import ChatInput from "../components/ChatInput";
-import StarRating from "../components/StarRating";
 import FaqModal from "../components/FaqModal";
 import BottomTab from "../components/BottomTab";
 import { api } from "../services/api";
@@ -79,8 +78,6 @@ export default function ChatScreen() {
     descripcion: string;
     estado: string;
   } | null>(null);
-  const [ratingIncidentId, setRatingIncidentId] = useState<string | null>(null);
-  const [ratedIncidents, setRatedIncidents] = useState<Set<string>>(new Set());
   const [showFaq, setShowFaq] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const autoActionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,15 +138,6 @@ export default function ChatScreen() {
       })
       .catch((err) => {
         logger.error("Latest incident fetch error", { error: err instanceof Error ? err.message : err });
-      });
-
-    api
-      .get<{ ratedIncidentIds: string[] }>("/ratings/my-ratings")
-      .then((data) => {
-        setRatedIncidents(new Set(data.ratedIncidentIds ?? []));
-      })
-      .catch((err) => {
-        logger.error("Rated incidents fetch error", { error: err instanceof Error ? err.message : err });
       });
   }, [initializing, user, router]);
 
@@ -275,45 +263,6 @@ export default function ChatScreen() {
     [router, handleSend]
   );
 
-  const handleSubmitRating = useCallback(
-    async (puntuacion: number, comentario: string) => {
-      const id = ratingIncidentId || latestIncident?.id;
-      if (!id) {
-        Alert.alert("Sin tickets", "No se encontró un ticket para calificar.");
-        setRatingIncidentId(null);
-        return;
-      }
-      try {
-        await api.post(`/ratings/${id}`, { puntuacion, comentario });
-        setRatingIncidentId(null);
-        setRatedIncidents((prev) => new Set(prev).add(id));
-        const thanksMsg: Message = {
-          id: nextMsgId("bot-card"),
-          type: "bot-card",
-          text: `¡Gracias por tu calificación de ${puntuacion} estrella${puntuacion !== 1 ? "s" : ""}! Tu opinión nos ayuda a mejorar.`,
-          timestamp: getTimeString(),
-        };
-        setMessages((prev) => [...prev, thanksMsg]);
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Error desconocido";
-        
-        if (errorMsg.includes("Ya has calificado")) {
-          setRatedIncidents((prev) => new Set(prev).add(id));
-          setRatingIncidentId(null);
-        } else if (errorMsg.includes("Solo puedes calificar tickets resueltos")) {
-          setRatingIncidentId(null);
-          Alert.alert("Ticket no resuelto", "Este ticket aún no ha sido marcado como resuelto.");
-        } else if (errorMsg.includes("Datos inválidos")) {
-          Alert.alert("Error de validación", "La puntuación debe ser un número entre 1 y 5.");
-        } else {
-          setRatingIncidentId(null);
-          Alert.alert("Error", errorMsg || "No se pudo enviar la calificación.");
-        }
-      }
-    },
-    [ratingIncidentId, latestIncident]
-  );
-
   const renderItem = useCallback(
     ({ item }: { item: Message }) => {
       if (item.type === "date") {
@@ -343,20 +292,6 @@ export default function ChatScreen() {
 
       if (item.type === "bot-card") {
         const isResolved = item.text?.includes("ha sido marcado como **Resuelto**") ?? false;
-        let isRated = false;
-        if (isResolved) {
-          if (item.ticketId) {
-            isRated = Array.from(ratedIncidents).includes(item.ticketId);
-          } else {
-            const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-            if (match) {
-              const shortId = match[1];
-              isRated = Array.from(ratedIncidents).some(
-                (id) => id.replace(/-/g, "").slice(-8).toUpperCase() === shortId
-              );
-            }
-          }
-        }
         return (
           <BotMessageCard
             message={item.text || ""}
@@ -366,37 +301,6 @@ export default function ChatScreen() {
             onSuggestedAction={handleSuggestedAction}
             suggestedActions={item.suggestedActions}
             isResolvedNotification={isResolved}
-            alreadyRated={isRated}
-            onRateService={async () => {
-              // ticketId estructurado; fallback a #TK solo para mensajes antiguos
-              if (item.ticketId) {
-                logger.info("[Rating] Abriendo modal de rating", { id: item.ticketId });
-                setRatingIncidentId(item.ticketId);
-                return;
-              }
-              const match = item.text?.match(/#TK-([A-Z0-9]+)/);
-              if (!match) {
-                Alert.alert("Ticket no identificado", "No se pudo identificar el ticket para calificar.");
-                return;
-              }
-              logger.info("[Rating] Botón presionado", { tk: match[1] });
-              try {
-                const data = await api.get<{ items: { id: string; estado: string }[] }>(
-                  `/incidents?limit=1&estado=resuelto&search=${match[1]}`
-                );
-                const resolved = data.items?.[0];
-                if (resolved) {
-                  logger.info("[Rating] Abriendo modal de rating", { id: resolved.id });
-                  setRatingIncidentId(resolved.id);
-                } else {
-                  logger.info("[Rating] No hay tickets resueltos");
-                  Alert.alert("Sin tickets resueltos", "No hay tickets resueltos para calificar.");
-                }
-              } catch (err) {
-                logger.error("[Rating] Error buscando incidente", { error: (err as Error).message });
-                Alert.alert("Error", "No se pudo obtener el ticket para calificar.");
-              }
-            }}
           />
         );
       }
@@ -420,7 +324,7 @@ export default function ChatScreen() {
         </ChatBubble>
       );
     },
-    [handleSubmenuPress, handleSend, handleSuggestedAction, latestIncident, ratedIncidents]
+    [handleSubmenuPress, handleSend, handleSuggestedAction, latestIncident]
   );
 
   const msgList = typing
@@ -462,7 +366,6 @@ export default function ChatScreen() {
             data={msgList}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            extraData={ratedIncidents}
             contentContainerStyle={{ paddingVertical: 8, paddingBottom: 8 }}
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
@@ -524,35 +427,6 @@ export default function ChatScreen() {
             }
           />
         )}
-
-        <Modal
-          visible={ratingIncidentId !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setRatingIncidentId(null)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              justifyContent: "center",
-              padding: 24,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#FFFFFF",
-                borderRadius: 20,
-                padding: 24,
-              }}
-            >
-              <StarRating
-                onSubmit={handleSubmitRating}
-                onCancel={() => setRatingIncidentId(null)}
-              />
-            </View>
-          </View>
-        </Modal>
 
         <Modal
           visible={showFaq}

@@ -11,6 +11,7 @@ import CreateTicketModal from "@/components/CreateTicketModal";
 import Pagination from "@/components/Pagination";
 import Modal from "@/components/Modal";
 import { useModal } from "@/hooks/useModal";
+import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { formatDateShort, formatDescription, getDateRange } from "@/lib/utils";
@@ -31,8 +32,19 @@ export default function TicketsPage() {
   const [stats, setStats] = useState({ pendientes: 0, enProceso: 0, resueltos: 0 });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { modal, showAlert, closeModal } = useModal();
+  const { showToast } = useToast();
 
   const LIMIT = 10;
+
+  // Búsqueda con debounce contra el servidor: al cambiar, vuelve a la página 1
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1);
+      setDebouncedSearch(searchTerm);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   // Mark unread tickets as seen when viewing the page
   useEffect(() => {
@@ -44,7 +56,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
-    if (searchTerm) params.set("search", searchTerm);
+    if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
 
     const range = getDateRange(dateFilter);
@@ -63,7 +75,7 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-  }, [page, searchTerm, estadoFilter, dateFilter]);
+  }, [page, debouncedSearch, estadoFilter, dateFilter]);
 
   const fetchStats = useCallback(() => {
     const range = getDateRange(dateFilter);
@@ -105,11 +117,21 @@ export default function TicketsPage() {
         setIncidents((prev) =>
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
+        showToast("Estado actualizado correctamente");
       } catch (err) {
-        logger.error("Status change error", { error: err instanceof Error ? err.message : err });
+        const msg = err instanceof Error ? err.message : "";
+        logger.error("Status change error", { error: msg });
+        // El estado puede haber cambiado en el servidor (409): recargar la tabla
+        fetchTickets();
+        showAlert(
+          "No se pudo cambiar el estado",
+          msg || "Revisa el estado actual del ticket e intenta de nuevo.",
+          "error"
+        );
       }
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showAlert, fetchTickets, showToast]
   );
 
   const handleViewDetail = useCallback(
@@ -121,9 +143,11 @@ export default function TicketsPage() {
         setSelectedIncident(incident);
       } catch (err) {
         logger.error("Detail error", { error: err instanceof Error ? err.message : err });
+        showAlert("Error", "No se pudo cargar el detalle del ticket.", "error");
       }
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showAlert]
   );
 
   const handleResolve = useCallback(
@@ -137,8 +161,9 @@ export default function TicketsPage() {
     (ticketId: string) => {
       fetchTickets();
       fetchStats();
+      showToast("Ticket resuelto");
     },
-    [fetchTickets, fetchStats]
+    [fetchTickets, fetchStats, showToast]
   );
 
   const handleAssignAgent = useCallback(
@@ -151,11 +176,20 @@ export default function TicketsPage() {
         setIncidents((prev) =>
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
+        showToast(`Agente ${agent} asignado`);
       } catch (err) {
-        logger.error("Assign agent error", { error: err instanceof Error ? err.message : err });
+        const msg = err instanceof Error ? err.message : "";
+        logger.error("Assign agent error", { error: msg });
+        fetchTickets();
+        showAlert(
+          "No se pudo asignar el agente",
+          msg || "El ticket puede haber cambiado. Se recargó la tabla.",
+          "error"
+        );
       }
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showAlert, fetchTickets, showToast]
   );
 
   const handleExport = useCallback(async () => {
@@ -228,7 +262,8 @@ export default function TicketsPage() {
     a.download = `tickets_hub${qs ? `_${range.start}_${range.end}` : ""}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [dateFilter]);
+    showToast(`Exportación lista: ${items.length} tickets`);
+  }, [dateFilter, showToast]);
 
   const mappedTickets = useMemo(
     () => {
@@ -342,6 +377,7 @@ export default function TicketsPage() {
             setShowCreateModal(false);
             fetchTickets();
             fetchStats();
+            showToast("Ticket creado correctamente");
           }}
           showAlert={showAlert}
         />

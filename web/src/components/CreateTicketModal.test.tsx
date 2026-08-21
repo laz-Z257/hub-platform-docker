@@ -99,16 +99,19 @@ describe("CreateTicketModal", () => {
     fireEvent.change(screen.getByPlaceholderText("Nombre del solicitante"), {
       target: { value: "Test User" },
     });
+    fireEvent.change(screen.getByPlaceholderText("123456789"), {
+      target: { value: "123456789" },
+    });
     fireEvent.change(screen.getByPlaceholderText("Nombre del punto de venta"), {
       target: { value: "Test PV" },
     });
     fireEvent.change(screen.getByPlaceholderText("Describe el problema..."), {
       target: { value: "Test description" },
     });
-    
+
     const submitButton = screen.getByRole("button", { name: /crear ticket/i });
     fireEvent.click(submitButton);
-    
+
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith("/incidents", expect.any(Object));
       expect(onCreated).toHaveBeenCalledTimes(1);
@@ -132,16 +135,19 @@ describe("CreateTicketModal", () => {
     fireEvent.change(screen.getByPlaceholderText("Nombre del solicitante"), {
       target: { value: "Test User" },
     });
+    fireEvent.change(screen.getByPlaceholderText("123456789"), {
+      target: { value: "123456789" },
+    });
     fireEvent.change(screen.getByPlaceholderText("Nombre del punto de venta"), {
       target: { value: "Test PV" },
     });
     fireEvent.change(screen.getByPlaceholderText("Describe el problema..."), {
       target: { value: "Test description" },
     });
-    
+
     const submitButton = screen.getByRole("button", { name: /crear ticket/i });
     fireEvent.click(submitButton);
-    
+
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledWith(
         "Error",
