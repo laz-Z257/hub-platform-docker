@@ -45,10 +45,6 @@ export interface DashboardSummary {
     activos: number;
     bloqueados: number;
   };
-  calificaciones: {
-    promedio: number;
-    total: number;
-  };
   puntosVenta: {
     total: number;
     activos: number;
