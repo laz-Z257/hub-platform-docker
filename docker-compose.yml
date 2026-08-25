@@ -2,6 +2,18 @@ services:
   postgres:
     image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: hub-postgres
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_READ_ACCESS
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -36,6 +48,11 @@ services:
     container_name: hub-api
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     ports:
       - "127.0.0.1:3001:3001"
     environment:
@@ -80,6 +97,11 @@ services:
     container_name: hub-web
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     ports:
       - "127.0.0.1:3000:3000"
     environment:
@@ -120,6 +142,16 @@ services:
     container_name: hub-mobile
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
     ports:
       - "127.0.0.1:8081:8081"
     networks:

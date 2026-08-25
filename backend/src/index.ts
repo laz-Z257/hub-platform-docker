@@ -53,7 +53,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'"],
         imgSrc: ["'self'", "data:"],
         fontSrc: ["'self'"],
         connectSrc: env.NODE_ENV === "development" ? ["'self'", "ws:", "http://localhost:*"] : ["'self'"],
