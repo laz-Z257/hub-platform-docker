@@ -27,7 +27,7 @@ export default function ResetPasswordModal({ userId, userDocument, onClose, onSu
     }
 
     if (contrasena.length < 6) {
-      setError("Mínimo 8 caracteres");
+      setError("Mínimo 6 caracteres");
       return;
     }
 
@@ -61,7 +61,7 @@ export default function ResetPasswordModal({ userId, userDocument, onClose, onSu
         <p className="text-[13px] text-gray-500 dark:text-gray-400 font-inter mb-6">
           Usuario: <strong>{userDocument}</strong>
           <br />
-          La contraseña debe tener mínimo 8 caracteres. Al guardar, el usuario será desbloqueado automáticamente.
+          La contraseña debe tener mínimo 6 caracteres. Al guardar, el usuario será desbloqueado automáticamente.
         </p>
 
         {error && (
@@ -80,8 +80,8 @@ export default function ResetPasswordModal({ userId, userDocument, onClose, onSu
               value={contrasena}
               onChange={(e) => setContrasena(e.target.value)}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)]"
-              placeholder="Mínimo 8 caracteres"
-              minLength={8}
+              placeholder="Mínimo 6 caracteres"
+              minLength={6}
               required
             />
           </div>
@@ -96,7 +96,7 @@ export default function ResetPasswordModal({ userId, userDocument, onClose, onSu
               onChange={(e) => setConfirmar(e.target.value)}
               className="w-full h-11 px-3.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-[#F9FAFB] dark:bg-gray-800 text-sm font-inter text-gray-800 dark:text-gray-100 outline-none focus:border-[var(--brand)]"
               placeholder="Repite la contraseña"
-              minLength={8}
+              minLength={6}
               required
             />
           </div>

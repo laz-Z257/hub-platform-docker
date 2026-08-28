@@ -63,6 +63,7 @@ export default function HistorialScreen() {
         setTotal(data.total);
         setTotalPages(data.totalPages);
         setHasMore(data.page < data.totalPages);
+        setPage(targetPage);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Error al cargar el historial");
@@ -312,7 +313,7 @@ export default function HistorialScreen() {
             </View>
           }
           ListFooterComponent={
-            hasMore && !loadingMore && (
+            hasMore && !loadingMore ? (
               <TouchableOpacity
                 onPress={loadMore}
                 style={{
@@ -324,7 +325,7 @@ export default function HistorialScreen() {
                   Cargar más
                 </Text>
               </TouchableOpacity>
-            )
+            ) : null
           }
         />
       )}

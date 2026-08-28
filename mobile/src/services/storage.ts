@@ -4,6 +4,9 @@ import * as SecureStore from "expo-secure-store";
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 
+let memoryToken: string | null = null;
+let memoryUser: string | null = null;
+
 async function nativeSet(key: string, value: string): Promise<void> {
   try {
     await SecureStore.setItemAsync(key, value);
@@ -30,6 +33,14 @@ async function nativeDelete(key: string): Promise<void> {
 }
 
 function webSet(key: string, value: string): void {
+  if (key === TOKEN_KEY) {
+    memoryToken = value;
+    return;
+  }
+  if (key === USER_KEY) {
+    memoryUser = value;
+    return;
+  }
   try {
     localStorage.setItem(key, value);
   } catch (err) {
@@ -38,6 +49,8 @@ function webSet(key: string, value: string): void {
 }
 
 function webGet(key: string): string | null {
+  if (key === TOKEN_KEY) return memoryToken;
+  if (key === USER_KEY) return memoryUser;
   try {
     return localStorage.getItem(key);
   } catch (err) {
@@ -47,6 +60,14 @@ function webGet(key: string): string | null {
 }
 
 function webDelete(key: string): void {
+  if (key === TOKEN_KEY) {
+    memoryToken = null;
+    return;
+  }
+  if (key === USER_KEY) {
+    memoryUser = null;
+    return;
+  }
   try {
     localStorage.removeItem(key);
   } catch (err) {

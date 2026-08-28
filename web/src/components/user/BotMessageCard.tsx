@@ -22,9 +22,7 @@ interface BotMessageCardProps {
   timestamp: string;
   suggestedActions?: SuggestedAction[];
   isResolvedNotification?: boolean;
-  alreadyRated?: boolean;
   onSuggestedAction?: (action: string, label: string) => void;
-  onRateService?: () => void;
   onSubmenuPress?: (label: string) => void;
   onMenuPress?: (label: string) => void;
 }
@@ -34,9 +32,7 @@ export function BotMessageCard({
   timestamp,
   suggestedActions,
   isResolvedNotification,
-  alreadyRated,
   onSuggestedAction,
-  onRateService,
   onSubmenuPress,
   onMenuPress,
 }: BotMessageCardProps) {
@@ -68,22 +64,10 @@ export function BotMessageCard({
         )}
 
         {isResolvedNotification && !showMenu && (!suggestedActions || suggestedActions.length === 0) && (
-          <div className="mt-3 flex flex-col gap-2">
-            {alreadyRated ? (
-              <div className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#6B7280] text-sm">
-                Ya calificado
-              </div>
-            ) : (
-              <button
-                onClick={onRateService}
-                className="bg-[#201A7A] rounded-lg h-11 flex items-center justify-center text-white text-sm font-medium hover:bg-[#16145e] transition-colors"
-              >
-                Puntuar servicio
-              </button>
-            )}
+          <div className="mt-3">
             <button
               onClick={() => setShowMenu(true)}
-              className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm hover:bg-[#E8E4FF] transition-colors"
+              className="bg-[#F3F0FF] border border-[#DCD4FF] rounded-lg h-11 flex items-center justify-center text-[#201A7A] text-sm hover:bg-[#E8E4FF] transition-colors w-full"
             >
               Hacer otra petición
             </button>

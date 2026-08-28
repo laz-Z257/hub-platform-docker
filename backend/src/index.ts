@@ -64,6 +64,7 @@ app.use(
         upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
       },
     },
+    hsts: { maxAge: 31536000, includeSubDomains: true },
   })
 );
 app.use(

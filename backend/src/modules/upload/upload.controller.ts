@@ -19,13 +19,19 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+let uploadLock: Promise<void> = Promise.resolve();
+
 async function getDirSize(): Promise<number> {
   try {
     const files = await fs.promises.readdir(UPLOAD_DIR);
     let total = 0;
     for (const file of files) {
-      const stat = await fs.promises.stat(path.join(UPLOAD_DIR, file));
-      total += stat.size;
+      try {
+        const stat = await fs.promises.stat(path.join(UPLOAD_DIR, file));
+        total += stat.size;
+      } catch {
+        continue;
+      }
     }
     return total;
   } catch {
@@ -60,20 +66,29 @@ export async function uploadFile(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const currentSize = await getDirSize();
-    if (currentSize + file.size > MAX_STORAGE_BYTES) {
-      res.status(507).json({ error: "Almacenamiento de imágenes lleno. Contacta al administrador." });
+    let releaseLock!: () => void;
+    const prevLock = uploadLock;
+    uploadLock = new Promise<void>((resolve) => { releaseLock = resolve; });
+    await prevLock;
+    try {
+      const currentSize = await getDirSize();
+      if (currentSize + file.size > MAX_STORAGE_BYTES) {
+        res.status(507).json({ error: "Almacenamiento de imágenes lleno. Contacta al administrador." });
+        return;
+      }
+
+      const filename = `${randomUUID()}${ext}`;
+      const filepath = path.join(UPLOAD_DIR, filename);
+
+      await fs.promises.writeFile(filepath, file.buffer);
+
+      const url = `/uploads/${filename}`;
+
+      res.json({ url, filename });
       return;
+    } finally {
+      releaseLock();
     }
-
-    const filename = `${randomUUID()}${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
-
-    await fs.promises.writeFile(filepath, file.buffer);
-
-    const url = `/uploads/${filename}`;
-
-    res.json({ url, filename });
   } catch (error) {
     logger.error("Upload error", { error: (error as Error).message });
     res.status(500).json({ error: "Error al subir el archivo" });

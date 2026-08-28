@@ -9,11 +9,22 @@ interface SettingsMantenimientoTabProps {
 }
 
 export default function SettingsMantenimientoTab({ cacheStats, showAlert, showConfirm }: SettingsMantenimientoTabProps) {
+  function clearAppStorage() {
+    const prefixes = ["api_cache_", "hub_", "theme", "settings", "sidebar", "dashboard:"];
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && prefixes.some((p) => key.startsWith(p))) localStorage.removeItem(key);
+    }
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && prefixes.some((p) => key.startsWith(p))) sessionStorage.removeItem(key);
+    }
+  }
+
   const handleClearCache = () => {
     const size = cacheStats.size;
     const items = cacheStats.items;
-    localStorage.clear();
-    sessionStorage.clear();
+    clearAppStorage();
     showAlert("Caché limpiado", `Caché local limpiado correctamente (${size}, ${items} ítems eliminados). Se recargará la página.`, "success");
     setTimeout(() => window.location.reload(), 1500);
   };
@@ -24,8 +35,7 @@ export default function SettingsMantenimientoTab({ cacheStats, showAlert, showCo
       `¿Estás seguro de restablecer toda la configuración local? (${cacheStats.items} ítems, ${cacheStats.size})`,
       () => {
         const size = cacheStats.size;
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAppStorage();
         showAlert("Configuración restablecida", `Configuración restablecida (${size} eliminados). Se recargará la página.`, "success");
         setTimeout(() => window.location.reload(), 1500);
       }

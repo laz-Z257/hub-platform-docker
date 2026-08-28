@@ -322,10 +322,10 @@ export default function SettingsScreen() {
               if (!confirmed) return;
               try {
                 await logout();
+                router.replace("/");
               } catch (e) {
                 Alert.alert("Error", "No se pudo cerrar sesión. Intenta de nuevo.");
               }
-              router.replace("/");
             }}
             activeOpacity={0.85}
             style={{

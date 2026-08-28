@@ -186,13 +186,13 @@ export async function getSummary(_req: Request, res: Response): Promise<void> {
     
     const dailyCounts = await db
       .select({
-        date: sql<string>`DATE(${incidents.created_at})`.mapWith(String),
+        date: sql<string>`DATE(${incidents.created_at} AT TIME ZONE 'America/Bogota')`.mapWith(String),
         count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(incidents)
       .where(and(gte(incidents.created_at, sevenDaysAgo), isNull(incidents.deleted_at)))
-      .groupBy(sql`DATE(${incidents.created_at})`)
-      .orderBy(sql`DATE(${incidents.created_at})`);
+      .groupBy(sql`DATE(${incidents.created_at} AT TIME ZONE 'America/Bogota')`)
+      .orderBy(sql`DATE(${incidents.created_at} AT TIME ZONE 'America/Bogota')`);
     
     // Crear mapa de resultados
     const countMap = new Map(dailyCounts.map(d => [d.date, d.count]));

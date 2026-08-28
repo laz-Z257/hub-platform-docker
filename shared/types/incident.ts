@@ -42,4 +42,6 @@ export interface CreateIncidentInput {
 export interface UpdateIncidentInput {
   estado?: IncidentStatus;
   agente?: string;
+  solucion?: string;
+  imagen_url?: string | null;
 }

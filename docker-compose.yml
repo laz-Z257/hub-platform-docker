@@ -145,6 +145,7 @@ services:
     cap_drop:
       - ALL
     cap_add:
+      - CHOWN
       - SETUID
       - SETGID
     read_only: true

@@ -24,15 +24,10 @@ function getCsrfToken(): string | null {
 }
 
 function getCurrentScope(): "admin" | "user" | null {
-  // SIEMPRE derivar del path en el navegador: la variable de módulo puede
-  // quedar staleda (los efectos de los componentes hijos corren antes que
-  // el del AuthProvider) y un request del dashboard con scope "user" haría
-  // que el backend lea la cookie user_token — mezclando la sesión de la PWA
-  // con el dashboard.
   if (typeof window !== "undefined") {
     return window.location.pathname.startsWith("/user") ? "user" : "admin";
   }
-  return currentScope;
+  return null;
 }
 
 function requestHeaders(options: RequestInit): Record<string, string> {

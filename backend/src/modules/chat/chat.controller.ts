@@ -342,6 +342,15 @@ export async function sendMessage(
   try {
     const { content } = req.body;
 
+    if (typeof content !== "string" || content.trim().length === 0) {
+      res.status(400).json({ error: "El mensaje no puede estar vacío" });
+      return;
+    }
+    if (content.length > 10000) {
+      res.status(400).json({ error: "El mensaje no puede superar los 10000 caracteres" });
+      return;
+    }
+
     const [userMsg] = await db
       .insert(messages)
       .values({

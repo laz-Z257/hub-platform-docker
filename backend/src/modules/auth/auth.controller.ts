@@ -174,7 +174,7 @@ export async function login(req: Request, res: Response): Promise<void> {
           .where(and(eq(users.id, user.id), isNull(users.deleted_at)));
       } else {
         const msg = user.bloqueado_hasta
-          ? `Cuenta bloqueada temporalmente por intentos fallidos. Intenta de nuevo después de las ${user.bloqueado_hasta.toLocaleTimeString("es-CO", { timeZone: "America/Bogota" })}.`
+          ? "Cuenta bloqueada temporalmente por intentos fallidos. Intenta de nuevo en unos minutos."
           : "Usuario bloqueado. Contacta al administrador.";
         res.status(403).json({ error: msg });
         return;
