@@ -3,7 +3,7 @@ FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY tsconfig.json ./
 COPY drizzle.config.json ./
@@ -18,7 +18,7 @@ WORKDIR /app
 RUN addgroup -S nodejs && adduser -S nodejs -G nodejs && apk add --no-cache postgresql-client
 
 COPY package*.json ./
-RUN npm ci && npm prune --omit=dev && chown -R nodejs:nodejs /app
+RUN npm ci --legacy-peer-deps && npm prune --omit=dev && chown -R nodejs:nodejs /app
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
@@ -36,7 +36,11 @@ USER nodejs
 
 EXPOSE 3001
 
+# El header x-forwarded-proto es obligatorio: en producción src/index.ts
+# rechaza (400) o redirige a HTTPS cualquier petición que no llegue como https.
+# Un healthcheck en HTTP plano a localhost nunca vería un 200 y el contenedor
+# se quedaría "unhealthy" aunque la API esté perfecta.
 HEALTHCHECK --interval=15s --timeout=10s --start-period=45s --retries=5 \
-  CMD node -e "require('http').get('http://localhost:3001/api/health',r=>{process.exit(r.statusCode===200?0:1)})"
+  CMD node -e "require('http').get({host:'127.0.0.1',port:3001,path:'/api/health',headers:{'x-forwarded-proto':'https'}},r=>{process.exit(r.statusCode===200?0:1)})"
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Request, Response } from "express";
-import { createIncident, getIncident, deleteIncident } from "./incidents.controller";
+import { createIncident, getIncident, getTechnicians, updateIncident, deleteIncident } from "./incidents.controller";
 import { db } from "../../db";
 import { incidents } from "../../db/schema";
 
@@ -107,7 +107,7 @@ describe("Incidents Controller", () => {
       // Usuario rol "user" intenta atribuir a otro documento: se ignora
       req.body = {
         documento: "999999999",
-        punto_venta: "PV-001",
+        punto_venta: "Punto enviado por el cliente",
         descripcion: "Test description",
       };
 
@@ -116,6 +116,7 @@ describe("Incidents Controller", () => {
       const insertValues = insertChain.values.mock.calls[0][0];
       expect(insertValues.user_id).toBe("user-123");
       expect(insertValues.documento).toBe("123456789");
+      expect(insertValues.punto_venta).toBe("Test User");
     });
 
     it("admin con documento en el body: atribuye el ticket al usuario dueño del documento", async () => {
@@ -226,6 +227,42 @@ describe("Incidents Controller", () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: "Acceso denegado" });
     });
 
+    it("technician can view an unassigned ticket in the general tickets view", async () => {
+      const incidentSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: "incident-id",
+              user_id: "requester",
+              tecnico_id: null,
+              estado: "pendiente",
+              cerrado_por: null,
+            }]),
+          }),
+        }),
+      };
+      const commentsSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>)
+        .mockReturnValueOnce(incidentSelect)
+        .mockReturnValueOnce(commentsSelect);
+      req.params = { id: "incident-id" };
+      req.user = { userId: "technician-1", rol: "tecnico" } as any;
+
+      await getIncident(req as Request, res as Response);
+
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
+        id: "incident-id",
+        comments: [],
+      }));
+    });
+
     it("should return incident with comments if user has access", async () => {
       const incidentSelect = {
         from: vi.fn().mockReturnValue({
@@ -263,6 +300,69 @@ describe("Incidents Controller", () => {
           comments: [],
         })
       );
+    });
+  });
+
+  describe("updateIncident technician assignment", () => {
+    it("admin assigns an active technician by user id", async () => {
+      const technicianSelect = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "tech-1", nombre: "Técnico Uno" }]),
+          }),
+        }),
+      };
+      const updateChain = {
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "incident-1", tecnico_id: "tech-1", agente: "Técnico Uno" }]),
+          }),
+        }),
+      };
+      (db.select as ReturnType<typeof vi.fn>).mockReturnValue(technicianSelect);
+      (db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+      req.user = { userId: "admin-1", rol: "admin" } as any;
+      req.params = { id: "incident-1" };
+      req.body = { tecnico_id: "tech-1" };
+
+      await updateIncident(req as Request, res as Response);
+
+      expect(statusMock).not.toHaveBeenCalled();
+      expect(updateChain.set).toHaveBeenCalledWith(expect.objectContaining({
+        tecnico_id: "tech-1",
+        agente: "Técnico Uno",
+      }));
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ tecnico_id: "tech-1" }));
+    });
+
+    describe("getTechnicians", () => {
+      it("returns active technicians for assignment", async () => {
+        const technicians = [{ id: "tech-1", documento: "12345", nombre: "Técnico Uno" }];
+        const selectChain = {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue(technicians),
+            }),
+          }),
+        };
+        (db.select as ReturnType<typeof vi.fn>).mockReturnValue(selectChain);
+
+        await getTechnicians(req as Request, res as Response);
+
+        expect(jsonMock).toHaveBeenCalledWith(technicians);
+      });
+    });
+
+    it("technician cannot change assignments", async () => {
+      req.user = { userId: "tech-1", rol: "tecnico" } as any;
+      req.params = { id: "incident-1" };
+      req.body = { tecnico_id: "tech-2" };
+
+      await updateIncident(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(403);
+      expect(db.update).not.toHaveBeenCalled();
     });
   });
 

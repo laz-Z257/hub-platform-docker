@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { PlusCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import TicketSummaryCards from "@/components/TicketSummaryCards";
 import TicketFilters from "@/components/TicketFilters";
 import TicketTable from "@/components/TicketTable";
@@ -15,17 +17,26 @@ import { useToast } from "@/contexts/ToastContext";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { formatDateShort, formatDescription, getDateRange } from "@/lib/utils";
+import { getCategoriaLabel } from "@/lib/categorias";
 import type { Incident } from "@hub/shared/types/incident";
 
 type IncidentItem = Incident;
 
 export default function TicketsPage() {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const isTechnicianQueue = searchParams.get("view") === "technicians";
+  const isAdmin = user?.rol === "admin";
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
+  const [technicians, setTechnicians] = useState<{ id: string; nombre: string; documento: string }[]>([]);
+  const [techniciansLoading, setTechniciansLoading] = useState(false);
+  const [techniciansError, setTechniciansError] = useState(false);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("Todos");
+       const [tipoFilter, setTipoFilter] = useState("Todos");
   const [dateFilter, setDateFilter] = useState("30d");
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
   const [resolvingTicket, setResolvingTicket] = useState<string | null>(null);
@@ -48,16 +59,35 @@ export default function TicketsPage() {
 
   // Mark unread tickets as seen when viewing the page
   useEffect(() => {
+    if (!isAdmin) return;
     api.patch("/incidents/mark-seen").catch((err) => logger.error("Error marking incidents as seen", { error: (err as Error).message }));
-  }, []);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setTechnicians([]);
+      return;
+    }
+    setTechniciansLoading(true);
+    setTechniciansError(false);
+    api.get<{ id: string; nombre: string; documento: string }[]>("/incidents/technicians")
+      .then(setTechnicians)
+      .catch((err) => {
+        logger.error("Error fetching technicians", { error: err instanceof Error ? err.message : err });
+        setTechniciansError(true);
+      })
+      .finally(() => setTechniciansLoading(false));
+  }, [isAdmin]);
 
   const fetchTickets = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (estadoFilter !== "Todos") params.set("estado", estadoFilter);
+           if (tipoFilter !== "Todos") params.set("categoria", tipoFilter);
 
     const range = getDateRange(dateFilter);
     if (range.start) params.set("start", range.start);
@@ -75,9 +105,13 @@ export default function TicketsPage() {
         logger.error("Error fetching tickets", { error: err instanceof Error ? err.message : err })
       )
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, estadoFilter, dateFilter]);
+       }, [page, debouncedSearch, estadoFilter, tipoFilter, dateFilter, isTechnicianQueue]);
 
   const fetchStats = useCallback(() => {
+    if (!isAdmin) {
+      setStats({ pendientes: 0, enProceso: 0, resueltos: 0 });
+      return;
+    }
     const range = getDateRange(dateFilter);
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
@@ -97,7 +131,7 @@ export default function TicketsPage() {
       .catch((err) =>
         logger.error("Error fetching stats", { error: err instanceof Error ? err.message : err })
       );
-  }, [dateFilter]);
+  }, [dateFilter, isAdmin]);
 
   useEffect(() => {
     fetchTickets();
@@ -131,7 +165,7 @@ export default function TicketsPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showAlert, fetchTickets, showToast]
+    [showAlert, fetchTickets, showToast, technicians]
   );
 
   const handleViewDetail = useCallback(
@@ -167,16 +201,17 @@ export default function TicketsPage() {
   );
 
   const handleAssignAgent = useCallback(
-    async (ticketId: string, agent: string) => {
+    async (ticketId: string, technicianId: string | null) => {
       try {
         const updated = await api.patch<IncidentItem>(
           `/incidents/${ticketId}`,
-          { agente: agent }
+          { tecnico_id: technicianId }
         );
         setIncidents((prev) =>
           (Array.isArray(prev) ? prev : []).map((inc) => (inc.id === ticketId ? updated : inc))
         );
-        showToast(`Agente ${agent} asignado`);
+        const technicianName = technicians.find((technician) => technician.id === technicianId)?.nombre;
+        showToast(technicianName ? `Ticket asignado a ${technicianName}` : "Asignación de técnico quitada");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         logger.error("Assign agent error", { error: msg });
@@ -197,6 +232,7 @@ export default function TicketsPage() {
     const params = new URLSearchParams();
     if (range.start) params.set("start", range.start);
     if (range.end) params.set("end", range.end);
+    if (isTechnicianQueue) params.set("assignedOnly", "true");
     const qs = params.toString() ? `?${params.toString()}` : "";
 
     let items: IncidentItem[] = [];
@@ -263,7 +299,7 @@ export default function TicketsPage() {
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exportación lista: ${items.length} tickets`);
-  }, [dateFilter, showToast]);
+  }, [dateFilter, isTechnicianQueue, showToast]);
 
   const mappedTickets = useMemo(
     () => {
@@ -271,8 +307,9 @@ export default function TicketsPage() {
       return safe.map((inc) => ({
         id: inc.id,
         asunto: formatDescription(inc.descripcion),
-        categoria: inc.punto_venta,
-        solicitante: inc.nombre,
+                categoria: inc.punto_venta,
+        tipo: getCategoriaLabel(inc.categoria),
+        solicitante: inc.reportante_nombre || inc.nombre,
         estado:
           inc.estado === "pendiente"
             ? "Abierto"
@@ -282,9 +319,11 @@ export default function TicketsPage() {
         createdAt: formatDateShort(inc.created_at),
         fechaCierre: inc.fecha_cierre ? formatDateShort(inc.fecha_cierre) : null,
         agente: inc.agente,
+        tecnico_id: inc.tecnico_id,
+        canChangeStatus: isAdmin || (user?.rol === "tecnico" && inc.tecnico_id === user.id),
       }));
     },
-    [incidents]
+    [incidents, isAdmin, user]
   );
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
@@ -295,37 +334,42 @@ export default function TicketsPage() {
       <div className="flex items-start justify-between mb-7">
         <div>
           <h1 className="text-[42px] font-bold text-gray-900 dark:text-white font-inter leading-tight">
-            Gestión de Tickets
+            {isTechnicianQueue ? "Tickets técnicos" : "Gestión de Tickets"}
           </h1>
           <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400 font-inter max-w-[650px]">
-            Administre las solicitudes de soporte, supervise el progreso del
-            equipo y mantenga altos estándares de resolución para sus clientes
-            externos e internos.
+            {isTechnicianQueue
+              ? isAdmin
+                ? "Consulte todos los tickets y revise el técnico asignado a cada uno."
+                : "Consulta y gestiona los tickets que te han sido asignados."
+              : "Administre las solicitudes de soporte, supervise el progreso del equipo y mantenga altos estándares de resolución para sus clientes externos e internos."}
           </p>
         </div>
 
-        <button
+        {isAdmin && <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 h-11 px-[18px] bg-[#25207E] border-none rounded-[10px] cursor-pointer font-inter text-[13px] font-semibold text-white"
         >
           <PlusCircle size={18} strokeWidth={2} />
           Abrir Nuevo Ticket
-        </button>
+        </button>}
       </div>
 
       {/* Summary Cards */}
-      <TicketSummaryCards
-        total={total}
-        pendientes={stats.pendientes}
-        enProceso={stats.enProceso}
-        resueltos={stats.resueltos}
-        loading={loading}
-      />
+      {isAdmin && (
+        <TicketSummaryCards
+          total={total}
+          pendientes={stats.pendientes}
+          enProceso={stats.enProceso}
+          resueltos={stats.resueltos}
+          loading={loading}
+        />
+      )}
 
       {/* Filter Bar */}
       <TicketFilters
         searchTerm={searchTerm}
         estadoFilter={estadoFilter}
+        tipoFilter={tipoFilter}
         dateFilter={dateFilter}
         onSearchChange={(v) => {
           setSearchTerm(v);
@@ -335,12 +379,28 @@ export default function TicketsPage() {
           setEstadoFilter(v);
           setPage(1);
         }}
+
+             onTipoChange={(v) => {
+             setTipoFilter(v);
+             setPage(1);
+           }}
+
         onDateChange={setDateFilter}
         onExport={handleExport}
       />
 
       {/* Table */}
-      <TicketTable tickets={mappedTickets} onStatusChange={handleStatusChange} onViewDetail={handleViewDetail} onAssignAgent={handleAssignAgent} onResolve={handleResolve} />
+      <TicketTable
+        tickets={mappedTickets}
+        onStatusChange={handleStatusChange}
+        onViewDetail={handleViewDetail}
+        onAssignAgent={handleAssignAgent}
+        onResolve={handleResolve}
+        technicians={technicians}
+        canAssign={isAdmin}
+        techniciansLoading={techniciansLoading}
+        techniciansError={techniciansError}
+      />
 
       <Pagination
         page={page}

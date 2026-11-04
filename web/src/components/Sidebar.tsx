@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "next/navigation";
 
 interface NavItem {
   icon: typeof LayoutDashboard;
@@ -36,7 +37,12 @@ interface SidebarProps {
 
 export default function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const navItems =
+    user?.rol === "admin" || user?.rol === "tecnico"
+      ? [...NAV_ITEMS, { icon: Ticket, label: "Tickets técnicos", path: "/dashboard/tickets?view=technicians" }]
+      : NAV_ITEMS;
 
   const initials = user?.nombre
     ? user.nombre
@@ -56,20 +62,24 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <div className="flex items-center gap-2.5">
             <Image
               src={logoImg}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="rounded-md"
+              alt="Servired"
+              width={82}
+              height={24}
+              className="w-auto h-[24px] shrink-0"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-inter whitespace-nowrap">
               Admin Dashboard
             </span>
           </div>
         </div>
 
         <nav className="flex-1 flex flex-col px-3 gap-0.5">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.path;
+          {navItems.map((item) => {
+            const isTechnicianQueue = item.path.includes("?view=technicians");
+            const isActive =
+              isTechnicianQueue
+                ? pathname === "/dashboard/tickets" && searchParams.get("view") === "technicians"
+                : pathname === item.path && !(item.path === "/dashboard/tickets" && searchParams.has("view"));
 
             return (
               <Link

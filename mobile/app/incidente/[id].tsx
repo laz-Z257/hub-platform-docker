@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
+import { Clock, User, Phone, MapPin, AlertCircle, Shield, MessageSquare, XCircle } from "lucide-react-native";
 import { api } from "../../src/services/api";
-import { URGENCIA_COLORS, ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import AppHeader from "../../src/components/AppHeader";
+import { ESTADO_LABELS, ESTADO_COLORS, COLORS } from "../../src/constants/colors";
+import { getCategoriaLabel } from "../../src/constants/categorias";
 import { formatTicketId, formatDate } from "../../src/lib/format";
 
 interface IncidentDetail {
@@ -20,7 +21,9 @@ interface IncidentDetail {
   telefono: string;
   punto_venta: string;
   descripcion: string;
-  urgencia: "baja" | "media" | "alta";
+  categoria?: string | null;
+    reportante_nombre?: string | null;
+  reportante_cedula?: string | null;
   estado: "pendiente" | "en_proceso" | "resuelto";
   agente: string | null;
   created_at: string;
@@ -29,15 +32,31 @@ interface IncidentDetail {
 }
 
 export default function IncidentDetailScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // `router.back()` es un no-op silencioso cuando el historial está vacío. Desde
+  // la pantalla de éxito se llega con `router.replace` (exito.tsx), que sustituye
+  // la entrada en vez de apilar, así que el botón Volver quedaba muerto en ese
+  // camino. Desde historial se llega con `push` y ahí sí funciona; con este
+  // fallback ambos caminos hacen algo.
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/historial");
+    }
+  };
+
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setError("No se recibió el identificador del ticket");
+      setLoading(false);
+      return;
+    }
     api
       .get<IncidentDetail>(`/incidents/${id}`)
       .then(setIncident)
@@ -57,18 +76,11 @@ export default function IncidentDetailScreen() {
 
   if (!incident) {
     return (
-      <View
-        style={{ paddingTop: insets.top }}
-        className="flex-1 bg-[#F5F5F5]"
-      >
-        <View className="flex-row items-center px-5 py-4 border-b border-gray-200 bg-white">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
-            {error ? "Error" : "Incidente no encontrado"}
-          </Text>
-        </View>
+        <View className="flex-1 bg-[#F5F5F5]">
+        <AppHeader
+          title={error ? "No se pudo cargar el reporte" : "Reporte no encontrado"}
+          onBack={goBack}
+        />
         {error && (
           <View className="flex-1 items-center justify-center px-8">
             <XCircle size={48} color="#EF4444" strokeWidth={1.5} />
@@ -76,7 +88,7 @@ export default function IncidentDetailScreen() {
               {error}
             </Text>
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={goBack}
               className="mt-6 px-6 py-3 bg-[#3B348B] rounded-lg"
             >
               <Text className="text-white font-inter font-semibold">Volver</Text>
@@ -89,24 +101,15 @@ export default function IncidentDetailScreen() {
 
   const status = ESTADO_LABELS[incident.estado];
   const statusColor = ESTADO_COLORS[incident.estado];
-  const urgencyColor = URGENCIA_COLORS[incident.urgencia];
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
-      {/* Header */}
-      <View
-        style={{ paddingTop: insets.top }}
-        className="bg-white border-b border-gray-200"
-      >
-        <View className="flex-row items-center px-5 py-4">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <ArrowLeft size={22} color="#1F2366" strokeWidth={2} />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#1F2366] font-inter ml-4">
-            Detalle del Ticket
-          </Text>
-        </View>
-      </View>
+      
+      <AppHeader
+        title="Detalle del Reporte"
+        subtitle="Aquí ves toda la información del incidente que reportaste"
+        onBack={goBack}
+      />
 
       <ScrollView
         className="flex-1"
@@ -118,14 +121,6 @@ export default function IncidentDetailScreen() {
             <Text className="text-lg font-bold text-[#25207E] font-inter">
               {formatTicketId(incident.id)}
             </Text>
-            <View
-              className="px-2.5 py-1 rounded-full"
-              style={{ backgroundColor: urgencyColor }}
-            >
-              <Text className="text-[11px] font-bold text-white font-inter">
-                {incident.urgencia.toUpperCase()}
-              </Text>
-            </View>
             <View
               className="px-2.5 py-1 rounded-full"
               style={{ backgroundColor: statusColor }}
@@ -142,11 +137,11 @@ export default function IncidentDetailScreen() {
 
         {/* Info Grid */}
         <View className="bg-white rounded-2xl border border-gray-200 p-5 gap-4">
-          <InfoRow icon={User} label="Solicitante" value={incident.nombre} />
-          <InfoRow icon={User} label="Documento" value={incident.documento} />
+          <InfoRow icon={User} label="Reportado por" value={incident.reportante_nombre || incident.nombre} />
+          <InfoRow icon={User} label="Cédula" value={incident.reportante_cedula || incident.documento} />
           <InfoRow icon={Phone} label="Teléfono" value={incident.telefono || "—"} />
           <InfoRow icon={MapPin} label="Punto de Venta" value={incident.punto_venta} />
-          <InfoRow icon={AlertCircle} label="Urgencia" value={incident.urgencia.charAt(0).toUpperCase() + incident.urgencia.slice(1)} />
+          <InfoRow icon={AlertCircle} label="Tipo de problema" value={getCategoriaLabel(incident.categoria ?? undefined)} />
           <InfoRow icon={Clock} label="Estado" value={status} />
           <InfoRow icon={Shield} label="Agente" value={incident.agente || "Sin asignar"} />
         </View>
